@@ -1,7 +1,4 @@
 {
-  "buildCommand": "npx react-native-web-build",
-  "outputDirectory": "web-build",
-  "framework": null,
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
