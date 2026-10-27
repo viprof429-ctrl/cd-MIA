@@ -22,13 +22,11 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // Credenciales oficiales de Supabase
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIqxvbGUiOiJhbm9uIiwiaWF0IjoxNzYxMjk4MDU5LCJleHAiOjIwNzY4NzQwNTl9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyOTgwNTksImV4cCI6MjA3Njg3NDA1OX0";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyOTgwNTksImV4cCI6MjA3Njg3NDA1OX0.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyOTgwNTksImV4cCI6MjA3Njg3NDA1OX0";
         
-        // Inicialización optimizada compatible con la llave anónima clásica
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-          auth: { persistSession: true, autoRefreshToken: true }
+          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
         });
 
         const CUENTAS_BASE = [
@@ -130,6 +128,7 @@
               notificar('Error de Registro', error.message);
             } else {
               notificar('¡Registro exitoso!', 'Ya puedes iniciar sesión con tus datos.');
+              setModoRegistro(false);
             }
           };
 
@@ -1255,4 +1254,4 @@
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
-</html>    
+</html> 
