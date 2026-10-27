@@ -1,4 +1,4 @@
-     <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -88,11 +88,11 @@
           );
 
           const [cuentasPorCobrar, setCuentasPorCobrar] = useState(() =>
-            cargarDeStorage('mia_cxco_v3', [])
+            cargarDeStorage('mia_cxco_v4', [])
           );
 
           const [cuentasPorPagar, setCuentasPorPagar] = useState(() =>
-            cargarDeStorage('mia_cxpa_v3', [])
+            cargarDeStorage('mia_cxpa_v4', [])
           );
 
           useEffect(() => {
@@ -104,14 +104,14 @@
           }, [movimientos]);
 
           useEffect(() => {
-            guardarEnStorage('mia_cxco_v3', cuentasPorCobrar);
+            guardarEnStorage('mia_cxco_v4', cuentasPorCobrar);
           }, [cuentasPorCobrar]);
 
           useEffect(() => {
-            guardarEnStorage('mia_cxpa_v3', cuentasPorPagar);
+            guardarEnStorage('mia_cxpa_v4', cuentasPorPagar);
           }, [cuentasPorPagar]);
 
-          // Formulario Movimiento General
+          // Formulario Movimiento General (con categoría en lista)
           const [tipoMovimiento, setTipoMovimiento] = useState('Gasto');
           const [cuentaSeleccionada, setCuentaSeleccionada] = useState(cuentas[0]?.id || '1');
           const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(CATEGORIAS_GASTO[0]);
@@ -119,7 +119,7 @@
           const [valor, setValor] = useState('');
           const [fechaMovimiento, setFechaMovimiento] = useState(fechaHoy());
 
-          // Formularios CxC y CxP (con Saldo Inicial y Fecha de Vencimiento)
+          // Formularios CxC y CxP
           const [terceroCxC, setTerceroCxC] = useState('');
           const [conceptoCxC, setConceptoCxC] = useState('');
           const [saldoInicialCxC, setSaldoInicialCxC] = useState('');
@@ -142,6 +142,12 @@
           const [pagoIdCxP, setPagoIdCxP] = useState('');
           const [montoPagoCxP, setMontoPagoCxP] = useState('');
           const [cuentaPagoCxP, setCuentaPagoCxP] = useState(cuentas[0]?.id || '1');
+
+          // Filtro de reporte por Tercero
+          const [tipoReporteTercero, setTipoReporteTercero] = useState('CxC');
+          const [terceroSeleccionadoId, setTerceroSeleccionadoId] = useState('');
+          const [terceroFechaDesde, setTerceroFechaDesde] = useState(primerDiaMes());
+          const [terceroFechaHasta, setTerceroFechaHasta] = useState(fechaHoy());
 
           const [modalNuevaCuenta, setModalNuevaCuenta] = useState(false);
           const [nuevoNombre, setNuevoNombre] = useState('');
@@ -207,7 +213,8 @@
               vencimiento: vencimientoCxC,
               cuentaId: cuentaCxC,
               observacion: obsCxC.trim(),
-              estado: 'Pendiente'
+              estado: 'Pendiente',
+              historialPagos: []
             };
             setCuentasPorCobrar(prev => [nuevaCxC, ...prev]);
             setTerceroCxC('');
@@ -217,7 +224,6 @@
             notificar('Cuenta por Cobrar', 'Tercero y plazo registrados correctamente.');
           };
 
-          // Procesar Abono / Pago Parcial o Total de CxC desde Inicio
           const procesarCobroInicio = () => {
             const item = cuentasPorCobrar.find(c => c.id.toString() === pagoIdCxC);
             const abono = parseInt(montoPagoCxC.replace(/\D/g, ''), 10);
@@ -231,7 +237,6 @@
               return;
             }
 
-            // Registrar ingreso en la cuenta seleccionada
             const movimientoIngreso = {
               id: Date.now(),
               cuentaId: cuentaPagoCxC,
@@ -243,11 +248,17 @@
             };
             setMovimientos(prev => [movimientoIngreso, ...prev]);
 
-            // Actualizar saldo pendiente
             const nuevoSaldo = item.saldoPendiente - abono;
             const nuevoEstado = nuevoSaldo === 0 ? 'Pagado' : 'Parcial';
+            const registroPago = { fecha: fechaHoy(), monto: abono, tipo: 'Cobro' };
 
-            setCuentasPorCobrar(prev => prev.map(c => c.id === item.id ? { ...c, saldoPendiente: nuevoSaldo, estado: nuevoEstado } : c));
+            setCuentasPorCobrar(prev => prev.map(c => c.id === item.id ? { 
+              ...c, 
+              saldoPendiente: nuevoSaldo, 
+              estado: nuevoEstado,
+              historialPagos: [...(c.historialPagos || []), registroPago]
+            } : c));
+
             setPagoIdCxC('');
             setMontoPagoCxC('');
             notificar('¡Pago Recibido!', `Se registraron ${formatoCOP(abono)} con éxito.`);
@@ -268,7 +279,8 @@
               vencimiento: vencimientoCxP,
               cuentaId: cuentaCxP,
               observacion: obsCxP.trim(),
-              estado: 'Pendiente'
+              estado: 'Pendiente',
+              historialPagos: []
             };
             setCuentasPorPagar(prev => [nuevaCxP, ...prev]);
             setTerceroCxP('');
@@ -278,7 +290,6 @@
             notificar('Cuenta por Pagar', 'Tercero y plazo registrados correctamente.');
           };
 
-          // Procesar Abono / Pago Parcial o Total de CxP desde Inicio
           const procesarPagoInicio = () => {
             const item = cuentasPorPagar.find(c => c.id.toString() === pagoIdCxP);
             const abono = parseInt(montoPagoCxP.replace(/\D/g, ''), 10);
@@ -292,7 +303,6 @@
               return;
             }
 
-            // Registrar gasto en la cuenta seleccionada
             const movimientoGasto = {
               id: Date.now(),
               cuentaId: cuentaPagoCxP,
@@ -304,14 +314,60 @@
             };
             setMovimientos(prev => [movimientoGasto, ...prev]);
 
-            // Actualizar saldo pendiente
             const nuevoSaldo = item.saldoPendiente - abono;
             const nuevoEstado = nuevoSaldo === 0 ? 'Pagado' : 'Parcial';
+            const registroPago = { fecha: fechaHoy(), monto: abono, tipo: 'Pago' };
 
-            setCuentasPorPagar(prev => prev.map(c => c.id === item.id ? { ...c, saldoPendiente: nuevoSaldo, estado: nuevoEstado } : c));
+            setCuentasPorPagar(prev => prev.map(c => c.id === item.id ? { 
+              ...c, 
+              saldoPendiente: nuevoSaldo, 
+              estado: nuevoEstado,
+              historialPagos: [...(c.historialPagos || []), registroPago]
+            } : c));
+
             setPagoIdCxP('');
             setMontoPagoCxP('');
             notificar('¡Pago Realizado!', `Se descontaron ${formatoCOP(abono)} con éxito.`);
+          };
+
+          // Funciones de Exportación (PDF y CSV/Excel)
+          const exportarCSV = (terceroItem) => {
+            if (!terceroItem) return;
+            let csvContent = "data:text/csv;charset=utf-8,Fecha,Tercero,Concepto,Valor Total,Saldo Pendiente,Estado\n";
+            csvContent += `${fechaHoy()},${terceroItem.tercero},${terceroItem.concepto},${terceroItem.valorTotal},${terceroItem.saldoPendiente},${terceroItem.estado}\n`;
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `reporte_${terceroItem.tercero}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+
+          const exportarPDF = (terceroItem) => {
+            if (!terceroItem) return;
+            const ventana = window.open('', '_blank');
+            ventana.document.write(`
+              <html>
+                <head><title>Reporte Tercero - MIA</title></head>
+                <body style="font-family: Arial, sans-serif; padding: 20px; color: #1B4332;">
+                  <h2>MIA - Reporte de Cuenta por Tercero</h2>
+                  <hr/>
+                  <p><strong>Tercero:</strong> ${terceroItem.tercero}</p>
+                  <p><strong>Concepto:</strong> ${terceroItem.concepto}</p>
+                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(terceroItem.valorTotal)}</p>
+                  <p><strong>Saldo Pendiente:</strong> ${formatoCOP(terceroItem.saldoPendiente)}</p>
+                  <p><strong>Estado:</strong> ${terceroItem.estado}</p>
+                  <p><strong>Fecha Vencimiento:</strong> ${terceroItem.vencimiento}</p>
+                  <p><strong>Observaciones:</strong> ${terceroItem.observacion || 'Ninguna'}</p>
+                  <br/><hr/>
+                  <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
+                </body>
+              </html>
+            `);
+            ventana.document.close();
+            ventana.print();
           };
 
           const guardarNuevaCuenta = () => {
@@ -358,8 +414,8 @@
               setCuentasPorPagar([]);
               guardarEnStorage('mia_cuentas_v2', CUENTAS_BASE);
               guardarEnStorage('mia_movimientos_v2', []);
-              guardarEnStorage('mia_cxco_v3', []);
-              guardarEnStorage('mia_cxpa_v3', []);
+              guardarEnStorage('mia_cxco_v4', []);
+              guardarEnStorage('mia_cxpa_v4', []);
               notificar('Reinicio completo', 'Tus datos se han reiniciado.');
             }
           };
@@ -425,7 +481,7 @@
                       ))}
                     </div>
 
-                    {/* SECCIÓN PAGOS Y COBROS RÁPIDOS DESDE INICIO (CxP / CxC) */}
+                    {/* SECCIÓN PAGOS Y COBROS RÁPIDOS DESDE INICIO */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 my-4 space-y-4">
                       <h3 className="text-sm font-bold text-[#1B4332]">⚡ Gestión Rápida de CxP / CxC (Pagos y Cobros)</h3>
                       
@@ -498,19 +554,18 @@
                         </div>
                       </div>
 
+                      {/* RUBRO O CATEGORÍA EN FORMATO LISTA DESPLEGABLE */}
                       <div>
                         <label className="text-xs font-semibold text-[#52725F] block mb-1">Rubro o Categoría:</label>
-                        <div className="flex gap-2 overflow-x-auto pb-1">
+                        <select
+                          value={categoriaSeleccionada}
+                          onChange={(e) => setCategoriaSeleccionada(e.target.value)}
+                          className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none font-medium"
+                        >
                           {(tipoMovimiento === 'Gasto' ? CATEGORIAS_GASTO : CATEGORIAS_INGRESO).map((cat) => (
-                            <button
-                              key={cat}
-                              onClick={() => setCategoriaSeleccionada(cat)}
-                              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition ${categoriaSeleccionada === cat ? 'bg-[#205B43] text-white shadow' : 'bg-[#E8EFE9] text-[#205B43]'}`}
-                            >
-                              {cat}
-                            </button>
+                            <option key={cat} value={cat}>{cat}</option>
                           ))}
-                        </div>
+                        </select>
                       </div>
 
                       <div>
@@ -668,12 +723,53 @@
                   </div>
                 )}
 
-                {/* --- REPORTES (INCLUYE ESTADOS DE CXC Y CXP) --- */}
+                {/* --- REPORTES (CON REPORTE POR TERCERO Y EXPORTACIÓN A PDF/EXCEL) --- */}
                 {tab === 'reportes' && (
                   <div>
                     <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Reportes y Estado de Deudas</h3>
 
-                    {/* LISTADO DE CUENTAS POR COBRAR */}
+                    {/* NUEVO: REPORTE DETALLADO POR TERCERO (CON EXPORTACIÓN PDF/CSV) */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
+                      <h4 className="text-sm font-bold text-[#1B4332] mb-2">📑 Reporte Detallado por Tercero (CxC / CxP)</h4>
+                      <div className="flex gap-2 mb-2">
+                        <select value={tipoReporteTercero} onChange={(e) => { setTipoReporteTercero(e.target.value); setTerceroSeleccionadoId(''); }} className="flex-1 bg-[#F8FAF8] rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold">
+                          <option value="CxC">Cuentas por Cobrar</option>
+                          <option value="CxP">Cuentas por Pagar</option>
+                        </select>
+                        <select value={terceroSeleccionadoId} onChange={(e) => setTerceroSeleccionadoId(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
+                          <option value="">-- Seleccionar Tercero --</option>
+                          {(tipoReporteTercero === 'CxC' ? cuentasPorCobrar : cuentasPorPagar).map(item => (
+                            <option key={item.id} value={item.id}>{item.tercero} ({item.concepto})</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {terceroSeleccionadoId && (() => {
+                        const itemSel = (tipoReporteTercero === 'CxC' ? cuentasPorCobrar : cuentasPorPagar).find(c => c.id.toString() === terceroSeleccionadoId);
+                        if (!itemSel) return null;
+                        return (
+                          <div className="mt-3 p-3 bg-[#F8FAF8] rounded-xl border border-slate-200 space-y-2">
+                            <p className="text-xs font-bold text-[#1F2937]">👤 Tercero: {itemSel.tercero}</p>
+                            <p className="text-xs text-[#52725F]">Concepto: {itemSel.concepto}</p>
+                            <p className="text-xs font-bold">Valor Total Inicial: {formatoCOP(itemSel.valorTotal)}</p>
+                            <p className="text-xs font-bold text-[#C94A4A]">Saldo Pendiente Actual: {formatoCOP(itemSel.saldoPendiente)}</p>
+                            <p className="text-xs text-slate-500">Estado: <span className="font-bold">{itemSel.estado}</span> · Vence: {itemSel.vencimiento}</p>
+                            {itemSel.observacion && <p className="text-xs italic text-slate-500">Nota: {itemSel.observacion}</p>}
+
+                            <div className="flex gap-2 pt-2">
+                              <button onClick={() => exportarCSV(itemSel)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#1B4332] transition">
+                                📊 Exportar a Excel (CSV)
+                              </button>
+                              <button onClick={() => exportarPDF(itemSel)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#2D6A4F] transition">
+                                📄 Exportar a PDF
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* LISTADOS GENERALES DE ESTADO */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
                       <h4 className="text-sm font-bold text-[#2D6A4F] mb-3">📥 Cuentas por Cobrar (Clientes)</h4>
                       {cuentasPorCobrar.length === 0 ? (
@@ -687,17 +783,11 @@
                                 <div>
                                   <p className="text-xs font-bold text-[#1F2937]">👤 {item.tercero} - <span className="text-[#2D6A4F]">{item.concepto}</span></p>
                                   <p className="text-[11px] text-[#718078] mt-0.5">📅 Vence: {item.vencimiento} · Cuenta: {cAsoc?.nombre}</p>
-                                  {item.observacion && <p className="text-[11px] text-slate-500 italic mt-1">📝 {item.observacion}</p>}
                                 </div>
                                 <div className="text-right">
                                   <span className="text-[10px] text-slate-400 block">Pendiente</span>
                                   <span className="text-xs font-extrabold text-[#2D6A4F]">{formatoCOP(item.saldoPendiente)}</span>
                                 </div>
-                              </div>
-                              <div className="mt-2 pt-2 border-t border-slate-200 flex justify-between items-center">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.estado === 'Pagado' ? 'bg-emerald-200 text-emerald-800' : item.estado === 'Parcial' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>
-                                  Estado: {item.estado} (Total: {formatoCOP(item.valorTotal)})
-                                </span>
                               </div>
                             </div>
                           );
@@ -705,7 +795,6 @@
                       )}
                     </div>
 
-                    {/* LISTADO DE CUENTAS POR PAGAR */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
                       <h4 className="text-sm font-bold text-[#C94A4A] mb-3">📤 Cuentas por Pagar (Proveedores / Deudas)</h4>
                       {cuentasPorPagar.length === 0 ? (
@@ -719,17 +808,11 @@
                                 <div>
                                   <p className="text-xs font-bold text-[#1F2937]">🏢 {item.tercero} - <span className="text-[#C94A4A]">{item.concepto}</span></p>
                                   <p className="text-[11px] text-[#718078] mt-0.5">📅 Vence: {item.vencimiento} · Cuenta: {cAsoc?.nombre}</p>
-                                  {item.observacion && <p className="text-[11px] text-slate-500 italic mt-1">📝 {item.observacion}</p>}
                                 </div>
                                 <div className="text-right">
                                   <span className="text-[10px] text-slate-400 block">Pendiente</span>
                                   <span className="text-xs font-extrabold text-[#C94A4A]">{formatoCOP(item.saldoPendiente)}</span>
                                 </div>
-                              </div>
-                              <div className="mt-2 pt-2 border-t border-slate-200 flex justify-between items-center">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.estado === 'Pagado' ? 'bg-red-200 text-red-800' : item.estado === 'Parcial' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>
-                                  Estado: {item.estado} (Total: {formatoCOP(item.valorTotal)})
-                                </span>
                               </div>
                             </div>
                           );
