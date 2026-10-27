@@ -88,11 +88,11 @@
           );
 
           const [cuentasPorCobrar, setCuentasPorCobrar] = useState(() =>
-            cargarDeStorage('mia_cxco_v7', [])
+            cargarDeStorage('mia_cxco_v8', [])
           );
 
           const [cuentasPorPagar, setCuentasPorPagar] = useState(() =>
-            cargarDeStorage('mia_cxpa_v7', [])
+            cargarDeStorage('mia_cxpa_v8', [])
           );
 
           useEffect(() => {
@@ -104,11 +104,11 @@
           }, [movimientos]);
 
           useEffect(() => {
-            guardarEnStorage('mia_cxco_v7', cuentasPorCobrar);
+            guardarEnStorage('mia_cxco_v8', cuentasPorCobrar);
           }, [cuentasPorCobrar]);
 
           useEffect(() => {
-            guardarEnStorage('mia_cxpa_v7', cuentasPorPagar);
+            guardarEnStorage('mia_cxpa_v8', cuentasPorPagar);
           }, [cuentasPorPagar]);
 
           // Formulario Movimiento General
@@ -138,15 +138,15 @@
           const [cuentaCxP, setCuentaCxP] = useState(cuentas[0]?.id || '1');
           const [obsCxP, setObsCxP] = useState('');
 
-          // Estados para pagos unificados con fecha propia de abono
+          // Estados para pagos unificados (con fecha de abono arriba)
+          const [tipoAbonoUnified, setTipoAbonoUnified] = useState('CxC');
+          const [fechaAbonoUnified, setFechaAbonoUnified] = useState(fechaHoy());
           const [pagoIdCxC, setPagoIdCxC] = useState('');
           const [montoPagoCxC, setMontoPagoCxC] = useState('');
-          const [fechaPagoCxC, setFechaPagoCxC] = useState(fechaHoy());
           const [cuentaPagoCxC, setCuentaPagoCxC] = useState(cuentas[0]?.id || '1');
 
           const [pagoIdCxP, setPagoIdCxP] = useState('');
           const [montoPagoCxP, setMontoPagoCxP] = useState('');
-          const [fechaPagoCxP, setFechaPagoCxP] = useState(fechaHoy());
           const [cuentaPagoCxP, setCuentaPagoCxP] = useState(cuentas[0]?.id || '1');
 
           // Filtro de reporte por Tercero
@@ -179,7 +179,6 @@
 
           const patrimonioTotal = cuentas.reduce((acc, c) => acc + obtenerSaldoCuenta(c.id), 0);
 
-          // Totales pendientes para las tarjetas de Inicio
           const totalCxCPendiente = cuentasPorCobrar.reduce((acc, item) => acc + item.saldoPendiente, 0);
           const totalCxPPendiente = cuentasPorPagar.reduce((acc, item) => acc + item.saldoPendiente, 0);
 
@@ -254,13 +253,13 @@
               concepto: `Abono de ${item.tercero} (${item.concepto})`,
               valor: abono,
               tipo: 'Ingreso',
-              fecha: fechaPagoCxC,
+              fecha: fechaAbonoUnified,
             };
             setMovimientos(prev => [movimientoIngreso, ...prev]);
 
             const nuevoSaldo = item.saldoPendiente - abono;
             const nuevoEstado = nuevoSaldo === 0 ? 'Pagado' : 'Parcial';
-            const registroPago = { fecha: fechaPagoCxC, monto: abono, cuentaName: cuentaAsoc?.nombre || 'Cuenta' };
+            const registroPago = { fecha: fechaAbonoUnified, monto: abono, cuentaName: cuentaAsoc?.nombre || 'Cuenta' };
 
             setCuentasPorCobrar(prev => prev.map(c => c.id === item.id ? { 
               ...c, 
@@ -322,13 +321,13 @@
               concepto: `Abono a ${item.tercero} (${item.concepto})`,
               valor: abono,
               tipo: 'Gasto',
-              fecha: fechaPagoCxP,
+              fecha: fechaAbonoUnified,
             };
             setMovimientos(prev => [movimientoGasto, ...prev]);
 
             const nuevoSaldo = item.saldoPendiente - abono;
             const nuevoEstado = nuevoSaldo === 0 ? 'Pagado' : 'Parcial';
-            const registroPago = { fecha: fechaPagoCxP, monto: abono, cuentaName: cuentaAsoc?.nombre || 'Cuenta' };
+            const registroPago = { fecha: fechaAbonoUnified, monto: abono, cuentaName: cuentaAsoc?.nombre || 'Cuenta' };
 
             setCuentasPorPagar(prev => prev.map(c => c.id === item.id ? { 
               ...c, 
@@ -434,8 +433,8 @@
               setCuentasPorPagar([]);
               guardarEnStorage('mia_cuentas_v2', CUENTAS_BASE);
               guardarEnStorage('mia_movimientos_v2', []);
-              guardarEnStorage('mia_cxco_v7', []);
-              guardarEnStorage('mia_cxpa_v7', []);
+              guardarEnStorage('mia_cxco_v8', []);
+              guardarEnStorage('mia_cxpa_v8', []);
               notificar('Reinicio completo', 'Tus datos se han reiniciado.');
             }
           };
@@ -499,13 +498,11 @@
                           <p className="text-[13px] font-bold text-[#205B43] mt-0.5">{formatoCOP(obtenerSaldoCuenta(c.id))}</p>
                         </div>
                       ))}
-                      {/* Tarjeta de Total CxC Pendiente */}
                       <div className="bg-white p-3 rounded-2xl min-w-[125px] shadow-sm border border-emerald-100">
                         <span className="text-2xl">📥</span>
                         <p className="text-xs font-semibold text-slate-700 mt-1 truncate">Total CxC Pend</p>
                         <p className="text-[13px] font-bold text-[#2D6A4F] mt-0.5">{formatoCOP(totalCxCPendiente)}</p>
                       </div>
-                      {/* Tarjeta de Total CxP Pendiente */}
                       <div className="bg-white p-3 rounded-2xl min-w-[125px] shadow-sm border border-red-100">
                         <span className="text-2xl">📤</span>
                         <p className="text-xs font-semibold text-slate-700 mt-1 truncate">Total CxP Pend</p>
@@ -666,19 +663,18 @@
                   </div>
                 )}
 
-                {/* --- MÓDULO UNIFICADO: CXC / CXP (CON FECHA ARRIBA Y ABONOS FILTRADOS) --- */}
+                {/* --- MÓDULO UNIFICADO: CXC / CXP --- */}
                 {tab === 'deudas' && (
                   <div>
                     <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Gestión de Terceros (CxC / CxP)</h3>
 
+                    {/* CARD 1: NUEVO REGISTRO */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
-                      {/* Fecha general de registro arriba por estética */}
                       <div>
                         <label className="text-xs font-bold text-[#1B4332] block mb-1">📅 Fecha del Registro:</label>
                         <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold" />
                       </div>
 
-                      {/* Selector unificado Tipo */}
                       <div>
                         <label className="text-xs font-bold text-[#1B4332] block mb-1">Tipo:</label>
                         <select 
@@ -693,7 +689,6 @@
 
                       <div className="h-[1px] bg-[#EEF2EE] my-2"></div>
 
-                      {/* Formulario de Registro Dinámico */}
                       {tipoCxUnified === 'CxC' ? (
                         <div>
                           <h4 className="text-sm font-bold text-[#2D6A4F] mb-2">Nuevo Registro - Cuenta por Cobrar</h4>
@@ -735,24 +730,36 @@
                       )}
                     </div>
 
-                    {/* SECCIÓN DE ABONOS Y PAGOS FILTRADA POR EL TIPO SELECCIONADO */}
+                    {/* CARD 2: REGISTRAR ABONO O PAGO (CON FECHA ARRIBA Y TIPO INTEGRADO) */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
                       <h4 className="text-sm font-bold text-[#1B4332]">⚡ Registrar Abono o Pago</h4>
                       
-                      {tipoCxUnified === 'CxC' ? (
+                      <div>
+                        <label className="text-[11px] font-bold text-[#52725F] block mb-1">Fecha del Abono:</label>
+                        <input type="date" value={fechaAbonoUnified} onChange={(e) => setFechaAbonoUnified(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold" />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-[#52725F] block mb-1">Tipo de Operación:</label>
+                        <select 
+                          value={tipoAbonoUnified} 
+                          onChange={(e) => setTipoAbonoUnified(e.target.value)} 
+                          className="w-full bg-[#F8FAF8] text-[#1F2937] font-bold rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none"
+                        >
+                          <option value="CxC">📥 Cuenta por Cobrar (CxC)</option>
+                          <option value="CxP">📤 Cuenta por Pagar (CxP)</option>
+                        </select>
+                      </div>
+
+                      {tipoAbonoUnified === 'CxC' ? (
                         <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
-                          <label className="text-[11px] font-bold text-[#2D6A4F] block">📥 Registrar Abono (CxC)</label>
+                          <label className="text-[11px] font-bold text-[#2D6A4F] block">Seleccionar Tercero Pendiente:</label>
                           <select value={pagoIdCxC} onChange={(e) => setPagoIdCxC(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
-                            <option value="">-- Seleccionar Cuenta por Cobrar Pendiente --</option>
+                            <option value="">-- Seleccionar Cuenta por Cobrar --</option>
                             {cuentasPorCobrar.filter(c => c.estado !== 'Pagado').map(c => (
                               <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente)})</option>
                             ))}
                           </select>
-                          
-                          <div>
-                            <span className="text-[10px] font-semibold text-[#52725F] block mb-0.5">Fecha del Abono:</span>
-                            <input type="date" value={fechaPagoCxC} onChange={(e) => setFechaPagoCxC(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                          </div>
 
                           <div className="flex gap-2">
                             <input type="number" placeholder="Monto a abonar" value={montoPagoCxC} onChange={(e) => setMontoPagoCxC(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
@@ -764,18 +771,13 @@
                         </div>
                       ) : (
                         <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
-                          <label className="text-[11px] font-bold text-[#C94A4A] block">📤 Registrar Abono Deuda (CxP)</label>
+                          <label className="text-[11px] font-bold text-[#C94A4A] block">Seleccionar Tercero Pendiente:</label>
                           <select value={pagoIdCxP} onChange={(e) => setPagoIdCxP(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
-                            <option value="">-- Seleccionar Cuenta por Pagar Pendiente --</option>
+                            <option value="">-- Seleccionar Cuenta por Pagar --</option>
                             {cuentasPorPagar.filter(c => c.estado !== 'Pagado').map(c => (
                               <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente)})</option>
                             ))}
                           </select>
-
-                          <div>
-                            <span className="text-[10px] font-semibold text-[#52725F] block mb-0.5">Fecha del Abono:</span>
-                            <input type="date" value={fechaPagoCxP} onChange={(e) => setFechaPagoCxP(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                          </div>
 
                           <div className="flex gap-2">
                             <input type="number" placeholder="Monto a abonar" value={montoPagoCxP} onChange={(e) => setMontoPagoCxP(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
