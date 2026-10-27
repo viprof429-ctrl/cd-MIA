@@ -8,11 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
-    </style>
 </head>
 <body class="bg-[#F3F7F2] text-slate-800 flex justify-center items-center min-h-screen m-0">
     <div id="root" class="w-full max-w-md h-screen md:h-[850px] bg-[#F3F7F2] shadow-2xl flex flex-col relative overflow-hidden"></div>
@@ -34,23 +29,19 @@
           'Salario / Nómina', 'Ventas / Negocio', 'Otros Ingresos'
         ];
 
-        const guardarEnStorage = (subClave, valor) => {
+        const guardarEnStorage = (clave, valor) => {
           try {
             if (typeof window !== 'undefined' && window.localStorage) {
-              const dbActual = JSON.parse(window.localStorage.getItem('miahorro') || '{}');
-              dbActual[subClave] = valor;
-              window.localStorage.setItem('miahorro', JSON.stringify(dbActual));
+              window.localStorage.setItem(clave, JSON.stringify(valor));
             }
           } catch (e) {}
         };
 
-        const cargarDeStorage = (subClave, valorPorDefecto) => {
+        const cargarDeStorage = (clave, valorPorDefecto) => {
           try {
             if (typeof window !== 'undefined' && window.localStorage) {
-              const dbActual = JSON.parse(window.localStorage.getItem('miahorro') || '{}');
-              if (dbActual[subClave] !== undefined && dbActual[subClave] !== null) {
-                return dbActual[subClave];
-              }
+              const data = window.localStorage.getItem(clave);
+              if (data) return JSON.parse(data);
             }
           } catch (e) {}
           return valorPorDefecto;
@@ -101,67 +92,41 @@
           const [tab, setTab] = useState('inicio');
 
           const [cuentas, setCuentas] = useState(() =>
-            cargarDeStorage('cuentas', CUENTAS_BASE)
+            cargarDeStorage('mia_cuentas_v2', CUENTAS_BASE)
           );
 
           const [movimientos, setMovimientos] = useState(() =>
-            cargarDeStorage('movimientos', [])
+            cargarDeStorage('mia_movimientos_v2', [])
           );
 
           const [cuentasPorCobrar, setCuentasPorCobrar] = useState(() =>
-            cargarDeStorage('cxco', [])
+            cargarDeStorage('mia_cxco_v8', [])
           );
 
           const [cuentasPorPagar, setCuentasPorPagar] = useState(() =>
-            cargarDeStorage('cxpa', [])
+            cargarDeStorage('mia_cxpa_v8', [])
           );
 
+          // Listas personalizadas de categorías y conceptos de deudas
           const [categoriasGasto, setCategoriasGasto] = useState(() =>
-            cargarDeStorage('cat_gasto', CATEGORIAS_GASTO_BASE)
+            cargarDeStorage('mia_cat_gasto', CATEGORIAS_GASTO_BASE)
           );
           const [categoriasIngreso, setCategoriasIngreso] = useState(() =>
-            cargarDeStorage('cat_ingreso', CATEGORIAS_INGRESO_BASE)
+            cargarDeStorage('mia_cat_ingreso', CATEGORIAS_INGRESO_BASE)
           );
           const [conceptosDeuda, setConceptosDeuda] = useState(() =>
-            cargarDeStorage('conceptos_deuda', [...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión'])
+            cargarDeStorage('mia_conceptos_deuda', [...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión'])
           );
 
-          useEffect(() => { guardarEnStorage('cuentas', cuentas); }, [cuentas]);
-          useEffect(() => { guardarEnStorage('movimientos', movimientos); }, [movimientos]);
-          useEffect(() => { guardarEnStorage('cxco', cuentasPorCobrar); }, [cuentasPorCobrar]);
-          useEffect(() => { guardarEnStorage('cxpa', cuentasPorPagar); }, [cuentasPorPagar]);
-          useEffect(() => { guardarEnStorage('cat_gasto', categoriasGasto); }, [categoriasGasto]);
-          useEffect(() => { guardarEnStorage('cat_ingreso', categoriasIngreso); }, [categoriasIngreso]);
-          useEffect(() => { guardarEnStorage('conceptos_deuda', conceptosDeuda); }, [conceptosDeuda]);
+          useEffect(() => { guardarEnStorage('mia_cuentas_v2', cuentas); }, [cuentas]);
+          useEffect(() => { guardarEnStorage('mia_movimientos_v2', movimientos); }, [movimientos]);
+          useEffect(() => { guardarEnStorage('mia_cxco_v8', cuentasPorCobrar); }, [cuentasPorCobrar]);
+          useEffect(() => { guardarEnStorage('mia_cxpa_v8', cuentasPorPagar); }, [cuentasPorPagar]);
+          useEffect(() => { guardarEnStorage('mia_cat_gasto', categoriasGasto); }, [categoriasGasto]);
+          useEffect(() => { guardarEnStorage('mia_cat_ingreso', categoriasIngreso); }, [categoriasIngreso]);
+          useEffect(() => { guardarEnStorage('mia_conceptos_deuda', conceptosDeuda); }, [conceptosDeuda]);
 
-          useEffect(() => {
-            const ahora = new Date();
-            const hora = ahora.getHours();
-            const hoyStr = fechaHoy();
-            const ultimoCheck = window.localStorage.getItem('mia_ultimo_check') || '';
-
-            if (ultimoCheck !== hoyStr) {
-              if (hora >= 10 && hora < 12) {
-                notificar('MIA - Recordatorio ⏰', '¡Oye, hoy no me has mirado! 👀 Pásate a registrar tus movimientos de la mañana.');
-                window.localStorage.setItem('mia_ultimo_check', hoyStr);
-              } else if (hora >= 17) {
-                notificar('MIA - Recordatorio ⏰', '¡Oye, hoy no me has mirado! 👀 ¿Cómo van los gastos de la tarde? Regístralos.');
-                window.localStorage.setItem('mia_ultimo_check', hoyStr);
-              }
-            }
-
-            const mananaObj = new Date();
-            mananaObj.setDate(mananaObj.getDate() + 1);
-            const mananaStr = `${mananaObj.getFullYear()}-${String(mananaObj.getMonth() + 1).padStart(2, '0')}-${String(mananaObj.getDate()).padStart(2, '0')}`;
-
-            const porVencerCxC = cuentasPorCobrar.filter(c => c.estado !== 'Pagado' && c.vencimiento === mananaStr);
-            const porVencerCxP = cuentasPorPagar.filter(c => c.estado !== 'Pagado' && c.vencimiento === mananaStr);
-
-            if (porVencerCxC.length > 0 || porVencerCxP.length > 0) {
-              notificar('⚠️ Alerta de Vencimiento', 'Tienes cuentas por cobrar o pagar que vencen MAÑANA. ¡Revisa tu módulo de deudas!');
-            }
-          }, []);
-
+          // Formulario Movimiento General
           const [tipoMovimiento, setTipoMovimiento] = useState('Gasto');
           const [cuentaSeleccionada, setCuentaSeleccionada] = useState(cuentas[0]?.id || '1');
           const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(categoriasGasto[0]);
@@ -169,9 +134,11 @@
           const [valorDisplay, setValorDisplay] = useState('');
           const [fechaMovimiento, setFechaMovimiento] = useState(fechaHoy());
 
+          // Selector unificado en módulo CxC / CxP
           const [tipoCxUnified, setTipoCxUnified] = useState('CxC');
           const [fechaGeneralReg, setFechaGeneralReg] = useState(fechaHoy());
 
+          // Formularios CxC y CxP
           const [terceroCxC, setTerceroCxC] = useState('');
           const [conceptoCxC, setConceptoCxC] = useState(conceptosDeuda[0]);
           const [nuevoConceptoCxC, setNuevoConceptoCxC] = useState('');
@@ -192,6 +159,7 @@
           const [cuentaCxP, setCuentaCxP] = useState(cuentas[0]?.id || '1');
           const [obsCxP, setObsCxP] = useState('');
 
+          // Estados para pagos unificados
           const [tipoAbonoUnified, setTipoAbonoUnified] = useState('CxC');
           const [fechaAbonoUnified, setFechaAbonoUnified] = useState(fechaHoy());
           const [pagoIdCxC, setPagoIdCxC] = useState('');
@@ -202,10 +170,9 @@
           const [montoPagoCxPDisplay, setMontoPagoCxPDisplay] = useState('');
           const [cuentaPagoCxP, setCuentaPagoCxP] = useState(cuentas[0]?.id || '1');
 
+          // Filtro de reporte por Tercero
           const [tipoReporteTercero, setTipoReporteTercero] = useState('CxC');
           const [terceroSeleccionadoId, setTerceroSeleccionadoId] = useState('');
-
-          const [cuentaReporteId, setCuentaReporteId] = useState('');
 
           const [modalNuevaCuenta, setModalNuevaCuenta] = useState(false);
           const [nuevoNombre, setNuevoNombre] = useState('');
@@ -410,59 +377,6 @@
             notificar('¡Pago Realizado!', `Se descontaron ${formatoCOP(abono)} con éxito.`);
           };
 
-          const exportarPDFCuenta = (cuentaObj, movimientosCuenta, saldoActualCuenta) => {
-            if (!cuentaObj) return;
-            const ventana = window.open('https://miahorrointeligente.vercel.app/', '_blank');
-            ventana.document.write(`
-              <html>
-                <head>
-                  <title>Reporte Cuenta - MIA</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
-                    .ingreso { color: #2D6A4F; font-weight: bold; }
-                    .gasto { color: #C94A4A; font-weight: bold; }
-                  </style>
-                </head>
-                <body>
-                  <h2>MIA - Reporte de Movimientos de Cuenta</h2>
-                  <hr/>
-                  <p><strong>Cuenta:</strong> ${cuentaObj.nombre} (${cuentaObj.tipo})</p>
-                  <p><strong>Saldo Inicial:</strong> ${formatoCOP(cuentaObj.saldoInicial)}</p>
-                  <p><strong>Saldo Actual:</strong> ${formatoCOP(saldoActualCuenta)}</p>
-                  <hr/>
-                  <h3>Movimientos:</h3>
-                  <ul>
-                    ${movimientosCuenta.map(m => {
-                      const esIngreso = m.tipo === 'Ingreso';
-                      const claseCSS = esIngreso ? 'ingreso' : 'gasto';
-                      const signo = esIngreso ? '+' : '-';
-                      return `<li>${m.fecha} - ${m.concepto} (${m.categoria}) [<span class="${claseCSS}">${m.tipo}</span>]: <span class="${claseCSS}">${signo}${formatoCOP(m.valor)}</span></li>`;
-                    }).join('')}
-                  </ul>
-                  <br/><hr/>
-                  <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
-                </body>
-              </html>
-            `);
-            ventana.document.close();
-            ventana.print();
-          };
-
-          const exportarCSVCuenta = (cuentaObj, movimientosCuenta) => {
-            if (!cuentaObj) return;
-            let csvContent = "data:text/csv;charset=utf-8,Fecha,Concepto,Categoria,Tipo,Valor\n";
-            movimientosCuenta.forEach(m => {
-              csvContent += `${m.fecha},${m.concepto},${m.categoria},${m.tipo},${m.valor}\n`;
-            });
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `reporte_cuenta_${cuentaObj.nombre}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          };
-
           const exportarCSV = (terceroItem) => {
             if (!terceroItem) return;
             let csvContent = "data:text/csv;charset=utf-8,Fecha,Tercero,Concepto,Valor Total,Saldo Pendiente,Estado\n";
@@ -479,18 +393,11 @@
 
           const exportarPDF = (terceroItem) => {
             if (!terceroItem) return;
-            const ventana = window.open('https://miahorrointeligente.vercel.app/', '_blank');
+            const ventana = window.open('', '_blank');
             ventana.document.write(`
               <html>
-                <head>
-                  <title>Reporte Tercero - MIA</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
-                    .ingreso { color: #2D6A4F; font-weight: bold; }
-                    .gasto { color: #C94A4A; font-weight: bold; }
-                  </style>
-                </head>
-                <body>
+                <head><title>Reporte Tercero - MIA</title></head>
+                <body style="font-family: Arial, sans-serif; padding: 20px; color: #1B4332;">
                   <h2>MIA - Reporte Detallado por Tercero</h2>
                   <hr/>
                   <p><strong>Tercero:</strong> ${terceroItem.tercero}</p>
@@ -504,8 +411,8 @@
                   <hr/>
                   <h3>Historial de Movimientos:</h3>
                   <ul>
-                    <li class="ingreso">${terceroItem.fechaInicial || ''} - Saldo Inicial: +${formatoCOP(terceroItem.valorTotal)}</li>
-                    ${(terceroItem.historialPagos || []).map(p => `<li class="gasto">${p.fecha} - Abono (${p.cuentaName}): -${formatoCOP(p.monto)}</li>`).join('')}
+                    <li>${terceroItem.fechaInicial || ''} - Saldo Inicial: +${formatoCOP(terceroItem.valorTotal)}</li>
+                    ${(terceroItem.historialPagos || []).map(p => `<li>${p.fecha} - Abono (${p.cuentaName}): -${formatoCOP(p.monto)}</li>`).join('')}
                   </ul>
                   <br/><hr/>
                   <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
@@ -557,7 +464,10 @@
               setMovimientos([]);
               setCuentasPorCobrar([]);
               setCuentasPorPagar([]);
-              window.localStorage.removeItem('miahorro');
+              guardarEnStorage('mia_cuentas_v2', CUENTAS_BASE);
+              guardarEnStorage('mia_movimientos_v2', []);
+              guardarEnStorage('mia_cxco_v8', []);
+              guardarEnStorage('mia_cxpa_v8', []);
               notificar('Reinicio completo', 'Tus datos se han reiniciado.');
             }
           };
@@ -590,8 +500,6 @@
           const pctCxC = totalDeudasGrafico > 0 ? Math.round((totalCxCPendiente / totalDeudasGrafico) * 100) : 50;
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
 
-          const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
-
           return (
             <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
               {/* Header */}
@@ -615,44 +523,28 @@
                     </div>
 
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-[17px] font-bold text-[#1B4332]">Tus Fondos y Deudas Activas</h3>
+                      <h3 className="text-[17px] font-bold text-[#1B4332]">Tus Fondos y Deudas</h3>
                       <button onClick={() => setTab('cuentas')} className="text-xs text-[#2D6A4F] font-bold hover:underline">Ver cuentas ›</button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      {cuentasConSaldo.length === 0 && totalCxCPendiente === 0 && totalCxPPendiente === 0 ? (
-                        <p className="col-span-2 text-center text-xs text-[#718078] italic py-2">No hay cuentas ni deudas con saldo activo en este momento.</p>
-                      ) : (
-                        <>
-                          {cuentasConSaldo.map((c) => (
-                            <div key={c.id} className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xl">{c.icono}</span>
-                                <p className="text-xs font-semibold text-slate-700 truncate">{c.nombre}</p>
-                              </div>
-                              <p className="text-[14px] font-bold text-[#205B43] mt-2">{formatoCOP(obtenerSaldoCuenta(c.id))}</p>
-                            </div>
-                          ))}
-                          {totalCxCPendiente > 0 && (
-                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-emerald-100 flex flex-col justify-between">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xl">📥</span>
-                                <p className="text-xs font-semibold text-slate-700 truncate">Total CxC Pend</p>
-                              </div>
-                              <p className="text-[14px] font-bold text-[#2D6A4F] mt-2">{formatoCOP(totalCxCPendiente)}</p>
-                            </div>
-                          )}
-                          {totalCxPPendiente > 0 && (
-                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-red-100 flex flex-col justify-between">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xl">📤</span>
-                                <p className="text-xs font-semibold text-slate-700 truncate">Total CxP Pend</p>
-                              </div>
-                              <p className="text-[14px] font-bold text-[#C94A4A] mt-2">{formatoCOP(totalCxPPendiente)}</p>
-                            </div>
-                          )}
-                        </>
-                      )}
+                    <div className="flex gap-2 overflow-x-auto mb-3 pb-1">
+                      {cuentas.map((c) => (
+                        <div key={c.id} className="bg-white p-3 rounded-2xl min-w-[125px] shadow-sm border border-slate-100">
+                          <span className="text-2xl">{c.icono}</span>
+                          <p className="text-xs font-semibold text-slate-700 mt-1 truncate">{c.nombre}</p>
+                          <p className="text-[13px] font-bold text-[#205B43] mt-0.5">{formatoCOP(obtenerSaldoCuenta(c.id))}</p>
+                        </div>
+                      ))}
+                      <div className="bg-white p-3 rounded-2xl min-w-[125px] shadow-sm border border-emerald-100">
+                        <span className="text-2xl">📥</span>
+                        <p className="text-xs font-semibold text-slate-700 mt-1 truncate">Total CxC Pend</p>
+                        <p className="text-[13px] font-bold text-[#2D6A4F] mt-0.5">{formatoCOP(totalCxCPendiente)}</p>
+                      </div>
+                      <div className="bg-white p-3 rounded-2xl min-w-[125px] shadow-sm border border-red-100">
+                        <span className="text-2xl">📤</span>
+                        <p className="text-xs font-semibold text-slate-700 mt-1 truncate">Total CxP Pend</p>
+                        <p className="text-[13px] font-bold text-[#C94A4A] mt-0.5">{formatoCOP(totalCxPPendiente)}</p>
+                      </div>
                     </div>
 
                     <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Registrar Movimiento General</h3>
@@ -672,6 +564,7 @@
                         </button>
                       </div>
 
+                      {/* MEDIO DE PAGO EN FORMA DE LISTA */}
                       <div>
                         <label className="text-xs font-semibold text-[#52725F] block mb-1">¿Qué medio de pago vas a utilizar?</label>
                         <select
@@ -685,6 +578,7 @@
                         </select>
                       </div>
 
+                      {/* FECHA ARRIBA DE RUBRO O CATEGORÍA */}
                       <div>
                         <label className="text-xs font-semibold text-[#52725F] block mb-1">Fecha (AAAA-MM-DD):</label>
                         <input
@@ -716,6 +610,7 @@
                         className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none placeholder-[#8F9F95]"
                       />
 
+                      {/* VALOR CON FORMATO EN VIVO */}
                       <input
                         type="text"
                         placeholder="Valor en pesos (ej. 45.000)"
@@ -738,15 +633,14 @@
                     ) : (
                       movimientos.slice(0, 5).map((m) => {
                         const cuentaAsociada = cuentas.find((c) => c.id === m.cuentaId);
-                        const esIngreso = m.tipo === 'Ingreso';
                         return (
                           <div key={m.id} className="bg-white rounded-xl p-3.5 my-1.5 flex justify-between items-center shadow-sm border border-slate-100">
                             <div>
                               <p className="text-sm font-semibold text-[#1F2937]">{m.concepto}</p>
                               <p className="text-[11px] text-[#718078] mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
                             </div>
-                            <span className={`text-sm font-bold ${esIngreso ? 'text-[#2D6A4F]' : 'text-[#C94A4A]'}`}>
-                              {esIngreso ? '+ ' : '- '}{formatoCOP(m.valor)}
+                            <span className={`text-sm font-bold ${m.tipo === 'Ingreso' ? 'text-[#2D6A4F]' : 'text-[#C94A4A]'}`}>
+                              {m.tipo === 'Ingreso' ? '+' : '-'} {formatoCOP(m.valor)}
                             </span>
                           </div>
                         );
@@ -765,12 +659,12 @@
                       </button>
                     </div>
 
-                    <p className="text-[13px] text-[#52725F] mb-4">Define el dinero con el que arrancas en cada cuenta. Consulta sus reportes y exporta su historial abajo.</p>
+                    <p className="text-[13px] text-[#52725F] mb-4">Define el dinero con el que arrancas en cada cuenta. La información se guarda exclusivamente en este dispositivo.</p>
 
                     {cuentas.map((c) => {
                       const saldoActual = obtenerSaldoCuenta(c.id);
                       return (
-                        <div key={c.id} className="bg-white rounded-2xl p-4 my-3 shadow-sm border border-slate-100 space-y-3">
+                        <div key={c.id} className="bg-white rounded-2xl p-4 my-2 shadow-sm border border-slate-100">
                           <div className="flex items-center">
                             <span className="text-3xl">{c.icono}</span>
                             <div className="ml-3 flex-1">
@@ -783,62 +677,19 @@
                             </div>
                           </div>
 
-                          <div className="h-[1px] bg-[#EEF2EE]"></div>
+                          <div className="h-[1px] bg-[#EEF2EE] my-3"></div>
 
                           <div className="flex justify-between items-center">
                             <div>
                               <span className="text-[10px] font-bold text-[#718078] tracking-wider">SALDO INICIAL:</span>
-                              <p className="text-[14px] font-bold text-[#1F2937] mt-0.5">{formatoCOP(c.saldoInicial)}</p>
+                              <p className="text-[15px] font-bold text-[#1F2937] mt-0.5">{formatoCOP(c.saldoInicial)}</p>
                             </div>
                             <button
                               onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setModalEditarSaldo(true); }}
                               className="bg-[#E8EFE9] px-3 py-2 rounded-xl text-xs font-bold text-[#205B43] hover:bg-slate-200 transition"
                             >
-                              ✏️ Modificar
+                              ✏️ Modificar Saldo Inicial
                             </button>
-                          </div>
-
-                          <div className="pt-2 border-t border-slate-100">
-                            <button 
-                              onClick={() => setCuentaReporteId(cuentaReporteId === c.id ? '' : c.id)}
-                              className="w-full py-2 bg-[#F8FAF8] rounded-xl text-xs font-bold text-[#2D6A4F] border border-[#DCE5DB] hover:bg-[#E8EFE9] transition"
-                            >
-                              {cuentaReporteId === c.id ? '🔼 Ocultar Reporte de Cuenta' : '📊 Ver Reporte y Exportar Movimientos'}
-                            </button>
-
-                            {cuentaReporteId === c.id && (() => {
-                              const movsCuenta = movimientos.filter(m => m.cuentaId === c.id);
-                              return (
-                                <div className="mt-3 p-3 bg-[#F8FAF8] rounded-xl border border-slate-200 space-y-2">
-                                  <p className="text-xs font-bold text-[#1B4332]">Movimientos de {c.nombre}:</p>
-                                  {movsCuenta.length === 0 ? (
-                                    <p className="text-[11px] text-slate-500 italic">No hay movimientos registrados en esta cuenta.</p>
-                                  ) : (
-                                    <div className="space-y-1 max-h-40 overflow-y-auto">
-                                      {movsCuenta.map(m => {
-                                        const esIngreso = m.tipo === 'Ingreso';
-                                        return (
-                                          <div key={m.id} className="flex justify-between text-[11px] bg-white p-2 rounded border border-slate-100">
-                                            <span>{m.fecha} - {m.concepto}</span>
-                                            <span className={esIngreso ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>
-                                              {esIngreso ? '+' : '-'}{formatoCOP(m.valor)}
-                                            </span>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                  <div className="flex gap-2 pt-2">
-                                    <button onClick={() => exportarCSVCuenta(c, movsCuenta)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#1B4332] transition">
-                                      📊 Excel (CSV)
-                                    </button>
-                                    <button onClick={() => exportarPDFCuenta(c, movsCuenta, saldoActual)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#2D6A4F] transition">
-                                      📄 PDF
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })()}
                           </div>
                         </div>
                       );
@@ -850,7 +701,7 @@
                   </div>
                 )}
 
-                {/* --- MÓDULO UNIFICADO: CXC / CXP --- */}
+                {/* --- MÓDULO UNIFICADO: CXC / CXP (CON CONCEPTOS / RUBROS EN LÍNEA) --- */}
                 {tab === 'deudas' && (
                   <div>
                     <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Gestión de Terceros (CxC / CxP)</h3>
@@ -881,6 +732,7 @@
                           <h4 className="text-sm font-bold text-[#2D6A4F] mb-2">Nuevo Registro - Cuenta por Cobrar</h4>
                           <input type="text" placeholder="Tercero (Cliente / Deudor)" value={terceroCxC} onChange={(e) => setTerceroCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           
+                          {/* CONCEPTO / RUBRO EN FORMA DE LISTA O NUEVO EN LÍNEA */}
                           <div className="mb-2">
                             <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Concepto / Rubro:</label>
                             {!usarNuevoConceptoCxC ? (
@@ -919,6 +771,7 @@
                           <h4 className="text-sm font-bold text-[#C94A4A] mb-2">Nuevo Registro - Cuenta por Pagar</h4>
                           <input type="text" placeholder="Tercero (Proveedor / Acreedor)" value={terceroCxP} onChange={(e) => setTerceroCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           
+                          {/* CONCEPTO / RUBRO EN FORMA DE LISTA O NUEVO EN LÍNEA */}
                           <div className="mb-2">
                             <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Concepto / Rubro:</label>
                             {!usarNuevoConceptoCxP ? (
@@ -968,11 +821,7 @@
                         <label className="text-[11px] font-bold text-[#52725F] block mb-1">Tipo de Operación:</label>
                         <select 
                           value={tipoAbonoUnified} 
-                          onChange={(e) => {
-                            setTipoAbonoUnified(e.target.value);
-                            setPagoIdCxC('');
-                            setPagoIdCxP('');
-                          }} 
+                          onChange={(e) => setTipoAbonoUnified(e.target.value)} 
                           className="w-full bg-[#F8FAF8] text-[#1F2937] font-bold rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none"
                         >
                           <option value="CxC">📥 Cuenta por Cobrar (CxC)</option>
@@ -982,7 +831,7 @@
 
                       {tipoAbonoUnified === 'CxC' ? (
                         <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
-                          <label className="text-[11px] font-bold text-[#2D6A4F] block">Seleccionar Tercero Pendiente (Cliente):</label>
+                          <label className="text-[11px] font-bold text-[#2D6A4F] block">Seleccionar Tercero Pendiente:</label>
                           <select value={pagoIdCxC} onChange={(e) => setPagoIdCxC(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                             <option value="">-- Seleccionar Cuenta por Cobrar --</option>
                             {cuentasPorCobrar.filter(c => c.estado !== 'Pagado').map(c => (
@@ -1000,9 +849,248 @@
                         </div>
                       ) : (
                         <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
-                          <label className="text-[11px] font-bold text-[#C94A4A] block">Seleccionar Tercero Pendiente (Acreedor/Proveedor):</label>
+                          <label className="text-[11px] font-bold text-[#C94A4A] block">Seleccionar Tercero Pendiente:</label>
                           <select value={pagoIdCxP} onChange={(e) => setPagoIdCxP(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                             <option value="">-- Seleccionar Cuenta por Pagar --</option>
-                            {cuentasPorPagar.filter(c => c.estado !== 
+                            {cuentasPorPagar.filter(c => c.estado !== 'Pagado').map(c => (
+                              <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente)})</option>
+                            ))}
+                          </select>
 
-                                                    
+                          <div className="flex gap-2">
+                            <input type="text" placeholder="Monto a abonar" value={montoPagoCxPDisplay} onChange={(e) => setMontoPagoCxPDisplay(formatearInputEnVivo(e.target.value))} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                            <select value={cuentaPagoCxP} onChange={(e) => setCuentaPagoCxP(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
+                              {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
+                            </select>
+                          </div>
+                          <button onClick={procesarPagoUnificado} className="w-full bg-[#C94A4A] text-white font-bold py-2 rounded-lg text-xs hover:bg-red-700 transition">Pagar Deuda desde Cuenta</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* --- REPORTES --- */}
+                {tab === 'reportes' && (
+                  <div>
+                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Reportes y Estado de Deudas</h3>
+
+                    {/* REPORTE DETALLADO POR TERCERO */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
+                      <h4 className="text-sm font-bold text-[#1B4332] mb-2">📑 Reporte Detallado por Tercero (CxC / CxP)</h4>
+                      <div className="flex gap-2 mb-2">
+                        <select value={tipoReporteTercero} onChange={(e) => { setTipoReporteTercero(e.target.value); setTerceroSeleccionadoId(''); }} className="flex-1 bg-[#F8FAF8] rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold">
+                          <option value="CxC">Cuentas por Cobrar</option>
+                          <option value="CxP">Cuentas por Pagar</option>
+                        </select>
+                        <select value={terceroSeleccionadoId} onChange={(e) => setTerceroSeleccionadoId(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
+                          <option value="">-- Seleccionar Tercero --</option>
+                          {(tipoReporteTercero === 'CxC' ? cuentasPorCobrar : cuentasPorPagar).map(item => (
+                            <option key={item.id} value={item.id}>{item.tercero} ({item.concepto})</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {terceroSeleccionadoId && (() => {
+                        const itemSel = (tipoReporteTercero === 'CxC' ? cuentasPorCobrar : cuentasPorPagar).find(c => c.id.toString() === terceroSeleccionadoId);
+                        if (!itemSel) return null;
+                        return (
+                          <div className="mt-3 p-3 bg-[#F8FAF8] rounded-xl border border-slate-200 space-y-2">
+                            <p className="text-xs font-bold text-[#1F2937]">👤 Tercero: {itemSel.tercero}</p>
+                            <p className="text-xs text-[#52725F]">Concepto: {itemSel.concepto}</p>
+                            <p className="text-xs text-slate-600">📅 Fecha Inicial: {itemSel.fechaInicial || 'N/A'} · Vence: {itemSel.vencimiento}</p>
+                            <p className="text-xs font-bold">Valor Total Inicial: {formatoCOP(itemSel.valorTotal)}</p>
+                            <p className="text-xs font-bold text-[#C94A4A]">Saldo Pendiente Actual: {formatoCOP(itemSel.saldoPendiente)}</p>
+                            <p className="text-xs text-slate-500">Estado: <span className="font-bold">{itemSel.estado}</span></p>
+                            {itemSel.observacion && <p className="text-xs italic text-slate-500">Nota: {itemSel.observacion}</p>}
+
+                            <div className="mt-3 pt-2 border-t border-slate-200">
+                              <p className="text-[11px] font-bold text-[#1B4332] mb-1">📜 Historial de Movimientos:</p>
+                              <div className="text-[11px] space-y-1 bg-white p-2 rounded-lg border border-slate-100">
+                                <p className="text-emerald-700 font-semibold">🟢 {itemSel.fechaInicial || 'Inicio'} — Saldo Inicial: +{formatoCOP(itemSel.valorTotal)}</p>
+                                {(itemSel.historialPagos || []).map((p, idx) => (
+                                  <p key={idx} className="text-red-600 font-semibold">
+                                    🔴 {p.fecha} — Abono ({p.cuentaName}): -{formatoCOP(p.monto)}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2 pt-2">
+                              <button onClick={() => exportarCSV(itemSel)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#1B4332] transition">
+                                📊 Exportar a Excel (CSV)
+                              </button>
+                              <button onClick={() => exportarPDF(itemSel)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#2D6A4F] transition">
+                                📄 Exportar a PDF
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* GRÁFICO RESUMEN CONSOLIDADO DE DEUDAS (CXC VS CXP) */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
+                      <h4 className="text-sm font-bold text-[#1B4332] mb-3">📊 Balance General de Deudas</h4>
+                      
+                      <div className="flex justify-between items-center mb-1 text-xs">
+                        <span className="font-semibold text-[#2D6A4F]">📥 CxC: {formatoCOP(totalCxCPendiente)} ({pctCxC}%)</span>
+                        <span className="font-semibold text-[#C94A4A]">📤 CxP: {formatoCOP(totalCxPPendiente)} ({pctCxP}%)</span>
+                      </div>
+
+                      <div className="h-4 flex rounded-lg overflow-hidden bg-[#E2E8F0] mb-3">
+                        <div style={{ width: `${pctCxC}%`, backgroundColor: '#2D6A4F' }} className="h-full transition-all"></div>
+                        <div style={{ width: `${pctCxP}%`, backgroundColor: '#C94A4A' }} className="h-full transition-all"></div>
+                      </div>
+
+                      <div className="flex justify-between text-[11px] text-slate-500 font-medium">
+                        <span>Total por Cobrar</span>
+                        <span>Total por Pagar</span>
+                      </div>
+                    </div>
+
+                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3 mt-6">Reporte Financiero por Fechas</h3>
+
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3">
+                      <label className="text-xs font-semibold text-[#52725F] block mb-2">Período de consulta (AAAA-MM-DD):</label>
+                      <div className="flex gap-2 mb-2">
+                        <div className="flex-1">
+                          <span className="text-[11px] font-semibold text-[#718078] block mb-1">Fecha Desde:</span>
+                          <input type="text" value={fechaDesde} onChange={(e) => setFechaDesde(e.target.value)} className="w-full bg-[#F8FAF8] rounded-lg p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                        </div>
+                        <div className="flex-1">
+                          <span className="text-[11px] font-semibold text-[#718078] block mb-1">Fecha Hasta:</span>
+                          <input type="text" value={fechaHasta} onChange={(e) => setFechaHasta(e.target.value)} className="w-full bg-[#F8FAF8] rounded-lg p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button onClick={() => { setFechaDesde(fechaHoy()); setFechaHasta(fechaHoy()); }} className="flex-1 py-1.5 bg-[#E8EFE9] rounded-lg text-xs font-bold text-[#205B43] hover:bg-slate-200 transition">Hoy</button>
+                        <button onClick={() => { setFechaDesde(primerDiaMes()); setFechaHasta(fechaHoy()); }} className="flex-1 py-1.5 bg-[#E8EFE9] rounded-lg text-xs font-bold text-[#205B43] hover:bg-slate-200 transition">Este Mes</button>
+                        <button onClick={() => { setFechaDesde('2026-01-01'); setFechaHasta('2026-12-31'); }} className="flex-1 py-1.5 bg-[#E8EFE9] rounded-lg text-xs font-bold text-[#205B43] hover:bg-slate-200 transition">Todo el Año</button>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3">
+                      <span className="text-[11px] font-bold text-[#718078]">GASTOS DEL PERÍODO</span>
+                      <h2 className="text-2xl font-extrabold text-[#C94A4A] my-1">{formatoCOP(totalGastosReporte)}</h2>
+                      <div className="border-t border-[#EEF2EE] pt-2 mt-2 space-y-1">
+                        <p className="text-xs text-[#52725F] font-semibold">Ingresos en el rango: {formatoCOP(totalIngresosReporte)}</p>
+                        <p className="text-xs text-[#52725F] font-semibold">Ahorro neto: {formatoCOP(totalIngresosReporte - totalGastosReporte)}</p>
+                      </div>
+                    </div>
+
+                    <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Distribución por Rubro ({listaRubros.length})</h3>
+
+                    {totalGastosReporte === 0 ? (
+                      <p className="text-center text-[#718078] my-6 italic text-sm">No existen gastos registrados entre {fechaDesde} y {fechaHasta}.</p>
+                    ) : (
+                      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                        <div className="h-4 flex rounded-lg overflow-hidden bg-[#E2E8F0] mb-4">
+                          {listaRubros.map(([rubro, total], idx) => {
+                            const pct = Math.max(1, Math.round((total / totalGastosReporte) * 100));
+                            const paleta = ['#1B4332', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
+                            return <div key={rubro} style={{ width: `${pct}%`, backgroundColor: paleta[idx % paleta.length] }} className="h-full"></div>;
+                          })}
+                        </div>
+
+                        {listaRubros.map(([rubro, total], idx) => {
+                          const porcentaje = Math.round((total / totalGastosReporte) * 100);
+                          const paleta = ['#1B4332', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
+                          const color = paleta[idx % paleta.length];
+
+                          return (
+                            <div key={rubro} className="mt-3">
+                              <div className="flex justify-between items-center mb-1">
+                                <div className="flex items-center">
+                                  <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: color }}></div>
+                                  <span className="text-xs font-semibold text-[#1F2937]">{rubro}</span>
+                                </div>
+                                <span className="text-xs font-bold text-[#52725F]">{formatoCOP(total)} ({porcentaje}%)</span>
+                              </div>
+                              <div className="h-1.5 bg-[#F1F5F1] rounded-full overflow-hidden">
+                                <div className="h-full rounded-full" style={{ width: `${porcentaje}%`, backgroundColor: color }}></div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* --- MODAL EDITAR SALDO --- */}
+              {modalEditarSaldo && (
+                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
+                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
+                    <h3 className="text-lg font-extrabold text-[#1B4332] text-center mb-2">Modificar Saldo Inicial</h3>
+                    <p className="text-xs text-[#52725F] mb-3 text-center">Cuenta: <span className="font-bold">{cuentaAEditar?.nombre}</span></p>
+
+                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Nuevo saldo de arranque en COP:</label>
+                    <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
+
+                    <div className="flex gap-2">
+                      <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
+                      <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#1B4332] transition">Guardar Saldo</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- MODAL NUEVA CUENTA --- */}
+              {modalNuevaCuenta && (
+                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
+                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
+                    <h3 className="text-lg font-extrabold text-[#1B4332] text-center mb-3">Nueva Cuenta o Banco</h3>
+
+                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Nombre de la cuenta:</label>
+                    <input type="text" placeholder="Ej. Daviplata, BBVA" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
+
+                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Tipo:</label>
+                    <div className="flex gap-2 mb-3">
+                      {['Banco', 'Billetera', 'Efectivo'].map((t) => (
+                        <button key={t} onClick={() => setNuevoTipo(t)} className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${nuevoTipo === t ? 'bg-[#205B43] text-white shadow' : 'bg-[#E8EFE9] text-[#205B43]'}`}>
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+
+                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Saldo inicial en COP:</label>
+                    <input type="text" placeholder="Monto en pesos" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
+
+                    <div className="flex gap-2">
+                      <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
+                      <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#1B4332] transition">Crear Cuenta</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- NAVEGACIÓN INFERIOR (4 PESTAÑAS) --- */}
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-white flex border-t border-[#E2E8F0] shadow-lg z-40">
+                <button onClick={() => setTab('inicio')} className="flex-1 flex flex-col items-center justify-center">
+                  <span className={`text-lg transition ${tab === 'inicio' ? 'opacity-100 scale-110' : 'opacity-40'}`}>🏠</span>
+                  <span className={`text-[10px] ${tab === 'inicio' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Inicio</span>
+                </button>
+                <button onClick={() => setTab('cuentas')} className="flex-1 flex flex-col items-center justify-center">
+                  <span className={`text-lg transition ${tab === 'cuentas' ? 'opacity-100 scale-110' : 'opacity-40'}`}>🏦</span>
+                  <span className={`text-[10px] ${tab === 'cuentas' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Cuentas</span>
+                </button>
+                <button onClick={() => setTab('deudas')} className="flex-1 flex flex-col items-center justify-center">
+                  <span className={`text-lg transition ${tab === 'deudas' ? 'opacity-100 scale-110' : 'opacity-40'}`}>📑</span>
+                  <span className={`text-[10px] ${tab === 'deudas' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>CxC / CxP</span>
+                </button>
+                <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center">
+                  <span className={`text-lg transition ${tab === 'reportes' ? 'opacity-100 scale-110' : 'opacity-40'}`}>📊</span>
+                  <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Reportes</span>
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html> 
