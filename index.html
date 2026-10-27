@@ -8,6 +8,11 @@
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
 </head>
 <body class="bg-[#F3F7F2] text-slate-800 flex justify-center items-center min-h-screen m-0">
     <div id="root" class="w-full max-w-md h-screen md:h-[850px] bg-[#F3F7F2] shadow-2xl flex flex-col relative overflow-hidden"></div>
@@ -29,19 +34,24 @@
           'Salario / Nómina', 'Ventas / Negocio', 'Otros Ingresos'
         ];
 
-        const guardarEnStorage = (clave, valor) => {
+        // ALMACENAMIENTO UNIFICADO BAJO LA CLAVE "miahorro"
+        const guardarEnStorage = (subClave, valor) => {
           try {
             if (typeof window !== 'undefined' && window.localStorage) {
-              window.localStorage.setItem(clave, JSON.stringify(valor));
+              const dbActual = JSON.parse(window.localStorage.getItem('miahorro') || '{}');
+              dbActual[subClave] = valor;
+              window.localStorage.setItem('miahorro', JSON.stringify(dbActual));
             }
           } catch (e) {}
         };
 
-        const cargarDeStorage = (clave, valorPorDefecto) => {
+        const cargarDeStorage = (subClave, valorPorDefecto) => {
           try {
             if (typeof window !== 'undefined' && window.localStorage) {
-              const data = window.localStorage.getItem(clave);
-              if (data) return JSON.parse(data);
+              const dbActual = JSON.parse(window.localStorage.getItem('miahorro') || '{}');
+              if (dbActual[subClave] !== undefined && dbActual[subClave] !== null) {
+                return dbActual[subClave];
+              }
             }
           } catch (e) {}
           return valorPorDefecto;
@@ -92,38 +102,38 @@
           const [tab, setTab] = useState('inicio');
 
           const [cuentas, setCuentas] = useState(() =>
-            cargarDeStorage('mia_cuentas_v2', CUENTAS_BASE)
+            cargarDeStorage('cuentas', CUENTAS_BASE)
           );
 
           const [movimientos, setMovimientos] = useState(() =>
-            cargarDeStorage('mia_movimientos_v2', [])
+            cargarDeStorage('movimientos', [])
           );
 
           const [cuentasPorCobrar, setCuentasPorCobrar] = useState(() =>
-            cargarDeStorage('mia_cxco_v8', [])
+            cargarDeStorage('cxco', [])
           );
 
           const [cuentasPorPagar, setCuentasPorPagar] = useState(() =>
-            cargarDeStorage('mia_cxpa_v8', [])
+            cargarDeStorage('cxpa', [])
           );
 
           const [categoriasGasto, setCategoriasGasto] = useState(() =>
-            cargarDeStorage('mia_cat_gasto', CATEGORIAS_GASTO_BASE)
+            cargarDeStorage('cat_gasto', CATEGORIAS_GASTO_BASE)
           );
           const [categoriasIngreso, setCategoriasIngreso] = useState(() =>
-            cargarDeStorage('mia_cat_ingreso', CATEGORIAS_INGRESO_BASE)
+            cargarDeStorage('cat_ingreso', CATEGORIAS_INGRESO_BASE)
           );
           const [conceptosDeuda, setConceptosDeuda] = useState(() =>
-            cargarDeStorage('mia_conceptos_deuda', [...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión'])
+            cargarDeStorage('conceptos_deuda', [...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión'])
           );
 
-          useEffect(() => { guardarEnStorage('mia_cuentas_v2', cuentas); }, [cuentas]);
-          useEffect(() => { guardarEnStorage('mia_movimientos_v2', movimientos); }, [movimientos]);
-          useEffect(() => { guardarEnStorage('mia_cxco_v8', cuentasPorCobrar); }, [cuentasPorCobrar]);
-          useEffect(() => { guardarEnStorage('mia_cxpa_v8', cuentasPorPagar); }, [cuentasPorPagar]);
-          useEffect(() => { guardarEnStorage('mia_cat_gasto', categoriasGasto); }, [categoriasGasto]);
-          useEffect(() => { guardarEnStorage('mia_cat_ingreso', categoriasIngreso); }, [categoriasIngreso]);
-          useEffect(() => { guardarEnStorage('mia_conceptos_deuda', conceptosDeuda); }, [conceptosDeuda]);
+          useEffect(() => { guardarEnStorage('cuentas', cuentas); }, [cuentas]);
+          useEffect(() => { guardarEnStorage('movimientos', movimientos); }, [movimientos]);
+          useEffect(() => { guardarEnStorage('cxco', cuentasPorCobrar); }, [cuentasPorCobrar]);
+          useEffect(() => { guardarEnStorage('cxpa', cuentasPorPagar); }, [cuentasPorPagar]);
+          useEffect(() => { guardarEnStorage('cat_gasto', categoriasGasto); }, [categoriasGasto]);
+          useEffect(() => { guardarEnStorage('cat_ingreso', categoriasIngreso); }, [categoriasIngreso]);
+          useEffect(() => { guardarEnStorage('conceptos_deuda', conceptosDeuda); }, [conceptosDeuda]);
 
           // Alarma de uso diario y de vencimientos al iniciar
           useEffect(() => {
@@ -132,7 +142,6 @@
             const hoyStr = fechaHoy();
             const ultimoCheck = window.localStorage.getItem('mia_ultimo_check') || '';
 
-            // Verificar si no ha usado la app a las 10am o 5pm
             if (ultimoCheck !== hoyStr) {
               if (hora >= 10 && hora < 12) {
                 notificar('MIA - Recordatorio ⏰', '¡Oye, hoy no me has mirado! 👀 Pásate a registrar tus movimientos de la mañana.');
@@ -143,7 +152,6 @@
               }
             }
 
-            // Verificar deudas próximas a vencer (mañana)
             const mananaObj = new Date();
             mananaObj.setDate(mananaObj.getDate() + 1);
             const mananaStr = `${mananaObj.getFullYear()}-${String(mananaObj.getMonth() + 1).padStart(2, '0')}-${String(mananaObj.getDate()).padStart(2, '0')}`;
@@ -206,8 +214,6 @@
 
           // Filtro de reporte por Cuenta individual
           const [cuentaReporteId, setCuentaReporteId] = useState('');
-          const [cuentaFechaDesde, setCuentaFechaDesde] = useState(primerDiaMes());
-          const [cuentaFechaHasta, setCuentaFechaHasta] = useState(fechaHoy());
 
           const [modalNuevaCuenta, setModalNuevaCuenta] = useState(false);
           const [nuevoNombre, setNuevoNombre] = useState('');
@@ -412,44 +418,35 @@
             notificar('¡Pago Realizado!', `Se descontaron ${formatoCOP(abono)} con éxito.`);
           };
 
-          // Exportar CSV de Tercero
-          const exportarCSV = (terceroItem) => {
-            if (!terceroItem) return;
-            let csvContent = "data:text/csv;charset=utf-8,Fecha,Tercero,Concepto,Valor Total,Saldo Pendiente,Estado\n";
-            csvContent += `${fechaHoy()},${terceroItem.tercero},${terceroItem.concepto},${terceroItem.valorTotal},${terceroItem.saldoPendiente},${terceroItem.estado}\n`;
-            
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `reporte_${terceroItem.tercero}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          };
-
-          // Exportar PDF de Tercero
-          const exportarPDF = (terceroItem) => {
-            if (!terceroItem) return;
-            const ventana = window.open('', '_blank');
+          // EXPORTAR PDF DE CUENTA CON COLORES VERDE Y ROJO
+          const exportarPDFCuenta = (cuentaObj, movimientosCuenta, saldoActualCuenta) => {
+            if (!cuentaObj) return;
+            const ventana = window.open('https://miahorrointeligente.vercel.app/', '_blank');
             ventana.document.write(`
               <html>
-                <head><title>Reporte Tercero - MIA</title></head>
-                <body style="font-family: Arial, sans-serif; padding: 20px; color: #1B4332;">
-                  <h2>MIA - Reporte Detallado por Tercero</h2>
+                <head>
+                  <title>Reporte Cuenta - MIA</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
+                    .ingreso { color: #2D6A4F; font-weight: bold; }
+                    .gasto { color: #C94A4A; font-weight: bold; }
+                  </style>
+                </head>
+                <body>
+                  <h2>MIA - Reporte de Movimientos de Cuenta</h2>
                   <hr/>
-                  <p><strong>Tercero:</strong> ${terceroItem.tercero}</p>
-                  <p><strong>Concepto:</strong> ${terceroItem.concepto}</p>
-                  <p><strong>Fecha Inicial:</strong> ${terceroItem.fechaInicial || 'N/A'}</p>
-                  <p><strong>Fecha Vencimiento:</strong> ${terceroItem.vencimiento}</p>
-                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(terceroItem.valorTotal)}</p>
-                  <p><strong>Saldo Pendiente Actual:</strong> ${formatoCOP(terceroItem.saldoPendiente)}</p>
-                  <p><strong>Estado:</strong> ${terceroItem.estado}</p>
-                  <p><strong>Observaciones:</strong> ${terceroItem.observacion || 'Ninguna'}</p>
+                  <p><strong>Cuenta:</strong> ${cuentaObj.nombre} (${cuentaObj.tipo})</p>
+                  <p><strong>Saldo Inicial:</strong> ${formatoCOP(cuentaObj.saldoInicial)}</p>
+                  <p><strong>Saldo Actual:</strong> ${formatoCOP(saldoActualCuenta)}</p>
                   <hr/>
-                  <h3>Historial de Movimientos:</h3>
+                  <h3>Movimientos:</h3>
                   <ul>
-                    <li>${terceroItem.fechaInicial || ''} - Saldo Inicial: +${formatoCOP(terceroItem.valorTotal)}</li>
-                    ${(terceroItem.historialPagos || []).map(p => `<li>${p.fecha} - Abono (${p.cuentaName}): -${formatoCOP(p.monto)}</li>`).join('')}
+                    ${movimientosCuenta.map(m => {
+                      const esIngreso = m.tipo === 'Ingreso';
+                      const claseCSS = esIngreso ? 'ingreso' : 'gasto';
+                      const signo = esIngreso ? '+' : '-';
+                      return `<li>${m.fecha} - ${m.concepto} (${m.categoria}) [<span class="${claseCSS}">${m.tipo}</span>]: <span class="${claseCSS}">${signo}${formatoCOP(m.valor)}</span></li>`;
+                    }).join('')}
                   </ul>
                   <br/><hr/>
                   <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
@@ -460,7 +457,6 @@
             ventana.print();
           };
 
-          // Exportar CSV de Cuenta Individual
           const exportarCSVCuenta = (cuentaObj, movimientosCuenta) => {
             if (!cuentaObj) return;
             let csvContent = "data:text/csv;charset=utf-8,Fecha,Concepto,Categoria,Tipo,Valor\n";
@@ -476,23 +472,49 @@
             document.body.removeChild(link);
           };
 
-          // Exportar PDF de Cuenta Individual
-          const exportarPDFCuenta = (cuentaObj, movimientosCuenta, saldoActualCuenta) => {
-            if (!cuentaObj) return;
-            const ventana = window.open('', '_blank');
+          const exportarCSV = (terceroItem) => {
+            if (!terceroItem) return;
+            let csvContent = "data:text/csv;charset=utf-8,Fecha,Tercero,Concepto,Valor Total,Saldo Pendiente,Estado\n";
+            csvContent += `${fechaHoy()},${terceroItem.tercero},${terceroItem.concepto},${terceroItem.valorTotal},${terceroItem.saldoPendiente},${terceroItem.estado}\n`;
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `reporte_${terceroItem.tercero}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+
+          const exportarPDF = (terceroItem) => {
+            if (!terceroItem) return;
+            const ventana = window.open('https://miahorrointeligente.vercel.app/', '_blank');
             ventana.document.write(`
               <html>
-                <head><title>Reporte Cuenta - MIA</title></head>
-                <body style="font-family: Arial, sans-serif; padding: 20px; color: #1B4332;">
-                  <h2>MIA - Reporte de Movimientos de Cuenta</h2>
+                <head>
+                  <title>Reporte Tercero - MIA</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
+                    .ingreso { color: #2D6A4F; font-weight: bold; }
+                    .gasto { color: #C94A4A; font-weight: bold; }
+                  </style>
+                </head>
+                <body>
+                  <h2>MIA - Reporte Detallado por Tercero</h2>
                   <hr/>
-                  <p><strong>Cuenta:</strong> ${cuentaObj.nombre} (${cuentaObj.tipo})</p>
-                  <p><strong>Saldo Inicial:</strong> ${formatoCOP(cuentaObj.saldoInicial)}</p>
-                  <p><strong>Saldo Actual:</strong> ${formatoCOP(saldoActualCuenta)}</p>
+                  <p><strong>Tercero:</strong> ${terceroItem.tercero}</p>
+                  <p><strong>Concepto:</strong> ${terceroItem.concepto}</p>
+                  <p><strong>Fecha Inicial:</strong> ${terceroItem.fechaInicial || 'N/A'}</p>
+                  <p><strong>Fecha Vencimiento:</strong> ${terceroItem.vencimiento}</p>
+                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(terceroItem.valorTotal)}</p>
+                  <p><strong>Saldo Pendiente Actual:</strong> ${formatoCOP(terceroItem.saldoPendiente)}</p>
+                  <p><strong>Estado:</strong> ${terceroItem.estado}</p>
+                  <p><strong>Observaciones:</strong> ${terceroItem.observacion || 'Ninguna'}</p>
                   <hr/>
-                  <h3>Movimientos:</h3>
+                  <h3>Historial de Movimientos:</h3>
                   <ul>
-                    ${movimientosCuenta.map(m => `<li>${m.fecha} - ${m.concepto} (${m.categoria}) [${m.tipo}]: ${m.tipo === 'Ingreso' ? '+' : '-'}${formatoCOP(m.valor)}</li>`).join('')}
+                    <li class="ingreso">${terceroItem.fechaInicial || ''} - Saldo Inicial: +${formatoCOP(terceroItem.valorTotal)}</li>
+                    ${(terceroItem.historialPagos || []).map(p => `<li class="gasto">${p.fecha} - Abono (${p.cuentaName}): -${formatoCOP(p.monto)}</li>`).join('')}
                   </ul>
                   <br/><hr/>
                   <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
@@ -544,10 +566,7 @@
               setMovimientos([]);
               setCuentasPorCobrar([]);
               setCuentasPorPagar([]);
-              guardarEnStorage('mia_cuentas_v2', CUENTAS_BASE);
-              guardarEnStorage('mia_movimientos_v2', []);
-              guardarEnStorage('mia_cxco_v8', []);
-              guardarEnStorage('mia_cxpa_v8', []);
+              window.localStorage.removeItem('miahorro');
               notificar('Reinicio completo', 'Tus datos se han reiniciado.');
             }
           };
@@ -580,7 +599,6 @@
           const pctCxC = totalDeudasGrafico > 0 ? Math.round((totalCxCPendiente / totalDeudasGrafico) * 100) : 50;
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
 
-          // Filtrar fondos/deudas activos (con saldo > 0) para la pantalla de inicio
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
 
           return (
@@ -610,7 +628,6 @@
                       <button onClick={() => setTab('cuentas')} className="text-xs text-[#2D6A4F] font-bold hover:underline">Ver cuentas ›</button>
                     </div>
 
-                    {/* CUADRÍCULA COMPACTA DE FONDOS Y DEUDAS ACTIVAS */}
                     <div className="grid grid-cols-2 gap-2 mb-4">
                       {cuentasConSaldo.length === 0 && totalCxCPendiente === 0 && totalCxPPendiente === 0 ? (
                         <p className="col-span-2 text-center text-xs text-[#718078] italic py-2">No hay cuentas ni deudas con saldo activo en este momento.</p>
@@ -664,7 +681,6 @@
                         </button>
                       </div>
 
-                      {/* MEDIO DE PAGO EN FORMA DE LISTA */}
                       <div>
                         <label className="text-xs font-semibold text-[#52725F] block mb-1">¿Qué medio de pago vas a utilizar?</label>
                         <select
@@ -678,7 +694,6 @@
                         </select>
                       </div>
 
-                      {/* FECHA ARRIBA DE RUBRO O CATEGORÍA */}
                       <div>
                         <label className="text-xs font-semibold text-[#52725F] block mb-1">Fecha (AAAA-MM-DD):</label>
                         <input
@@ -710,7 +725,6 @@
                         className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none placeholder-[#8F9F95]"
                       />
 
-                      {/* VALOR CON FORMATO EN VIVO */}
                       <input
                         type="text"
                         placeholder="Valor en pesos (ej. 45.000)"
@@ -740,7 +754,6 @@
                               <p className="text-sm font-semibold text-[#1F2937]">{m.concepto}</p>
                               <p className="text-[11px] text-[#718078] mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
                             </div>
-                            {/* COLORES VERDE Y ROJO EN MOVIMIENTOS RECIENTES */}
                             <span className={`text-sm font-bold ${esIngreso ? 'text-[#2D6A4F]' : 'text-[#C94A4A]'}`}>
                               {esIngreso ? '+ ' : '- '}{formatoCOP(m.valor)}
                             </span>
@@ -751,7 +764,7 @@
                   </div>
                 )}
 
-                {/* --- CUENTAS (CON REPORTE INDIVIDUAL Y EXPORTACIÓN) --- */}
+                {/* --- CUENTAS --- */}
                 {tab === 'cuentas' && (
                   <div>
                     <div className="flex justify-between items-center mb-3">
@@ -794,7 +807,6 @@
                             </button>
                           </div>
 
-                          {/* ACCESO A REPORTE Y EXPORTACIÓN POR CUENTA */}
                           <div className="pt-2 border-t border-slate-100">
                             <button 
                               onClick={() => setCuentaReporteId(cuentaReporteId === c.id ? '' : c.id)}
@@ -812,14 +824,17 @@
                                     <p className="text-[11px] text-slate-500 italic">No hay movimientos registrados en esta cuenta.</p>
                                   ) : (
                                     <div className="space-y-1 max-h-40 overflow-y-auto">
-                                      {movsCuenta.map(m => (
-                                        <div key={m.id} className="flex justify-between text-[11px] bg-white p-2 rounded border border-slate-100">
-                                          <span>{m.fecha} - {m.concepto}</span>
-                                          <span className={m.tipo === 'Ingreso' ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>
-                                            {m.tipo === 'Ingreso' ? '+' : '-'}{formatoCOP(m.valor)}
-                                          </span>
-                                        </div>
-                                      ))}
+                                      {movsCuenta.map(m => {
+                                        const esIngreso = m.tipo === 'Ingreso';
+                                        return (
+                                          <div key={m.id} className="flex justify-between text-[11px] bg-white p-2 rounded border border-slate-100">
+                                            <span>{m.fecha} - {m.concepto}</span>
+                                            <span className={esIngreso ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>
+                                              {esIngreso ? '+' : '-'}{formatoCOP(m.valor)}
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
                                     </div>
                                   )}
                                   <div className="flex gap-2 pt-2">
@@ -875,7 +890,6 @@
                           <h4 className="text-sm font-bold text-[#2D6A4F] mb-2">Nuevo Registro - Cuenta por Cobrar</h4>
                           <input type="text" placeholder="Tercero (Cliente / Deudor)" value={terceroCxC} onChange={(e) => setTerceroCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           
-                          {/* CONCEPTO / RUBRO EN FORMA DE LISTA O NUEVO EN LÍNEA */}
                           <div className="mb-2">
                             <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Concepto / Rubro:</label>
                             {!usarNuevoConceptoCxC ? (
@@ -914,7 +928,6 @@
                           <h4 className="text-sm font-bold text-[#C94A4A] mb-2">Nuevo Registro - Cuenta por Pagar</h4>
                           <input type="text" placeholder="Tercero (Proveedor / Acreedor)" value={terceroCxP} onChange={(e) => setTerceroCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           
-                          {/* CONCEPTO / RUBRO EN FORMA DE LISTA O NUEVO EN LÍNEA */}
                           <div className="mb-2">
                             <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Concepto / Rubro:</label>
                             {!usarNuevoConceptoCxP ? (
@@ -964,7 +977,11 @@
                         <label className="text-[11px] font-bold text-[#52725F] block mb-1">Tipo de Operación:</label>
                         <select 
                           value={tipoAbonoUnified} 
-                          onChange={(e) => setTipoAbonoUnified(e.target.value)} 
+                          onChange={(e) => {
+                            setTipoAbonoUnified(e.target.value);
+                            setPagoIdCxC('');
+                            setPagoIdCxP('');
+                          }} 
                           className="w-full bg-[#F8FAF8] text-[#1F2937] font-bold rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none"
                         >
                           <option value="CxC">📥 Cuenta por Cobrar (CxC)</option>
@@ -974,7 +991,7 @@
 
                       {tipoAbonoUnified === 'CxC' ? (
                         <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
-                          <label className="text-[11px] font-bold text-[#2D6A4F] block">Seleccionar Tercero Pendiente:</label>
+                          <label className="text-[11px] font-bold text-[#2D6A4F] block">Seleccionar Tercero Pendiente (Cliente):</label>
                           <select value={pagoIdCxC} onChange={(e) => setPagoIdCxC(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                             <option value="">-- Seleccionar Cuenta por Cobrar --</option>
                             {cuentasPorCobrar.filter(c => c.estado !== 'Pagado').map(c => (
@@ -992,7 +1009,7 @@
                         </div>
                       ) : (
                         <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
-                          <label className="text-[11px] font-bold text-[#C94A4A] block">Seleccionar Tercero Pendiente:</label>
+                          <label className="text-[11px] font-bold text-[#C94A4A] block">Seleccionar Tercero Pendiente (Acreedor/Proveedor):</label>
                           <select value={pagoIdCxP} onChange={(e) => setPagoIdCxP(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                             <option value="">-- Seleccionar Cuenta por Pagar --</option>
                             {cuentasPorPagar.filter(c => c.estado !== 'Pagado').map(c => (
@@ -1226,7 +1243,7 @@
                 </button>
                 <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center">
                   <span className={`text-lg transition ${tab === 'reportes' ? 'opacity-100 scale-110' : 'opacity-40'}`}>📊</span>
-                  <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Reportes</span>
+                  <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}Reportes</span>
                 </button>
               </div>
             </div>
@@ -1236,4 +1253,4 @@
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
-</html>  
+</html> 
