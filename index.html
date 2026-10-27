@@ -107,7 +107,6 @@
             cargarDeStorage('mia_cxpa_v8', [])
           );
 
-          // Listas personalizadas de categorías y conceptos de deudas
           const [categoriasGasto, setCategoriasGasto] = useState(() =>
             cargarDeStorage('mia_cat_gasto', CATEGORIAS_GASTO_BASE)
           );
@@ -125,6 +124,37 @@
           useEffect(() => { guardarEnStorage('mia_cat_gasto', categoriasGasto); }, [categoriasGasto]);
           useEffect(() => { guardarEnStorage('mia_cat_ingreso', categoriasIngreso); }, [categoriasIngreso]);
           useEffect(() => { guardarEnStorage('mia_conceptos_deuda', conceptosDeuda); }, [conceptosDeuda]);
+
+          // Alarma de uso diario y de vencimientos al iniciar
+          useEffect(() => {
+            const ahora = new Date();
+            const hora = ahora.getHours();
+            const hoyStr = fechaHoy();
+            const ultimoCheck = window.localStorage.getItem('mia_ultimo_check') || '';
+
+            // Verificar si no ha usado la app a las 10am o 5pm
+            if (ultimoCheck !== hoyStr) {
+              if (hora >= 10 && hora < 12) {
+                notificar('MIA - Recordatorio ⏰', '¡Oye, hoy no me has mirado! 👀 Pásate a registrar tus movimientos de la mañana.');
+                window.localStorage.setItem('mia_ultimo_check', hoyStr);
+              } else if (hora >= 17) {
+                notificar('MIA - Recordatorio ⏰', '¡Oye, hoy no me has mirado! 👀 ¿Cómo van los gastos de la tarde? Regístralos.');
+                window.localStorage.setItem('mia_ultimo_check', hoyStr);
+              }
+            }
+
+            // Verificar deudas próximas a vencer (mañana)
+            const mananaObj = new Date();
+            mananaObj.setDate(mananaObj.getDate() + 1);
+            const mananaStr = `${mananaObj.getFullYear()}-${String(mananaObj.getMonth() + 1).padStart(2, '0')}-${String(mananaObj.getDate()).padStart(2, '0')}`;
+
+            const porVencerCxC = cuentasPorCobrar.filter(c => c.estado !== 'Pagado' && c.vencimiento === mananaStr);
+            const porVencerCxP = cuentasPorPagar.filter(c => c.estado !== 'Pagado' && c.vencimiento === mananaStr);
+
+            if (porVencerCxC.length > 0 || porVencerCxP.length > 0) {
+              notificar('⚠️ Alerta de Vencimiento', 'Tienes cuentas por cobrar o pagar que vencen MAÑANA. ¡Revisa tu módulo de deudas!');
+            }
+          }, []);
 
           // Formulario Movimiento General
           const [tipoMovimiento, setTipoMovimiento] = useState('Gasto');
@@ -173,6 +203,11 @@
           // Filtro de reporte por Tercero
           const [tipoReporteTercero, setTipoReporteTercero] = useState('CxC');
           const [terceroSeleccionadoId, setTerceroSeleccionadoId] = useState('');
+
+          // Filtro de reporte por Cuenta individual
+          const [cuentaReporteId, setCuentaReporteId] = useState('');
+          const [cuentaFechaDesde, setCuentaFechaDesde] = useState(primerDiaMes());
+          const [cuentaFechaHasta, setCuentaFechaHasta] = useState(fechaHoy());
 
           const [modalNuevaCuenta, setModalNuevaCuenta] = useState(false);
           const [nuevoNombre, setNuevoNombre] = useState('');
@@ -377,6 +412,7 @@
             notificar('¡Pago Realizado!', `Se descontaron ${formatoCOP(abono)} con éxito.`);
           };
 
+          // Exportar CSV de Tercero
           const exportarCSV = (terceroItem) => {
             if (!terceroItem) return;
             let csvContent = "data:text/csv;charset=utf-8,Fecha,Tercero,Concepto,Valor Total,Saldo Pendiente,Estado\n";
@@ -391,6 +427,7 @@
             document.body.removeChild(link);
           };
 
+          // Exportar PDF de Tercero
           const exportarPDF = (terceroItem) => {
             if (!terceroItem) return;
             const ventana = window.open('', '_blank');
@@ -413,6 +450,49 @@
                   <ul>
                     <li>${terceroItem.fechaInicial || ''} - Saldo Inicial: +${formatoCOP(terceroItem.valorTotal)}</li>
                     ${(terceroItem.historialPagos || []).map(p => `<li>${p.fecha} - Abono (${p.cuentaName}): -${formatoCOP(p.monto)}</li>`).join('')}
+                  </ul>
+                  <br/><hr/>
+                  <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
+                </body>
+              </html>
+            `);
+            ventana.document.close();
+            ventana.print();
+          };
+
+          // Exportar CSV de Cuenta Individual
+          const exportarCSVCuenta = (cuentaObj, movimientosCuenta) => {
+            if (!cuentaObj) return;
+            let csvContent = "data:text/csv;charset=utf-8,Fecha,Concepto,Categoria,Tipo,Valor\n";
+            movimientosCuenta.forEach(m => {
+              csvContent += `${m.fecha},${m.concepto},${m.categoria},${m.tipo},${m.valor}\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `reporte_cuenta_${cuentaObj.nombre}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+
+          // Exportar PDF de Cuenta Individual
+          const exportarPDFCuenta = (cuentaObj, movimientosCuenta, saldoActualCuenta) => {
+            if (!cuentaObj) return;
+            const ventana = window.open('', '_blank');
+            ventana.document.write(`
+              <html>
+                <head><title>Reporte Cuenta - MIA</title></head>
+                <body style="font-family: Arial, sans-serif; padding: 20px; color: #1B4332;">
+                  <h2>MIA - Reporte de Movimientos de Cuenta</h2>
+                  <hr/>
+                  <p><strong>Cuenta:</strong> ${cuentaObj.nombre} (${cuentaObj.tipo})</p>
+                  <p><strong>Saldo Inicial:</strong> ${formatoCOP(cuentaObj.saldoInicial)}</p>
+                  <p><strong>Saldo Actual:</strong> ${formatoCOP(saldoActualCuenta)}</p>
+                  <hr/>
+                  <h3>Movimientos:</h3>
+                  <ul>
+                    ${movimientosCuenta.map(m => `<li>${m.fecha} - ${m.concepto} (${m.categoria}) [${m.tipo}]: ${m.tipo === 'Ingreso' ? '+' : '-'}${formatoCOP(m.valor)}</li>`).join('')}
                   </ul>
                   <br/><hr/>
                   <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
@@ -500,6 +580,9 @@
           const pctCxC = totalDeudasGrafico > 0 ? Math.round((totalCxCPendiente / totalDeudasGrafico) * 100) : 50;
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
 
+          // Filtrar fondos/deudas activos (con saldo > 0) para la pantalla de inicio
+          const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
+
           return (
             <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
               {/* Header */}
@@ -523,28 +606,45 @@
                     </div>
 
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-[17px] font-bold text-[#1B4332]">Tus Fondos y Deudas</h3>
+                      <h3 className="text-[17px] font-bold text-[#1B4332]">Tus Fondos y Deudas Activas</h3>
                       <button onClick={() => setTab('cuentas')} className="text-xs text-[#2D6A4F] font-bold hover:underline">Ver cuentas ›</button>
                     </div>
 
-                    <div className="flex gap-2 overflow-x-auto mb-3 pb-1">
-                      {cuentas.map((c) => (
-                        <div key={c.id} className="bg-white p-3 rounded-2xl min-w-[125px] shadow-sm border border-slate-100">
-                          <span className="text-2xl">{c.icono}</span>
-                          <p className="text-xs font-semibold text-slate-700 mt-1 truncate">{c.nombre}</p>
-                          <p className="text-[13px] font-bold text-[#205B43] mt-0.5">{formatoCOP(obtenerSaldoCuenta(c.id))}</p>
-                        </div>
-                      ))}
-                      <div className="bg-white p-3 rounded-2xl min-w-[125px] shadow-sm border border-emerald-100">
-                        <span className="text-2xl">📥</span>
-                        <p className="text-xs font-semibold text-slate-700 mt-1 truncate">Total CxC Pend</p>
-                        <p className="text-[13px] font-bold text-[#2D6A4F] mt-0.5">{formatoCOP(totalCxCPendiente)}</p>
-                      </div>
-                      <div className="bg-white p-3 rounded-2xl min-w-[125px] shadow-sm border border-red-100">
-                        <span className="text-2xl">📤</span>
-                        <p className="text-xs font-semibold text-slate-700 mt-1 truncate">Total CxP Pend</p>
-                        <p className="text-[13px] font-bold text-[#C94A4A] mt-0.5">{formatoCOP(totalCxPPendiente)}</p>
-                      </div>
+                    {/* CUADRÍCULA COMPACTA DE FONDOS Y DEUDAS ACTIVAS */}
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {cuentasConSaldo.length === 0 && totalCxCPendiente === 0 && totalCxPPendiente === 0 ? (
+                        <p className="col-span-2 text-center text-xs text-[#718078] italic py-2">No hay cuentas ni deudas con saldo activo en este momento.</p>
+                      ) : (
+                        <>
+                          {cuentasConSaldo.map((c) => (
+                            <div key={c.id} className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xl">{c.icono}</span>
+                                <p className="text-xs font-semibold text-slate-700 truncate">{c.nombre}</p>
+                              </div>
+                              <p className="text-[14px] font-bold text-[#205B43] mt-2">{formatoCOP(obtenerSaldoCuenta(c.id))}</p>
+                            </div>
+                          ))}
+                          {totalCxCPendiente > 0 && (
+                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-emerald-100 flex flex-col justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xl">📥</span>
+                                <p className="text-xs font-semibold text-slate-700 truncate">Total CxC Pend</p>
+                              </div>
+                              <p className="text-[14px] font-bold text-[#2D6A4F] mt-2">{formatoCOP(totalCxCPendiente)}</p>
+                            </div>
+                          )}
+                          {totalCxPPendiente > 0 && (
+                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-red-100 flex flex-col justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xl">📤</span>
+                                <p className="text-xs font-semibold text-slate-700 truncate">Total CxP Pend</p>
+                              </div>
+                              <p className="text-[14px] font-bold text-[#C94A4A] mt-2">{formatoCOP(totalCxPPendiente)}</p>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
 
                     <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Registrar Movimiento General</h3>
@@ -633,14 +733,16 @@
                     ) : (
                       movimientos.slice(0, 5).map((m) => {
                         const cuentaAsociada = cuentas.find((c) => c.id === m.cuentaId);
+                        const esIngreso = m.tipo === 'Ingreso';
                         return (
                           <div key={m.id} className="bg-white rounded-xl p-3.5 my-1.5 flex justify-between items-center shadow-sm border border-slate-100">
                             <div>
                               <p className="text-sm font-semibold text-[#1F2937]">{m.concepto}</p>
                               <p className="text-[11px] text-[#718078] mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
                             </div>
-                            <span className={`text-sm font-bold ${m.tipo === 'Ingreso' ? 'text-[#2D6A4F]' : 'text-[#C94A4A]'}`}>
-                              {m.tipo === 'Ingreso' ? '+' : '-'} {formatoCOP(m.valor)}
+                            {/* COLORES VERDE Y ROJO EN MOVIMIENTOS RECIENTES */}
+                            <span className={`text-sm font-bold ${esIngreso ? 'text-[#2D6A4F]' : 'text-[#C94A4A]'}`}>
+                              {esIngreso ? '+ ' : '- '}{formatoCOP(m.valor)}
                             </span>
                           </div>
                         );
@@ -649,7 +751,7 @@
                   </div>
                 )}
 
-                {/* --- CUENTAS --- */}
+                {/* --- CUENTAS (CON REPORTE INDIVIDUAL Y EXPORTACIÓN) --- */}
                 {tab === 'cuentas' && (
                   <div>
                     <div className="flex justify-between items-center mb-3">
@@ -659,12 +761,12 @@
                       </button>
                     </div>
 
-                    <p className="text-[13px] text-[#52725F] mb-4">Define el dinero con el que arrancas en cada cuenta. La información se guarda exclusivamente en este dispositivo.</p>
+                    <p className="text-[13px] text-[#52725F] mb-4">Define el dinero con el que arrancas en cada cuenta. Consulta sus reportes y exporta su historial abajo.</p>
 
                     {cuentas.map((c) => {
                       const saldoActual = obtenerSaldoCuenta(c.id);
                       return (
-                        <div key={c.id} className="bg-white rounded-2xl p-4 my-2 shadow-sm border border-slate-100">
+                        <div key={c.id} className="bg-white rounded-2xl p-4 my-3 shadow-sm border border-slate-100 space-y-3">
                           <div className="flex items-center">
                             <span className="text-3xl">{c.icono}</span>
                             <div className="ml-3 flex-1">
@@ -677,19 +779,60 @@
                             </div>
                           </div>
 
-                          <div className="h-[1px] bg-[#EEF2EE] my-3"></div>
+                          <div className="h-[1px] bg-[#EEF2EE]"></div>
 
                           <div className="flex justify-between items-center">
                             <div>
                               <span className="text-[10px] font-bold text-[#718078] tracking-wider">SALDO INICIAL:</span>
-                              <p className="text-[15px] font-bold text-[#1F2937] mt-0.5">{formatoCOP(c.saldoInicial)}</p>
+                              <p className="text-[14px] font-bold text-[#1F2937] mt-0.5">{formatoCOP(c.saldoInicial)}</p>
                             </div>
                             <button
                               onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setModalEditarSaldo(true); }}
                               className="bg-[#E8EFE9] px-3 py-2 rounded-xl text-xs font-bold text-[#205B43] hover:bg-slate-200 transition"
                             >
-                              ✏️ Modificar Saldo Inicial
+                              ✏️ Modificar
                             </button>
+                          </div>
+
+                          {/* ACCESO A REPORTE Y EXPORTACIÓN POR CUENTA */}
+                          <div className="pt-2 border-t border-slate-100">
+                            <button 
+                              onClick={() => setCuentaReporteId(cuentaReporteId === c.id ? '' : c.id)}
+                              className="w-full py-2 bg-[#F8FAF8] rounded-xl text-xs font-bold text-[#2D6A4F] border border-[#DCE5DB] hover:bg-[#E8EFE9] transition"
+                            >
+                              {cuentaReporteId === c.id ? '🔼 Ocultar Reporte de Cuenta' : '📊 Ver Reporte y Exportar Movimientos'}
+                            </button>
+
+                            {cuentaReporteId === c.id && (() => {
+                              const movsCuenta = movimientos.filter(m => m.cuentaId === c.id);
+                              return (
+                                <div className="mt-3 p-3 bg-[#F8FAF8] rounded-xl border border-slate-200 space-y-2">
+                                  <p className="text-xs font-bold text-[#1B4332]">Movimientos de {c.nombre}:</p>
+                                  {movsCuenta.length === 0 ? (
+                                    <p className="text-[11px] text-slate-500 italic">No hay movimientos registrados en esta cuenta.</p>
+                                  ) : (
+                                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                                      {movsCuenta.map(m => (
+                                        <div key={m.id} className="flex justify-between text-[11px] bg-white p-2 rounded border border-slate-100">
+                                          <span>{m.fecha} - {m.concepto}</span>
+                                          <span className={m.tipo === 'Ingreso' ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>
+                                            {m.tipo === 'Ingreso' ? '+' : '-'}{formatoCOP(m.valor)}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <div className="flex gap-2 pt-2">
+                                    <button onClick={() => exportarCSVCuenta(c, movsCuenta)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#1B4332] transition">
+                                      📊 Excel (CSV)
+                                    </button>
+                                    <button onClick={() => exportarPDFCuenta(c, movsCuenta, saldoActual)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#2D6A4F] transition">
+                                      📄 PDF
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
                       );
@@ -701,7 +844,7 @@
                   </div>
                 )}
 
-                {/* --- MÓDULO UNIFICADO: CXC / CXP (CON CONCEPTOS / RUBROS EN LÍNEA) --- */}
+                {/* --- MÓDULO UNIFICADO: CXC / CXP --- */}
                 {tab === 'deudas' && (
                   <div>
                     <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Gestión de Terceros (CxC / CxP)</h3>
