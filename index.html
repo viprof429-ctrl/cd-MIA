@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase CDN para la Nube -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -19,6 +21,11 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
+
+        // Configuración de Supabase (Se conectará a tu proyecto gratuito en la nube)
+        const SUPABASE_URL = "TU_SUPABASE_URL_AQUI";
+        const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY_AQUI";
+        const supabaseClient = (SUPABASE_URL !== "TU_SUPABASE_URL_AQUI") ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
         const CUENTAS_BASE = [
           { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, icono: '💵' },
@@ -33,28 +40,6 @@
         const CATEGORIAS_INGRESO_BASE = [
           'Salario / Nómina', 'Ventas / Negocio', 'Otros Ingresos'
         ];
-
-        const guardarEnStorage = (subClave, valor) => {
-          try {
-            if (typeof window !== 'undefined' && window.localStorage) {
-              const dbActual = JSON.parse(window.localStorage.getItem('miahorro') || '{}');
-              dbActual[subClave] = valor;
-              window.localStorage.setItem('miahorro', JSON.stringify(dbActual));
-            }
-          } catch (e) {}
-        };
-
-        const cargarDeStorage = (subClave, valorPorDefecto) => {
-          try {
-            if (typeof window !== 'undefined' && window.localStorage) {
-              const dbActual = JSON.parse(window.localStorage.getItem('miahorro') || '{}');
-              if (dbActual[subClave] !== undefined && dbActual[subClave] !== null) {
-                return dbActual[subClave];
-              }
-            }
-          } catch (e) {}
-          return valorPorDefecto;
-        };
 
         const formatoCOP = (valor) => {
           if (isNaN(valor) || valor === null || valor === undefined) return '$ 0';
@@ -98,70 +83,78 @@
         };
 
         function App() {
+          const [sesion, setSesion] = useState(null);
+          const [emailInput, setEmailInput] = useState('');
+          const [passInput, setPassInput] = useState('');
+          const [modoRegistro, setModoRegistro] = useState(false);
+
           const [tab, setTab] = useState('inicio');
+          const [cuentas, setCuentas] = useState(CUENTAS_BASE);
+          const [movimientos, setMovimientos] = useState([]);
+          const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
+          const [cuentasPorPagar, setCuentasPorPagar] = useState([]);
+          const [categoriasGasto, setCategoriasGasto] = useState(CATEGORIAS_GASTO_BASE);
+          const [categoriasIngreso, setCategoriasIngreso] = useState(CATEGORIAS_INGRESO_BASE);
+          const [conceptosDeuda, setConceptosDeuda] = useState([...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión']);
 
-          const [cuentas, setCuentas] = useState(() =>
-            cargarDeStorage('cuentas', CUENTAS_BASE)
-          );
-
-          const [movimientos, setMovimientos] = useState(() =>
-            cargarDeStorage('movimientos', [])
-          );
-
-          const [cuentasPorCobrar, setCuentasPorCobrar] = useState(() =>
-            cargarDeStorage('cxco', [])
-          );
-
-          const [cuentasPorPagar, setCuentasPorPagar] = useState(() =>
-            cargarDeStorage('cxpa', [])
-          );
-
-          const [categoriasGasto, setCategoriasGasto] = useState(() =>
-            cargarDeStorage('cat_gasto', CATEGORIAS_GASTO_BASE)
-          );
-          const [categoriasIngreso, setCategoriasIngreso] = useState(() =>
-            cargarDeStorage('cat_ingreso', CATEGORIAS_INGRESO_BASE)
-          );
-          const [conceptosDeuda, setConceptosDeuda] = useState(() =>
-            cargarDeStorage('conceptos_deuda', [...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión'])
-          );
-
-          useEffect(() => { guardarEnStorage('cuentas', cuentas); }, [cuentas]);
-          useEffect(() => { guardarEnStorage('movimientos', movimientos); }, [movimientos]);
-          useEffect(() => { guardarEnStorage('cxco', cuentasPorCobrar); }, [cuentasPorCobrar]);
-          useEffect(() => { guardarEnStorage('cxpa', cuentasPorPagar); }, [cuentasPorPagar]);
-          useEffect(() => { guardarEnStorage('cat_gasto', categoriasGasto); }, [categoriasGasto]);
-          useEffect(() => { guardarEnStorage('cat_ingreso', categoriasIngreso); }, [categoriasIngreso]);
-          useEffect(() => { guardarEnStorage('conceptos_deuda', conceptosDeuda); }, [conceptosDeuda]);
-
+          // Control de sesión por Supabase o Resguardo Local temporal
           useEffect(() => {
-            const ahora = new Date();
-            const hora = ahora.getHours();
-            const hoyStr = fechaHoy();
-            const ultimoCheck = window.localStorage.getItem('mia_ultimo_check') || '';
-
-            if (ultimoCheck !== hoyStr) {
-              if (hora >= 10 && hora < 12) {
-                notificar('MIA - Recordatorio ⏰', '¡Oye, hoy no me has mirado! 👀 Pásate a registrar tus movimientos de la mañana.');
-                window.localStorage.setItem('mia_ultimo_check', hoyStr);
-              } else if (hora >= 17) {
-                notificar('MIA - Recordatorio ⏰', '¡Oye, hoy no me has mirado! 👀 ¿Cómo van los gastos de la tarde? Regístralos.');
-                window.localStorage.setItem('mia_ultimo_check', hoyStr);
-              }
-            }
-
-            const mananaObj = new Date();
-            mananaObj.setDate(mananaObj.getDate() + 1);
-            const mananaStr = `${mananaObj.getFullYear()}-${String(mananaObj.getMonth() + 1).padStart(2, '0')}-${String(mananaObj.getDate()).padStart(2, '0')}`;
-
-            const porVencerCxC = cuentasPorCobrar.filter(c => c.estado !== 'Pagado' && c.vencimiento === mananaStr);
-            const porVencerCxP = cuentasPorPagar.filter(c => c.estado !== 'Pagado' && c.vencimiento === mananaStr);
-
-            if (porVencerCxC.length > 0 || porVencerCxP.length > 0) {
-              notificar('⚠️ Alerta de Vencimiento', 'Tienes cuentas por cobrar o pagar que vencen MAÑANA. ¡Revisa tu módulo de deudas!');
+            if (supabaseClient) {
+              supabaseClient.auth.getSession().then(({ data: { session } }) => {
+                setSesion(session);
+              });
+              const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+                setSesion(session);
+              });
+              return () => subscription.unsubscribe();
+            } else {
+              // Modo local de respaldo si aún no configuras las llaves de Supabase
+              const localUser = window.localStorage.getItem('mia_usuario_activo');
+              if (localUser) setSesion({ user: { email: localUser } });
             }
           }, []);
 
+          const manejarLogin = async () => {
+            if (!emailInput || !passInput) {
+              notificar('Datos incompletos', 'Ingresa tu correo y contraseña.');
+              return;
+            }
+            if (supabaseClient) {
+              const { error } = await supabaseClient.auth.signInWithPassword({ email: emailInput, password: passInput });
+              if (error) notificar('Error de Acceso', error.message);
+            } else {
+              window.localStorage.setItem('mia_usuario_activo', emailInput);
+              setSesion({ user: { email: emailInput } });
+            }
+          };
+
+          const manejarRegistro = async () => {
+            if (!emailInput || !passInput) {
+              notificar('Datos incompletos', 'Ingresa un correo y contraseña válidos.');
+              return;
+            }
+            if (supabaseClient) {
+              const { error } = await supabaseClient.auth.signUp({ email: emailInput, password: passInput });
+              if (error) {
+                notificar('Error de Registro', error.message);
+              } else {
+                notificar('¡Registro exitoso!', 'Revisa tu correo para confirmar tu cuenta o inicia sesión.');
+              }
+            } else {
+              window.localStorage.setItem('mia_usuario_activo', emailInput);
+              setSesion({ user: { email: emailInput } });
+            }
+          };
+
+          const cerrarSesion = async () => {
+            if (supabaseClient) {
+              await supabaseClient.auth.signOut();
+            }
+            window.localStorage.removeItem('mia_usuario_activo');
+            setSesion(null);
+          };
+
+          // Formularios y estados de la app
           const [tipoMovimiento, setTipoMovimiento] = useState('Gasto');
           const [cuentaSeleccionada, setCuentaSeleccionada] = useState(cuentas[0]?.id || '1');
           const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(categoriasGasto[0]);
@@ -176,7 +169,6 @@
           const [conceptoCxC, setConceptoCxC] = useState(conceptosDeuda[0]);
           const [nuevoConceptoCxC, setNuevoConceptoCxC] = useState('');
           const [usarNuevoConceptoCxC, setUsarNuevoConceptoCxC] = useState(false);
-
           const [saldoInicialCxCDisplay, setSaldoInicialCxCDisplay] = useState('');
           const [vencimientoCxC, setVencimientoCxC] = useState(fechaHoy());
           const [cuentaCxC, setCuentaCxC] = useState(cuentas[0]?.id || '1');
@@ -186,7 +178,6 @@
           const [conceptoCxP, setConceptoCxP] = useState(conceptosDeuda[0]);
           const [nuevoConceptoCxP, setNuevoConceptoCxP] = useState('');
           const [usarNuevoConceptoCxP, setUsarNuevoConceptoCxP] = useState(false);
-
           const [saldoInicialCxPDisplay, setSaldoInicialCxPDisplay] = useState('');
           const [vencimientoCxP, setVencimientoCxP] = useState(fechaHoy());
           const [cuentaCxP, setCuentaCxP] = useState(cuentas[0]?.id || '1');
@@ -204,7 +195,6 @@
 
           const [tipoReporteTercero, setTipoReporteTercero] = useState('CxC');
           const [terceroSeleccionadoId, setTerceroSeleccionadoId] = useState('');
-
           const [cuentaReporteId, setCuentaReporteId] = useState('');
 
           const [modalNuevaCuenta, setModalNuevaCuenta] = useState(false);
@@ -241,7 +231,6 @@
               notificar('Datos incompletos', 'Escribe un concepto y un valor numérico válido en COP.');
               return;
             }
-
             const nuevo = {
               id: Date.now(),
               cuentaId: cuentaSeleccionada,
@@ -251,7 +240,6 @@
               tipo: tipoMovimiento,
               fecha: fechaMovimiento.trim() || fechaHoy(),
             };
-
             setMovimientos((prev) => [nuevo, ...prev]);
             setConcepto('');
             setValorDisplay('');
@@ -261,16 +249,13 @@
           const guardarCxC = () => {
             const num = obtenerNumeroLimpio(saldoInicialCxCDisplay);
             const conceptoFinal = usarNuevoConceptoCxC ? nuevoConceptoCxC.trim() : conceptoCxC;
-
             if (!terceroCxC.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
               notificar('Datos incompletos', 'Ingresa el tercero, concepto y un saldo inicial válido.');
               return;
             }
-
             if (usarNuevoConceptoCxC && !conceptosDeuda.includes(conceptoFinal)) {
               setConceptosDeuda(prev => [...prev, conceptoFinal]);
             }
-
             const nuevaCxC = {
               id: Date.now(),
               tercero: terceroCxC.trim(),
@@ -296,7 +281,6 @@
           const procesarCobroUnificado = () => {
             const item = cuentasPorCobrar.find(c => c.id.toString() === pagoIdCxC);
             const abono = obtenerNumeroLimpio(montoPagoCxCDisplay);
-
             if (!item || isNaN(abono) || abono <= 0) {
               notificar('Datos inválidos', 'Selecciona una cuenta por cobrar e ingresa un monto válido.');
               return;
@@ -305,7 +289,6 @@
               notificar('Monto excedentario', 'El abono no puede ser mayor al saldo pendiente.');
               return;
             }
-
             const cuentaAsoc = cuentas.find(c => c.id === cuentaPagoCxC);
             const movimientoIngreso = {
               id: Date.now(),
@@ -317,7 +300,6 @@
               fecha: fechaAbonoUnified,
             };
             setMovimientos(prev => [movimientoIngreso, ...prev]);
-
             const nuevoSaldo = item.saldoPendiente - abono;
             const nuevoEstado = nuevoSaldo === 0 ? 'Pagado' : 'Parcial';
             const registroPago = { fecha: fechaAbonoUnified, monto: abono, cuentaName: cuentaAsoc?.nombre || 'Cuenta' };
@@ -337,16 +319,13 @@
           const guardarCxP = () => {
             const num = obtenerNumeroLimpio(saldoInicialCxPDisplay);
             const conceptoFinal = usarNuevoConceptoCxP ? nuevoConceptoCxP.trim() : conceptoCxP;
-
             if (!terceroCxP.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
               notificar('Datos incompletos', 'Ingresa el tercero, concepto y un saldo inicial válido.');
               return;
             }
-
             if (usarNuevoConceptoCxP && !conceptosDeuda.includes(conceptoFinal)) {
               setConceptosDeuda(prev => [...prev, conceptoFinal]);
             }
-
             const nuevaCxP = {
               id: Date.now(),
               tercero: terceroCxP.trim(),
@@ -372,7 +351,6 @@
           const procesarPagoUnificado = () => {
             const item = cuentasPorPagar.find(c => c.id.toString() === pagoIdCxP);
             const abono = obtenerNumeroLimpio(montoPagoCxPDisplay);
-
             if (!item || isNaN(abono) || abono <= 0) {
               notificar('Datos inválidos', 'Selecciona una cuenta por pagar e ingresa un monto válido.');
               return;
@@ -381,7 +359,6 @@
               notificar('Monto excedentario', 'El pago no puede ser mayor al saldo pendiente.');
               return;
             }
-
             const cuentaAsoc = cuentas.find(c => c.id === cuentaPagoCxP);
             const movimientoGasto = {
               id: Date.now(),
@@ -393,7 +370,6 @@
               fecha: fechaAbonoUnified,
             };
             setMovimientos(prev => [movimientoGasto, ...prev]);
-
             const nuevoSaldo = item.saldoPendiente - abono;
             const nuevoEstado = nuevoSaldo === 0 ? 'Pagado' : 'Parcial';
             const registroPago = { fecha: fechaAbonoUnified, monto: abono, cuentaName: cuentaAsoc?.nombre || 'Cuenta' };
@@ -467,7 +443,6 @@
             if (!terceroItem) return;
             let csvContent = "data:text/csv;charset=utf-8,Fecha,Tercero,Concepto,Valor Total,Saldo Pendiente,Estado\n";
             csvContent += `${fechaHoy()},${terceroItem.tercero},${terceroItem.concepto},${terceroItem.valorTotal},${terceroItem.saldoPendiente},${terceroItem.estado}\n`;
-            
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -522,7 +497,6 @@
               notificar('Falta el nombre', 'Ingresa el nombre del banco o cuenta.');
               return;
             }
-
             const iconos = { Efectivo: '💵', Banco: '🏦', Billetera: '📱' };
             const nueva = {
               id: Date.now().toString(),
@@ -531,7 +505,6 @@
               saldoInicial: saldo,
               icono: iconos[nuevoTipo],
             };
-
             setCuentas((prev) => [...prev, nueva]);
             setNuevoNombre('');
             setNuevoSaldoInitDisplay('');
@@ -541,7 +514,6 @@
           const actualizarSaldoInicial = () => {
             if (!cuentaAEditar) return;
             const nuevoMonto = obtenerNumeroLimpio(saldoEditadoValorDisplay);
-
             setCuentas((prev) =>
               prev.map((c) => (c.id === cuentaAEditar.id ? { ...c, saldoInicial: nuevoMonto } : c))
             );
@@ -557,7 +529,6 @@
               setMovimientos([]);
               setCuentasPorCobrar([]);
               setCuentasPorPagar([]);
-              window.localStorage.removeItem('miahorro');
               notificar('Reinicio completo', 'Tus datos se han reiniciado.');
             }
           };
@@ -585,20 +556,80 @@
             }, {});
 
           const listaRubros = Object.entries(rubrosAgrupados).sort((a, b) => b[1] - a[1]);
-
           const totalDeudasGrafico = totalCxCPendiente + totalCxPPendiente;
           const pctCxC = totalDeudasGrafico > 0 ? Math.round((totalCxCPendiente / totalDeudasGrafico) * 100) : 50;
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
-
-          // FILTRO ESTRICTO: Solo cuentas con saldo activo distinto de cero
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
 
+          // PANTALLA DE LOGIN / INICIO DE SESIÓN
+          if (!sesion) {
+            return (
+              <div className="flex flex-col h-full bg-[#1B4332] justify-center items-center p-6 w-full text-white">
+                <div className="text-center mb-8">
+                  <h1 className="text-4xl font-extrabold tracking-wider">MIA</h1>
+                  <p className="text-xs text-[#B7E4C7] mt-1">Mi Inteligencia de Ahorro</p>
+                </div>
+
+                <div className="bg-white text-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+                  <h2 className="text-lg font-bold text-center text-[#1B4332]">
+                    {modoRegistro ? 'Crea tu cuenta' : 'Iniciar Sesión'}
+                  </h2>
+
+                  <div>
+                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Correo electrónico:</label>
+                    <input 
+                      type="email" 
+                      placeholder="tucorreo@email.com" 
+                      value={emailInput} 
+                      onChange={(e) => setEmailInput(e.target.value)} 
+                      className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none" 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Contraseña:</label>
+                    <input 
+                      type="password" 
+                      placeholder="••••••••" 
+                      value={passInput} 
+                      onChange={(e) => setPassInput(e.target.value)} 
+                      className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none" 
+                    />
+                  </div>
+
+                  {modoRegistro ? (
+                    <button onClick={manejarRegistro} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#1B4332] transition">
+                      Registrarse
+                    </button>
+                  ) : (
+                    <button onClick={manejarLogin} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#1B4332] transition">
+                      Ingresar
+                    </button>
+                  )}
+
+                  <button 
+                    onClick={() => setModoRegistro(!modoRegistro)} 
+                    className="w-full text-center text-xs text-[#2D6A4F] font-bold hover:underline pt-2"
+                  >
+                    {modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí'}
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          // APLICACIÓN PRINCIPAL UNA VEZ AUTENTICADO
           return (
             <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
               {/* Header */}
-              <div className="p-4 pb-2 text-center">
-                <h1 className="text-3xl font-extrabold text-[#1B4332]">MIA</h1>
-                <p className="text-xs font-semibold text-[#40916C]">Mi Inteligencia de Ahorro</p>
+              <div className="p-4 pb-2 flex justify-between items-center bg-white border-b border-slate-100">
+                <div>
+                  <h1 className="text-2xl font-extrabold text-[#1B4332]">MIA</h1>
+                  <p className="text-[10px] font-semibold text-[#40916C]">Usuario: {sesion.user.email}</p>
+                </div>
+                <button onClick={cerrarSesion} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 hover:bg-red-100 transition">
+                  Cerrar Sesión
+                </button>
               </div>
 
               {/* Contenido scrolleable */}
@@ -620,7 +651,6 @@
                       <button onClick={() => setTab('cuentas')} className="text-xs text-[#2D6A4F] font-bold hover:underline">Ver cuentas ›</button>
                     </div>
 
-                    {/* MOSTRAR SOLO CUENTAS CON SALDO ACTIVO Y DEUDAS PENDIENTES */}
                     <div className="grid grid-cols-2 gap-2 mb-4">
                       {cuentasConSaldo.length === 0 && totalCxCPendiente === 0 && totalCxPPendiente === 0 ? (
                         <p className="col-span-2 text-center text-xs text-[#718078] italic py-2">No hay cuentas ni deudas con saldo activo en este momento.</p>
