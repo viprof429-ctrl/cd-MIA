@@ -21,11 +21,11 @@
           { id: '3', nombre: 'Nequi', tipo: 'Billetera', saldoInicial: 0, icono: '📱' },
         ];
 
-        const CATEGORIAS_GASTO = [
+        const CATEGORIAS_GASTO_BASE = [
           'Alimentación', 'Transporte', 'Servicios / Hogar', 'Ocio / Salidas', 'Salud', 'Educación', 'Otros Gastos'
         ];
 
-        const CATEGORIAS_INGRESO = [
+        const CATEGORIAS_INGRESO_BASE = [
           'Salario / Nómina', 'Ventas / Negocio', 'Otros Ingresos'
         ];
 
@@ -53,6 +53,18 @@
           const valorAbs = Math.abs(Math.round(valor));
           const partes = valorAbs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
           return `${signo}$ ${partes}`;
+        };
+
+        const formatearInputEnVivo = (inputStr) => {
+          if (!inputStr) return '';
+          const limpio = inputStr.toString().replace(/\D/g, '');
+          if (!limpio) return '';
+          return Number(limpio).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        };
+
+        const obtenerNumeroLimpio = (inputStr) => {
+          if (!inputStr) return 0;
+          return parseInt(inputStr.toString().replace(/\D/g, ''), 10) || 0;
         };
 
         const fechaHoy = () => {
@@ -95,28 +107,31 @@
             cargarDeStorage('mia_cxpa_v8', [])
           );
 
-          useEffect(() => {
-            guardarEnStorage('mia_cuentas_v2', cuentas);
-          }, [cuentas]);
+          // Listas personalizadas de categorías y conceptos de deudas
+          const [categoriasGasto, setCategoriasGasto] = useState(() =>
+            cargarDeStorage('mia_cat_gasto', CATEGORIAS_GASTO_BASE)
+          );
+          const [categoriasIngreso, setCategoriasIngreso] = useState(() =>
+            cargarDeStorage('mia_cat_ingreso', CATEGORIAS_INGRESO_BASE)
+          );
+          const [conceptosDeuda, setConceptosDeuda] = useState(() =>
+            cargarDeStorage('mia_conceptos_deuda', [...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión'])
+          );
 
-          useEffect(() => {
-            guardarEnStorage('mia_movimientos_v2', movimientos);
-          }, [movimientos]);
-
-          useEffect(() => {
-            guardarEnStorage('mia_cxco_v8', cuentasPorCobrar);
-          }, [cuentasPorCobrar]);
-
-          useEffect(() => {
-            guardarEnStorage('mia_cxpa_v8', cuentasPorPagar);
-          }, [cuentasPorPagar]);
+          useEffect(() => { guardarEnStorage('mia_cuentas_v2', cuentas); }, [cuentas]);
+          useEffect(() => { guardarEnStorage('mia_movimientos_v2', movimientos); }, [movimientos]);
+          useEffect(() => { guardarEnStorage('mia_cxco_v8', cuentasPorCobrar); }, [cuentasPorCobrar]);
+          useEffect(() => { guardarEnStorage('mia_cxpa_v8', cuentasPorPagar); }, [cuentasPorPagar]);
+          useEffect(() => { guardarEnStorage('mia_cat_gasto', categoriasGasto); }, [categoriasGasto]);
+          useEffect(() => { guardarEnStorage('mia_cat_ingreso', categoriasIngreso); }, [categoriasIngreso]);
+          useEffect(() => { guardarEnStorage('mia_conceptos_deuda', conceptosDeuda); }, [conceptosDeuda]);
 
           // Formulario Movimiento General
           const [tipoMovimiento, setTipoMovimiento] = useState('Gasto');
           const [cuentaSeleccionada, setCuentaSeleccionada] = useState(cuentas[0]?.id || '1');
-          const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(CATEGORIAS_GASTO[0]);
+          const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(categoriasGasto[0]);
           const [concepto, setConcepto] = useState('');
-          const [valor, setValor] = useState('');
+          const [valorDisplay, setValorDisplay] = useState('');
           const [fechaMovimiento, setFechaMovimiento] = useState(fechaHoy());
 
           // Selector unificado en módulo CxC / CxP
@@ -125,15 +140,21 @@
 
           // Formularios CxC y CxP
           const [terceroCxC, setTerceroCxC] = useState('');
-          const [conceptoCxC, setConceptoCxC] = useState('');
-          const [saldoInicialCxC, setSaldoInicialCxC] = useState('');
+          const [conceptoCxC, setConceptoCxC] = useState(conceptosDeuda[0]);
+          const [nuevoConceptoCxC, setNuevoConceptoCxC] = useState('');
+          const [usarNuevoConceptoCxC, setUsarNuevoConceptoCxC] = useState(false);
+
+          const [saldoInicialCxCDisplay, setSaldoInicialCxCDisplay] = useState('');
           const [vencimientoCxC, setVencimientoCxC] = useState(fechaHoy());
           const [cuentaCxC, setCuentaCxC] = useState(cuentas[0]?.id || '1');
           const [obsCxC, setObsCxC] = useState('');
 
           const [terceroCxP, setTerceroCxP] = useState('');
-          const [conceptoCxP, setConceptoCxP] = useState('');
-          const [saldoInicialCxP, setSaldoInicialCxP] = useState('');
+          const [conceptoCxP, setConceptoCxP] = useState(conceptosDeuda[0]);
+          const [nuevoConceptoCxP, setNuevoConceptoCxP] = useState('');
+          const [usarNuevoConceptoCxP, setUsarNuevoConceptoCxP] = useState(false);
+
+          const [saldoInicialCxPDisplay, setSaldoInicialCxPDisplay] = useState('');
           const [vencimientoCxP, setVencimientoCxP] = useState(fechaHoy());
           const [cuentaCxP, setCuentaCxP] = useState(cuentas[0]?.id || '1');
           const [obsCxP, setObsCxP] = useState('');
@@ -142,11 +163,11 @@
           const [tipoAbonoUnified, setTipoAbonoUnified] = useState('CxC');
           const [fechaAbonoUnified, setFechaAbonoUnified] = useState(fechaHoy());
           const [pagoIdCxC, setPagoIdCxC] = useState('');
-          const [montoPagoCxC, setMontoPagoCxC] = useState('');
+          const [montoPagoCxCDisplay, setMontoPagoCxCDisplay] = useState('');
           const [cuentaPagoCxC, setCuentaPagoCxC] = useState(cuentas[0]?.id || '1');
 
           const [pagoIdCxP, setPagoIdCxP] = useState('');
-          const [montoPagoCxP, setMontoPagoCxP] = useState('');
+          const [montoPagoCxPDisplay, setMontoPagoCxPDisplay] = useState('');
           const [cuentaPagoCxP, setCuentaPagoCxP] = useState(cuentas[0]?.id || '1');
 
           // Filtro de reporte por Tercero
@@ -156,11 +177,11 @@
           const [modalNuevaCuenta, setModalNuevaCuenta] = useState(false);
           const [nuevoNombre, setNuevoNombre] = useState('');
           const [nuevoTipo, setNuevoTipo] = useState('Banco');
-          const [nuevoSaldoInit, setNuevoSaldoInit] = useState('');
+          const [nuevoSaldoInitDisplay, setNuevoSaldoInitDisplay] = useState('');
 
           const [modalEditarSaldo, setModalEditarSaldo] = useState(false);
           const [cuentaAEditar, setCuentaAEditar] = useState(null);
-          const [saldoEditadoValor, setSaldoEditadoValor] = useState('');
+          const [saldoEditadoValorDisplay, setSaldoEditadoValorDisplay] = useState('');
 
           const [fechaDesde, setFechaDesde] = useState(primerDiaMes());
           const [fechaHasta, setFechaHasta] = useState(fechaHoy());
@@ -178,12 +199,11 @@
           };
 
           const patrimonioTotal = cuentas.reduce((acc, c) => acc + obtenerSaldoCuenta(c.id), 0);
-
           const totalCxCPendiente = cuentasPorCobrar.reduce((acc, item) => acc + item.saldoPendiente, 0);
           const totalCxPPendiente = cuentasPorPagar.reduce((acc, item) => acc + item.saldoPendiente, 0);
 
           const guardarMovimiento = () => {
-            const num = parseInt(valor.replace(/\D/g, ''), 10);
+            const num = obtenerNumeroLimpio(valorDisplay);
             if (!concepto.trim() || isNaN(num) || num <= 0) {
               notificar('Datos incompletos', 'Escribe un concepto y un valor numérico válido en COP.');
               return;
@@ -201,20 +221,27 @@
 
             setMovimientos((prev) => [nuevo, ...prev]);
             setConcepto('');
-            setValor('');
+            setValorDisplay('');
             notificar('¡Registrado!', `${tipoMovimiento} guardado con éxito.`);
           };
 
           const guardarCxC = () => {
-            const num = parseInt(saldoInicialCxC.replace(/\D/g, ''), 10);
-            if (!terceroCxC.trim() || !conceptoCxC.trim() || isNaN(num) || num <= 0) {
+            const num = obtenerNumeroLimpio(saldoInicialCxCDisplay);
+            const conceptoFinal = usarNuevoConceptoCxC ? nuevoConceptoCxC.trim() : conceptoCxC;
+
+            if (!terceroCxC.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
               notificar('Datos incompletos', 'Ingresa el tercero, concepto y un saldo inicial válido.');
               return;
             }
+
+            if (usarNuevoConceptoCxC && !conceptosDeuda.includes(conceptoFinal)) {
+              setConceptosDeuda(prev => [...prev, conceptoFinal]);
+            }
+
             const nuevaCxC = {
               id: Date.now(),
               tercero: terceroCxC.trim(),
-              concepto: conceptoCxC.trim(),
+              concepto: conceptoFinal,
               valorTotal: num,
               saldoPendiente: num,
               fechaInicial: fechaGeneralReg,
@@ -226,15 +253,16 @@
             };
             setCuentasPorCobrar(prev => [nuevaCxC, ...prev]);
             setTerceroCxC('');
-            setConceptoCxC('');
-            setSaldoInicialCxC('');
+            setSaldoInicialCxCDisplay('');
             setObsCxC('');
+            setUsarNuevoConceptoCxC(false);
+            setNuevoConceptoCxC('');
             notificar('Cuenta por Cobrar', 'Tercero y plazos registrados correctamente.');
           };
 
           const procesarCobroUnificado = () => {
             const item = cuentasPorCobrar.find(c => c.id.toString() === pagoIdCxC);
-            const abono = parseInt(montoPagoCxC.replace(/\D/g, ''), 10);
+            const abono = obtenerNumeroLimpio(montoPagoCxCDisplay);
 
             if (!item || isNaN(abono) || abono <= 0) {
               notificar('Datos inválidos', 'Selecciona una cuenta por cobrar e ingresa un monto válido.');
@@ -269,20 +297,27 @@
             } : c));
 
             setPagoIdCxC('');
-            setMontoPagoCxC('');
+            setMontoPagoCxCDisplay('');
             notificar('¡Pago Recibido!', `Se registraron ${formatoCOP(abono)} con éxito.`);
           };
 
           const guardarCxP = () => {
-            const num = parseInt(saldoInicialCxP.replace(/\D/g, ''), 10);
-            if (!terceroCxP.trim() || !conceptoCxP.trim() || isNaN(num) || num <= 0) {
+            const num = obtenerNumeroLimpio(saldoInicialCxPDisplay);
+            const conceptoFinal = usarNuevoConceptoCxP ? nuevoConceptoCxP.trim() : conceptoCxP;
+
+            if (!terceroCxP.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
               notificar('Datos incompletos', 'Ingresa el tercero, concepto y un saldo inicial válido.');
               return;
             }
+
+            if (usarNuevoConceptoCxP && !conceptosDeuda.includes(conceptoFinal)) {
+              setConceptosDeuda(prev => [...prev, conceptoFinal]);
+            }
+
             const nuevaCxP = {
               id: Date.now(),
               tercero: terceroCxP.trim(),
-              concepto: conceptoCxP.trim(),
+              concepto: conceptoFinal,
               valorTotal: num,
               saldoPendiente: num,
               fechaInicial: fechaGeneralReg,
@@ -294,15 +329,16 @@
             };
             setCuentasPorPagar(prev => [nuevaCxP, ...prev]);
             setTerceroCxP('');
-            setConceptoCxP('');
-            setSaldoInicialCxP('');
+            setSaldoInicialCxPDisplay('');
             setObsCxP('');
+            setUsarNuevoConceptoCxP(false);
+            setNuevoConceptoCxP('');
             notificar('Cuenta por Pagar', 'Tercero y plazos registrados correctamente.');
           };
 
           const procesarPagoUnificado = () => {
             const item = cuentasPorPagar.find(c => c.id.toString() === pagoIdCxP);
-            const abono = parseInt(montoPagoCxP.replace(/\D/g, ''), 10);
+            const abono = obtenerNumeroLimpio(montoPagoCxPDisplay);
 
             if (!item || isNaN(abono) || abono <= 0) {
               notificar('Datos inválidos', 'Selecciona una cuenta por pagar e ingresa un monto válido.');
@@ -337,11 +373,10 @@
             } : c));
 
             setPagoIdCxP('');
-            setMontoPagoCxP('');
+            setMontoPagoCxPDisplay('');
             notificar('¡Pago Realizado!', `Se descontaron ${formatoCOP(abono)} con éxito.`);
           };
 
-          // Exportar CSV
           const exportarCSV = (terceroItem) => {
             if (!terceroItem) return;
             let csvContent = "data:text/csv;charset=utf-8,Fecha,Tercero,Concepto,Valor Total,Saldo Pendiente,Estado\n";
@@ -356,7 +391,6 @@
             document.body.removeChild(link);
           };
 
-          // Exportar PDF
           const exportarPDF = (terceroItem) => {
             if (!terceroItem) return;
             const ventana = window.open('', '_blank');
@@ -390,14 +424,13 @@
           };
 
           const guardarNuevaCuenta = () => {
-            const saldo = parseInt(nuevoSaldoInit.replace(/\D/g, ''), 10) || 0;
+            const saldo = obtenerNumeroLimpio(nuevoSaldoInitDisplay);
             if (!nuevoNombre.trim()) {
               notificar('Falta el nombre', 'Ingresa el nombre del banco o cuenta.');
               return;
             }
 
             const iconos = { Efectivo: '💵', Banco: '🏦', Billetera: '📱' };
-
             const nueva = {
               id: Date.now().toString(),
               nombre: nuevoNombre.trim(),
@@ -408,13 +441,13 @@
 
             setCuentas((prev) => [...prev, nueva]);
             setNuevoNombre('');
-            setNuevoSaldoInit('');
+            setNuevoSaldoInitDisplay('');
             setModalNuevaCuenta(false);
           };
 
           const actualizarSaldoInicial = () => {
             if (!cuentaAEditar) return;
-            const nuevoMonto = parseInt(saldoEditadoValor.replace(/\D/g, ''), 10) || 0;
+            const nuevoMonto = obtenerNumeroLimpio(saldoEditadoValorDisplay);
 
             setCuentas((prev) =>
               prev.map((c) => (c.id === cuentaAEditar.id ? { ...c, saldoInicial: nuevoMonto } : c))
@@ -518,47 +551,34 @@
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
                       <div className="flex gap-2">
                         <button
-                          onClick={() => { setTipoMovimiento('Gasto'); setCategoriaSeleccionada(CATEGORIAS_GASTO[0]); }}
+                          onClick={() => { setTipoMovimiento('Gasto'); setCategoriaSeleccionada(categoriasGasto[0]); }}
                           className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Gasto' ? 'bg-[#C94A4A] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}
                         >
                           Gasto
                         </button>
                         <button
-                          onClick={() => { setTipoMovimiento('Ingreso'); setCategoriaSeleccionada(CATEGORIAS_INGRESO[0]); }}
+                          onClick={() => { setTipoMovimiento('Ingreso'); setCategoriaSeleccionada(categoriasIngreso[0]); }}
                           className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Ingreso' ? 'bg-[#2D6A4F] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}
                         >
                           Ingreso
                         </button>
                       </div>
 
+                      {/* MEDIO DE PAGO EN FORMA DE LISTA */}
                       <div>
-                        <label className="text-xs font-semibold text-[#52725F] block mb-1">¿En qué cuenta se mueve el dinero?</label>
-                        <div className="flex gap-2 overflow-x-auto pb-1">
-                          {cuentas.map((c) => (
-                            <button
-                              key={c.id}
-                              onClick={() => setCuentaSeleccionada(c.id)}
-                              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition ${cuentaSeleccionada === c.id ? 'bg-[#205B43] text-white shadow' : 'bg-[#E8EFE9] text-[#205B43]'}`}
-                            >
-                              {c.icono} {c.nombre}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-[#52725F] block mb-1">Rubro o Categoría:</label>
+                        <label className="text-xs font-semibold text-[#52725F] block mb-1">¿Qué medio de pago vas a utilizar?</label>
                         <select
-                          value={categoriaSeleccionada}
-                          onChange={(e) => setCategoriaSeleccionada(e.target.value)}
+                          value={cuentaSeleccionada}
+                          onChange={(e) => setCuentaSeleccionada(e.target.value)}
                           className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none font-medium"
                         >
-                          {(tipoMovimiento === 'Gasto' ? CATEGORIAS_GASTO : CATEGORIAS_INGRESO).map((cat) => (
-                            <option key={cat} value={cat}>{cat}</option>
+                          {cuentas.map((c) => (
+                            <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>
                           ))}
                         </select>
                       </div>
 
+                      {/* FECHA ARRIBA DE RUBRO O CATEGORÍA */}
                       <div>
                         <label className="text-xs font-semibold text-[#52725F] block mb-1">Fecha (AAAA-MM-DD):</label>
                         <input
@@ -569,6 +589,19 @@
                         />
                       </div>
 
+                      <div>
+                        <label className="text-xs font-semibold text-[#52725F] block mb-1">Rubro o Categoría:</label>
+                        <select
+                          value={categoriaSeleccionada}
+                          onChange={(e) => setCategoriaSeleccionada(e.target.value)}
+                          className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none font-medium"
+                        >
+                          {(tipoMovimiento === 'Gasto' ? categoriasGasto : categoriasIngreso).map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      </div>
+
                       <input
                         type="text"
                         placeholder="Concepto (ej. Almuerzo, Mercado, Nómina)"
@@ -577,11 +610,12 @@
                         className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none placeholder-[#8F9F95]"
                       />
 
+                      {/* VALOR CON FORMATO EN VIVO */}
                       <input
-                        type="number"
-                        placeholder="Valor en pesos (ej. 45000)"
-                        value={valor}
-                        onChange={(e) => setValor(e.target.value)}
+                        type="text"
+                        placeholder="Valor en pesos (ej. 45.000)"
+                        value={valorDisplay}
+                        onChange={(e) => setValorDisplay(formatearInputEnVivo(e.target.value))}
                         className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none placeholder-[#8F9F95]"
                       />
 
@@ -651,7 +685,7 @@
                               <p className="text-[15px] font-bold text-[#1F2937] mt-0.5">{formatoCOP(c.saldoInicial)}</p>
                             </div>
                             <button
-                              onClick={() => { setCuentaAEditar(c); setSaldoEditadoValor(c.saldoInicial.toString()); setModalEditarSaldo(true); }}
+                              onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setModalEditarSaldo(true); }}
                               className="bg-[#E8EFE9] px-3 py-2 rounded-xl text-xs font-bold text-[#205B43] hover:bg-slate-200 transition"
                             >
                               ✏️ Modificar Saldo Inicial
@@ -667,7 +701,7 @@
                   </div>
                 )}
 
-                {/* --- MÓDULO UNIFICADO: CXC / CXP --- */}
+                {/* --- MÓDULO UNIFICADO: CXC / CXP (CON CONCEPTOS / RUBROS EN LÍNEA) --- */}
                 {tab === 'deudas' && (
                   <div>
                     <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Gestión de Terceros (CxC / CxP)</h3>
@@ -697,8 +731,28 @@
                         <div>
                           <h4 className="text-sm font-bold text-[#2D6A4F] mb-2">Nuevo Registro - Cuenta por Cobrar</h4>
                           <input type="text" placeholder="Tercero (Cliente / Deudor)" value={terceroCxC} onChange={(e) => setTerceroCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          <input type="text" placeholder="Concepto" value={conceptoCxC} onChange={(e) => setConceptoCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          <input type="number" placeholder="Saldo Inicial (COP)" value={saldoInicialCxC} onChange={(e) => setSaldoInicialCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
+                          
+                          {/* CONCEPTO / RUBRO EN FORMA DE LISTA O NUEVO EN LÍNEA */}
+                          <div className="mb-2">
+                            <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Concepto / Rubro:</label>
+                            {!usarNuevoConceptoCxC ? (
+                              <div className="flex gap-2">
+                                <select value={conceptoCxC} onChange={(e) => setConceptoCxC(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-medium">
+                                  {conceptosDeuda.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                                <button onClick={() => setUsarNuevoConceptoCxC(true)} className="bg-[#E8EFE9] text-[#205B43] px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap hover:bg-slate-200 transition">
+                                  + Nuevo
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-2">
+                                <input type="text" placeholder="Escribe el nuevo concepto..." value={nuevoConceptoCxC} onChange={(e) => setNuevoConceptoCxC(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                                <button onClick={() => setUsarNuevoConceptoCxC(false)} className="bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-[11px] font-bold">Cancelar</button>
+                              </div>
+                            )}
+                          </div>
+
+                          <input type="text" placeholder="Saldo Inicial (COP)" value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           
                           <div className="mb-2">
                             <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
@@ -716,8 +770,28 @@
                         <div>
                           <h4 className="text-sm font-bold text-[#C94A4A] mb-2">Nuevo Registro - Cuenta por Pagar</h4>
                           <input type="text" placeholder="Tercero (Proveedor / Acreedor)" value={terceroCxP} onChange={(e) => setTerceroCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          <input type="text" placeholder="Concepto" value={conceptoCxP} onChange={(e) => setConceptoCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          <input type="number" placeholder="Saldo Inicial (COP)" value={saldoInicialCxP} onChange={(e) => setSaldoInicialCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
+                          
+                          {/* CONCEPTO / RUBRO EN FORMA DE LISTA O NUEVO EN LÍNEA */}
+                          <div className="mb-2">
+                            <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Concepto / Rubro:</label>
+                            {!usarNuevoConceptoCxP ? (
+                              <div className="flex gap-2">
+                                <select value={conceptoCxP} onChange={(e) => setConceptoCxP(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-medium">
+                                  {conceptosDeuda.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                                <button onClick={() => setUsarNuevoConceptoCxP(true)} className="bg-[#E8EFE9] text-[#205B43] px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap hover:bg-slate-200 transition">
+                                  + Nuevo
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-2">
+                                <input type="text" placeholder="Escribe el nuevo concepto..." value={nuevoConceptoCxP} onChange={(e) => setNuevoConceptoCxP(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                                <button onClick={() => setUsarNuevoConceptoCxP(false)} className="bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-[11px] font-bold">Cancelar</button>
+                              </div>
+                            )}
+                          </div>
+
+                          <input type="text" placeholder="Saldo Inicial (COP)" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           
                           <div className="mb-2">
                             <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
@@ -766,7 +840,7 @@
                           </select>
 
                           <div className="flex gap-2">
-                            <input type="number" placeholder="Monto a abonar" value={montoPagoCxC} onChange={(e) => setMontoPagoCxC(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                            <input type="text" placeholder="Monto a abonar" value={montoPagoCxCDisplay} onChange={(e) => setMontoPagoCxCDisplay(formatearInputEnVivo(e.target.value))} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                             <select value={cuentaPagoCxC} onChange={(e) => setCuentaPagoCxC(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                               {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
                             </select>
@@ -784,7 +858,7 @@
                           </select>
 
                           <div className="flex gap-2">
-                            <input type="number" placeholder="Monto a abonar" value={montoPagoCxP} onChange={(e) => setMontoPagoCxP(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                            <input type="text" placeholder="Monto a abonar" value={montoPagoCxPDisplay} onChange={(e) => setMontoPagoCxPDisplay(formatearInputEnVivo(e.target.value))} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                             <select value={cuentaPagoCxP} onChange={(e) => setCuentaPagoCxP(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                               {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
                             </select>
@@ -954,7 +1028,7 @@
                     <p className="text-xs text-[#52725F] mb-3 text-center">Cuenta: <span className="font-bold">{cuentaAEditar?.nombre}</span></p>
 
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Nuevo saldo de arranque en COP:</label>
-                    <input type="number" value={saldoEditadoValor} onChange={(e) => setSaldoEditadoValor(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
+                    <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
 
                     <div className="flex gap-2">
                       <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
@@ -983,7 +1057,7 @@
                     </div>
 
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Saldo inicial en COP:</label>
-                    <input type="number" placeholder="Monto en pesos" value={nuevoSaldoInit} onChange={(e) => setNuevoSaldoInit(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
+                    <input type="text" placeholder="Monto en pesos" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
 
                     <div className="flex gap-2">
                       <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
