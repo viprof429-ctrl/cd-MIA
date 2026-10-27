@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase CDN para la Nube -->
+    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @media print {
@@ -22,10 +22,11 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // Configuración de Supabase (Se conectará a tu proyecto gratuito en la nube)
-        const SUPABASE_URL = "TU_SUPABASE_URL_AQUI";
-        const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY_AQUI";
-        const supabaseClient = (SUPABASE_URL !== "TU_SUPABASE_URL_AQUI") ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+        // Credenciales de Supabase integradas
+        const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_0L1M_Ux721yK2dSyxTqPqQ_A0do3";
+        
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const CUENTAS_BASE = [
           { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, icono: '💵' },
@@ -97,21 +98,14 @@
           const [categoriasIngreso, setCategoriasIngreso] = useState(CATEGORIAS_INGRESO_BASE);
           const [conceptosDeuda, setConceptosDeuda] = useState([...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión']);
 
-          // Control de sesión por Supabase o Resguardo Local temporal
           useEffect(() => {
-            if (supabaseClient) {
-              supabaseClient.auth.getSession().then(({ data: { session } }) => {
-                setSesion(session);
-              });
-              const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
-                setSesion(session);
-              });
-              return () => subscription.unsubscribe();
-            } else {
-              // Modo local de respaldo si aún no configuras las llaves de Supabase
-              const localUser = window.localStorage.getItem('mia_usuario_activo');
-              if (localUser) setSesion({ user: { email: localUser } });
-            }
+            supabaseClient.auth.getSession().then(({ data: { session } }) => {
+              setSesion(session);
+            });
+            const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+              setSesion(session);
+            });
+            return () => subscription.unsubscribe();
           }, []);
 
           const manejarLogin = async () => {
@@ -119,13 +113,8 @@
               notificar('Datos incompletos', 'Ingresa tu correo y contraseña.');
               return;
             }
-            if (supabaseClient) {
-              const { error } = await supabaseClient.auth.signInWithPassword({ email: emailInput, password: passInput });
-              if (error) notificar('Error de Acceso', error.message);
-            } else {
-              window.localStorage.setItem('mia_usuario_activo', emailInput);
-              setSesion({ user: { email: emailInput } });
-            }
+            const { error } = await supabaseClient.auth.signInWithPassword({ email: emailInput, password: passInput });
+            if (error) notificar('Error de Acceso', error.message);
           };
 
           const manejarRegistro = async () => {
@@ -133,28 +122,19 @@
               notificar('Datos incompletos', 'Ingresa un correo y contraseña válidos.');
               return;
             }
-            if (supabaseClient) {
-              const { error } = await supabaseClient.auth.signUp({ email: emailInput, password: passInput });
-              if (error) {
-                notificar('Error de Registro', error.message);
-              } else {
-                notificar('¡Registro exitoso!', 'Revisa tu correo para confirmar tu cuenta o inicia sesión.');
-              }
+            const { error } = await supabaseClient.auth.signUp({ email: emailInput, password: passInput });
+            if (error) {
+              notificar('Error de Registro', error.message);
             } else {
-              window.localStorage.setItem('mia_usuario_activo', emailInput);
-              setSesion({ user: { email: emailInput } });
+              notificar('¡Registro exitoso!', 'Ya puedes iniciar sesión con tus datos.');
             }
           };
 
           const cerrarSesion = async () => {
-            if (supabaseClient) {
-              await supabaseClient.auth.signOut();
-            }
-            window.localStorage.removeItem('mia_usuario_activo');
+            await supabaseClient.auth.signOut();
             setSesion(null);
           };
 
-          // Formularios y estados de la app
           const [tipoMovimiento, setTipoMovimiento] = useState('Gasto');
           const [cuentaSeleccionada, setCuentaSeleccionada] = useState(cuentas[0]?.id || '1');
           const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(categoriasGasto[0]);
