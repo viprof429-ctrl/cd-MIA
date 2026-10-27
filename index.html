@@ -138,7 +138,7 @@
           const [cuentaCxP, setCuentaCxP] = useState(cuentas[0]?.id || '1');
           const [obsCxP, setObsCxP] = useState('');
 
-          // Estados para pagos unificados (con fecha de abono arriba)
+          // Estados para pagos unificados
           const [tipoAbonoUnified, setTipoAbonoUnified] = useState('CxC');
           const [fechaAbonoUnified, setFechaAbonoUnified] = useState(fechaHoy());
           const [pagoIdCxC, setPagoIdCxC] = useState('');
@@ -463,6 +463,10 @@
 
           const listaRubros = Object.entries(rubrosAgrupados).sort((a, b) => b[1] - a[1]);
 
+          const totalDeudasGrafico = totalCxCPendiente + totalCxPPendiente;
+          const pctCxC = totalDeudasGrafico > 0 ? Math.round((totalCxCPendiente / totalDeudasGrafico) * 100) : 50;
+          const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
+
           return (
             <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
               {/* Header */}
@@ -730,7 +734,7 @@
                       )}
                     </div>
 
-                    {/* CARD 2: REGISTRAR ABONO O PAGO (CON FECHA ARRIBA Y TIPO INTEGRADO) */}
+                    {/* CARD 2: REGISTRAR ABONO O PAGO */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
                       <h4 className="text-sm font-bold text-[#1B4332]">⚡ Registrar Abono o Pago</h4>
                       
@@ -851,49 +855,24 @@
                       })()}
                     </div>
 
-                    {/* LISTADOS GENERALES */}
+                    {/* GRÁFICO RESUMEN CONSOLIDADO DE DEUDAS (CXC VS CXP) */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
-                      <h4 className="text-sm font-bold text-[#2D6A4F] mb-3">📥 Cuentas por Cobrar (Clientes)</h4>
-                      {cuentasPorCobrar.length === 0 ? (
-                        <p className="text-center text-[#718078] my-2 italic text-xs">No hay cuentas por cobrar registradas.</p>
-                      ) : (
-                        cuentasPorCobrar.map((item) => (
-                          <div key={item.id} className="bg-[#F8FAF8] rounded-xl p-3 my-2 border border-slate-200">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="text-xs font-bold text-[#1F2937]">👤 {item.tercero} - <span className="text-[#2D6A4F]">{item.concepto}</span></p>
-                                <p className="text-[11px] text-[#718078] mt-0.5">📅 Vence: {item.vencimiento}</p>
-                              </div>
-                              <div className="text-right">
-                                <span className="text-[10px] text-slate-400 block">Pendiente</span>
-                                <span className="text-xs font-extrabold text-[#2D6A4F]">{formatoCOP(item.saldoPendiente)}</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
+                      <h4 className="text-sm font-bold text-[#1B4332] mb-3">📊 Balance General de Deudas</h4>
+                      
+                      <div className="flex justify-between items-center mb-1 text-xs">
+                        <span className="font-semibold text-[#2D6A4F]">📥 CxC: {formatoCOP(totalCxCPendiente)} ({pctCxC}%)</span>
+                        <span className="font-semibold text-[#C94A4A]">📤 CxP: {formatoCOP(totalCxPPendiente)} ({pctCxP}%)</span>
+                      </div>
 
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
-                      <h4 className="text-sm font-bold text-[#C94A4A] mb-3">📤 Cuentas por Pagar (Proveedores / Deudas)</h4>
-                      {cuentasPorPagar.length === 0 ? (
-                        <p className="text-center text-[#718078] my-2 italic text-xs">No hay cuentas por pagar registradas.</p>
-                      ) : (
-                        cuentasPorPagar.map((item) => (
-                          <div key={item.id} className="bg-[#F8FAF8] rounded-xl p-3 my-2 border border-slate-200">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="text-xs font-bold text-[#1F2937]">🏢 {item.tercero} - <span className="text-[#C94A4A]">{item.concepto}</span></p>
-                                <p className="text-[11px] text-[#718078] mt-0.5">📅 Vence: {item.vencimiento}</p>
-                              </div>
-                              <div className="text-right">
-                                <span className="text-[10px] text-slate-400 block">Pendiente</span>
-                                <span className="text-xs font-extrabold text-[#C94A4A]">{formatoCOP(item.saldoPendiente)}</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
+                      <div className="h-4 flex rounded-lg overflow-hidden bg-[#E2E8F0] mb-3">
+                        <div style={{ width: `${pctCxC}%`, backgroundColor: '#2D6A4F' }} className="h-full transition-all"></div>
+                        <div style={{ width: `${pctCxP}%`, backgroundColor: '#C94A4A' }} className="h-full transition-all"></div>
+                      </div>
+
+                      <div className="flex justify-between text-[11px] text-slate-500 font-medium">
+                        <span>Total por Cobrar</span>
+                        <span>Total por Pagar</span>
+                      </div>
                     </div>
 
                     <h3 className="text-[17px] font-bold text-[#1B4332] mb-3 mt-6">Reporte Financiero por Fechas</h3>
