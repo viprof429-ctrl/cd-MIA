@@ -88,11 +88,11 @@
           );
 
           const [cuentasPorCobrar, setCuentasPorCobrar] = useState(() =>
-            cargarDeStorage('mia_cxco_v6', [])
+            cargarDeStorage('mia_cxco_v7', [])
           );
 
           const [cuentasPorPagar, setCuentasPorPagar] = useState(() =>
-            cargarDeStorage('mia_cxpa_v6', [])
+            cargarDeStorage('mia_cxpa_v7', [])
           );
 
           useEffect(() => {
@@ -104,11 +104,11 @@
           }, [movimientos]);
 
           useEffect(() => {
-            guardarEnStorage('mia_cxco_v6', cuentasPorCobrar);
+            guardarEnStorage('mia_cxco_v7', cuentasPorCobrar);
           }, [cuentasPorCobrar]);
 
           useEffect(() => {
-            guardarEnStorage('mia_cxpa_v6', cuentasPorPagar);
+            guardarEnStorage('mia_cxpa_v7', cuentasPorPagar);
           }, [cuentasPorPagar]);
 
           // Formulario Movimiento General
@@ -119,14 +119,14 @@
           const [valor, setValor] = useState('');
           const [fechaMovimiento, setFechaMovimiento] = useState(fechaHoy());
 
-          // Selector principal en módulo CxC / CxP
+          // Selector unificado en módulo CxC / CxP
           const [tipoCxUnified, setTipoCxUnified] = useState('CxC');
+          const [fechaGeneralReg, setFechaGeneralReg] = useState(fechaHoy());
 
-          // Formularios CxC y CxP unificados
+          // Formularios CxC y CxP
           const [terceroCxC, setTerceroCxC] = useState('');
           const [conceptoCxC, setConceptoCxC] = useState('');
           const [saldoInicialCxC, setSaldoInicialCxC] = useState('');
-          const [fechaInicialCxC, setFechaInicialCxC] = useState(fechaHoy());
           const [vencimientoCxC, setVencimientoCxC] = useState(fechaHoy());
           const [cuentaCxC, setCuentaCxC] = useState(cuentas[0]?.id || '1');
           const [obsCxC, setObsCxC] = useState('');
@@ -134,18 +134,19 @@
           const [terceroCxP, setTerceroCxP] = useState('');
           const [conceptoCxP, setConceptoCxP] = useState('');
           const [saldoInicialCxP, setSaldoInicialCxP] = useState('');
-          const [fechaInicialCxP, setFechaInicialCxP] = useState(fechaHoy());
           const [vencimientoCxP, setVencimientoCxP] = useState(fechaHoy());
           const [cuentaCxP, setCuentaCxP] = useState(cuentas[0]?.id || '1');
           const [obsCxP, setObsCxP] = useState('');
 
-          // Estados para pagos desde el módulo unificado
+          // Estados para pagos unificados con fecha propia de abono
           const [pagoIdCxC, setPagoIdCxC] = useState('');
           const [montoPagoCxC, setMontoPagoCxC] = useState('');
+          const [fechaPagoCxC, setFechaPagoCxC] = useState(fechaHoy());
           const [cuentaPagoCxC, setCuentaPagoCxC] = useState(cuentas[0]?.id || '1');
 
           const [pagoIdCxP, setPagoIdCxP] = useState('');
           const [montoPagoCxP, setMontoPagoCxP] = useState('');
+          const [fechaPagoCxP, setFechaPagoCxP] = useState(fechaHoy());
           const [cuentaPagoCxP, setCuentaPagoCxP] = useState(cuentas[0]?.id || '1');
 
           // Filtro de reporte por Tercero
@@ -177,6 +178,10 @@
           };
 
           const patrimonioTotal = cuentas.reduce((acc, c) => acc + obtenerSaldoCuenta(c.id), 0);
+
+          // Totales pendientes para las tarjetas de Inicio
+          const totalCxCPendiente = cuentasPorCobrar.reduce((acc, item) => acc + item.saldoPendiente, 0);
+          const totalCxPPendiente = cuentasPorPagar.reduce((acc, item) => acc + item.saldoPendiente, 0);
 
           const guardarMovimiento = () => {
             const num = parseInt(valor.replace(/\D/g, ''), 10);
@@ -213,7 +218,7 @@
               concepto: conceptoCxC.trim(),
               valorTotal: num,
               saldoPendiente: num,
-              fechaInicial: fechaInicialCxC,
+              fechaInicial: fechaGeneralReg,
               vencimiento: vencimientoCxC,
               cuentaId: cuentaCxC,
               observacion: obsCxC.trim(),
@@ -249,13 +254,13 @@
               concepto: `Abono de ${item.tercero} (${item.concepto})`,
               valor: abono,
               tipo: 'Ingreso',
-              fecha: fechaHoy(),
+              fecha: fechaPagoCxC,
             };
             setMovimientos(prev => [movimientoIngreso, ...prev]);
 
             const nuevoSaldo = item.saldoPendiente - abono;
             const nuevoEstado = nuevoSaldo === 0 ? 'Pagado' : 'Parcial';
-            const registroPago = { fecha: fechaHoy(), monto: abono, cuentaName: cuentaAsoc?.nombre || 'Cuenta' };
+            const registroPago = { fecha: fechaPagoCxC, monto: abono, cuentaName: cuentaAsoc?.nombre || 'Cuenta' };
 
             setCuentasPorCobrar(prev => prev.map(c => c.id === item.id ? { 
               ...c, 
@@ -281,7 +286,7 @@
               concepto: conceptoCxP.trim(),
               valorTotal: num,
               saldoPendiente: num,
-              fechaInicial: fechaInicialCxP,
+              fechaInicial: fechaGeneralReg,
               vencimiento: vencimientoCxP,
               cuentaId: cuentaCxP,
               observacion: obsCxP.trim(),
@@ -317,13 +322,13 @@
               concepto: `Abono a ${item.tercero} (${item.concepto})`,
               valor: abono,
               tipo: 'Gasto',
-              fecha: fechaHoy(),
+              fecha: fechaPagoCxP,
             };
             setMovimientos(prev => [movimientoGasto, ...prev]);
 
             const nuevoSaldo = item.saldoPendiente - abono;
             const nuevoEstado = nuevoSaldo === 0 ? 'Pagado' : 'Parcial';
-            const registroPago = { fecha: fechaHoy(), monto: abono, cuentaName: cuentaAsoc?.nombre || 'Cuenta' };
+            const registroPago = { fecha: fechaPagoCxP, monto: abono, cuentaName: cuentaAsoc?.nombre || 'Cuenta' };
 
             setCuentasPorPagar(prev => prev.map(c => c.id === item.id ? { 
               ...c, 
@@ -429,8 +434,8 @@
               setCuentasPorPagar([]);
               guardarEnStorage('mia_cuentas_v2', CUENTAS_BASE);
               guardarEnStorage('mia_movimientos_v2', []);
-              guardarEnStorage('mia_cxco_v6', []);
-              guardarEnStorage('mia_cxpa_v6', []);
+              guardarEnStorage('mia_cxco_v7', []);
+              guardarEnStorage('mia_cxpa_v7', []);
               notificar('Reinicio completo', 'Tus datos se han reiniciado.');
             }
           };
@@ -482,8 +487,8 @@
                     </div>
 
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-[17px] font-bold text-[#1B4332]">Tus Fondos</h3>
-                      <button onClick={() => setTab('cuentas')} className="text-xs text-[#2D6A4F] font-bold hover:underline">Ver saldos iniciales ›</button>
+                      <h3 className="text-[17px] font-bold text-[#1B4332]">Tus Fondos y Deudas</h3>
+                      <button onClick={() => setTab('cuentas')} className="text-xs text-[#2D6A4F] font-bold hover:underline">Ver cuentas ›</button>
                     </div>
 
                     <div className="flex gap-2 overflow-x-auto mb-3 pb-1">
@@ -494,6 +499,18 @@
                           <p className="text-[13px] font-bold text-[#205B43] mt-0.5">{formatoCOP(obtenerSaldoCuenta(c.id))}</p>
                         </div>
                       ))}
+                      {/* Tarjeta de Total CxC Pendiente */}
+                      <div className="bg-white p-3 rounded-2xl min-w-[125px] shadow-sm border border-emerald-100">
+                        <span className="text-2xl">📥</span>
+                        <p className="text-xs font-semibold text-slate-700 mt-1 truncate">Total CxC Pend</p>
+                        <p className="text-[13px] font-bold text-[#2D6A4F] mt-0.5">{formatoCOP(totalCxCPendiente)}</p>
+                      </div>
+                      {/* Tarjeta de Total CxP Pendiente */}
+                      <div className="bg-white p-3 rounded-2xl min-w-[125px] shadow-sm border border-red-100">
+                        <span className="text-2xl">📤</span>
+                        <p className="text-xs font-semibold text-slate-700 mt-1 truncate">Total CxP Pend</p>
+                        <p className="text-[13px] font-bold text-[#C94A4A] mt-0.5">{formatoCOP(totalCxPPendiente)}</p>
+                      </div>
                     </div>
 
                     <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Registrar Movimiento General</h3>
@@ -649,40 +666,46 @@
                   </div>
                 )}
 
-                {/* --- MÓDULO UNIFICADO: CXC / CXP (REGISTRO Y ABONOS) --- */}
+                {/* --- MÓDULO UNIFICADO: CXC / CXP (CON FECHA ARRIBA Y ABONOS FILTRADOS) --- */}
                 {tab === 'deudas' && (
                   <div>
                     <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Gestión de Terceros (CxC / CxP)</h3>
 
-                    {/* SELECTOR UNIFICADO TIPO: CxC o CxP */}
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
-                      <label className="text-xs font-bold text-[#1B4332] block mb-1">Seleccionar Tipo:</label>
-                      <select 
-                        value={tipoCxUnified} 
-                        onChange={(e) => setTipoCxUnified(e.target.value)} 
-                        className="w-full bg-[#E8EFE9] text-[#205B43] font-extrabold rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none mb-3"
-                      >
-                        <option value="CxC">📥 Cuentas por Cobrar (CxC)</option>
-                        <option value="CxP">📤 Cuentas por Pagar (CxP)</option>
-                      </select>
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
+                      {/* Fecha general de registro arriba por estética */}
+                      <div>
+                        <label className="text-xs font-bold text-[#1B4332] block mb-1">📅 Fecha del Registro:</label>
+                        <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold" />
+                      </div>
 
-                      {/* FORMULARIO DE REGISTRO SEGÚN EL TIPO SELECCIONADO */}
+                      {/* Selector unificado Tipo */}
+                      <div>
+                        <label className="text-xs font-bold text-[#1B4332] block mb-1">Tipo:</label>
+                        <select 
+                          value={tipoCxUnified} 
+                          onChange={(e) => setTipoCxUnified(e.target.value)} 
+                          className="w-full bg-[#E8EFE9] text-[#205B43] font-extrabold rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none"
+                        >
+                          <option value="CxC">📥 Cuentas por Cobrar (CxC)</option>
+                          <option value="CxP">📤 Cuentas por Pagar (CxP)</option>
+                        </select>
+                      </div>
+
+                      <div className="h-[1px] bg-[#EEF2EE] my-2"></div>
+
+                      {/* Formulario de Registro Dinámico */}
                       {tipoCxUnified === 'CxC' ? (
                         <div>
                           <h4 className="text-sm font-bold text-[#2D6A4F] mb-2">Nuevo Registro - Cuenta por Cobrar</h4>
                           <input type="text" placeholder="Tercero (Cliente / Deudor)" value={terceroCxC} onChange={(e) => setTerceroCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           <input type="text" placeholder="Concepto" value={conceptoCxC} onChange={(e) => setConceptoCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           <input type="number" placeholder="Saldo Inicial (COP)" value={saldoInicialCxC} onChange={(e) => setSaldoInicialCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          <div className="flex gap-2 mb-2">
-                            <div className="flex-1">
-                              <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Inicial Saldo:</span>
-                              <input type="date" value={fechaInicialCxC} onChange={(e) => setFechaInicialCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                            </div>
-                            <div className="flex-1">
-                              <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
-                              <input type="date" value={vencimientoCxC} onChange={(e) => setVencimientoCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                            </div>
+                          
+                          <div className="mb-2">
+                            <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
+                            <input type="date" value={vencimientoCxC} onChange={(e) => setVencimientoCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                           </div>
+
                           <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Cuenta afectada al cobrar:</label>
                           <select value={cuentaCxC} onChange={(e) => setCuentaCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
                             {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
@@ -696,16 +719,12 @@
                           <input type="text" placeholder="Tercero (Proveedor / Acreedor)" value={terceroCxP} onChange={(e) => setTerceroCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           <input type="text" placeholder="Concepto" value={conceptoCxP} onChange={(e) => setConceptoCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           <input type="number" placeholder="Saldo Inicial (COP)" value={saldoInicialCxP} onChange={(e) => setSaldoInicialCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          <div className="flex gap-2 mb-2">
-                            <div className="flex-1">
-                              <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Inicial Saldo:</span>
-                              <input type="date" value={fechaInicialCxP} onChange={(e) => setFechaInicialCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                            </div>
-                            <div className="flex-1">
-                              <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
-                              <input type="date" value={vencimientoCxP} onChange={(e) => setVencimientoCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                            </div>
+                          
+                          <div className="mb-2">
+                            <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
+                            <input type="date" value={vencimientoCxP} onChange={(e) => setVencimientoCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                           </div>
+
                           <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Cuenta afectada al pagar:</label>
                           <select value={cuentaCxP} onChange={(e) => setCuentaCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
                             {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
@@ -716,20 +735,26 @@
                       )}
                     </div>
 
-                    {/* SECCIÓN DE ABONOS Y PAGOS DEBAJO */}
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-4">
-                      <h4 className="text-sm font-bold text-[#1B4332]">⚡ Registrar Abonos o Pagos</h4>
+                    {/* SECCIÓN DE ABONOS Y PAGOS FILTRADA POR EL TIPO SELECCIONADO */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                      <h4 className="text-sm font-bold text-[#1B4332]">⚡ Registrar Abono o Pago</h4>
                       
                       {tipoCxUnified === 'CxC' ? (
-                        <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB]">
-                          <label className="text-[11px] font-bold text-[#2D6A4F] block mb-1">📥 Registrar Abono (CxC)</label>
-                          <select value={pagoIdCxC} onChange={(e) => setPagoIdCxC(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
+                        <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
+                          <label className="text-[11px] font-bold text-[#2D6A4F] block">📥 Registrar Abono (CxC)</label>
+                          <select value={pagoIdCxC} onChange={(e) => setPagoIdCxC(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                             <option value="">-- Seleccionar Cuenta por Cobrar Pendiente --</option>
                             {cuentasPorCobrar.filter(c => c.estado !== 'Pagado').map(c => (
                               <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente)})</option>
                             ))}
                           </select>
-                          <div className="flex gap-2 mb-2">
+                          
+                          <div>
+                            <span className="text-[10px] font-semibold text-[#52725F] block mb-0.5">Fecha del Abono:</span>
+                            <input type="date" value={fechaPagoCxC} onChange={(e) => setFechaPagoCxC(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                          </div>
+
+                          <div className="flex gap-2">
                             <input type="number" placeholder="Monto a abonar" value={montoPagoCxC} onChange={(e) => setMontoPagoCxC(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                             <select value={cuentaPagoCxC} onChange={(e) => setCuentaPagoCxC(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                               {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
@@ -738,15 +763,21 @@
                           <button onClick={procesarCobroUnificado} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-lg text-xs hover:bg-[#205B43] transition">Recibir Pago en Cuenta</button>
                         </div>
                       ) : (
-                        <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB]">
-                          <label className="text-[11px] font-bold text-[#C94A4A] block mb-1">📤 Registrar Abono Deuda (CxP)</label>
-                          <select value={pagoIdCxP} onChange={(e) => setPagoIdCxP(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
+                        <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
+                          <label className="text-[11px] font-bold text-[#C94A4A] block">📤 Registrar Abono Deuda (CxP)</label>
+                          <select value={pagoIdCxP} onChange={(e) => setPagoIdCxP(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                             <option value="">-- Seleccionar Cuenta por Pagar Pendiente --</option>
                             {cuentasPorPagar.filter(c => c.estado !== 'Pagado').map(c => (
                               <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente)})</option>
                             ))}
                           </select>
-                          <div className="flex gap-2 mb-2">
+
+                          <div>
+                            <span className="text-[10px] font-semibold text-[#52725F] block mb-0.5">Fecha del Abono:</span>
+                            <input type="date" value={fechaPagoCxP} onChange={(e) => setFechaPagoCxP(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                          </div>
+
+                          <div className="flex gap-2">
                             <input type="number" placeholder="Monto a abonar" value={montoPagoCxP} onChange={(e) => setMontoPagoCxP(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                             <select value={cuentaPagoCxP} onChange={(e) => setCuentaPagoCxP(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                               {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
