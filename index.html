@@ -1,1 +1,559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIA - Mi Inteligencia de Ahorro</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#F3F7F2] text-slate-800 flex justify-center items-center min-h-screen m-0">
+    <div id="root" class="w-full max-w-md h-screen md:h-[850px] bg-[#F3F7F2] shadow-2xl flex flex-col relative overflow-hidden"></div>
 
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const CUENTAS_BASE = [
+          { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, icono: '💵' },
+          { id: '2', nombre: 'Bancolombia', tipo: 'Banco', saldoInicial: 0, icono: '🏦' },
+          { id: '3', nombre: 'Nequi', tipo: 'Billetera', saldoInicial: 0, icono: '📱' },
+        ];
+
+        const CATEGORIAS_GASTO = [
+          'Alimentación', 'Transporte', 'Servicios / Hogar', 'Ocio / Salidas', 'Salud', 'Educación', 'Otros Gastos'
+        ];
+
+        const CATEGORIAS_INGRESO = [
+          'Salario / Nómina', 'Ventas / Negocio', 'Otros Ingresos'
+        ];
+
+        const guardarEnStorage = (clave, valor) => {
+          try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+              window.localStorage.setItem(clave, JSON.stringify(valor));
+            }
+          } catch (e) {}
+        };
+
+        const cargarDeStorage = (clave, valorPorDefecto) => {
+          try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+              const data = window.localStorage.getItem(clave);
+              if (data) return JSON.parse(data);
+            }
+          } catch (e) {}
+          return valorPorDefecto;
+        };
+
+        const formatoCOP = (valor) => {
+          if (isNaN(valor) || valor === null || valor === undefined) return '$ 0';
+          const signo = valor < 0 ? '-' : '';
+          const valorAbs = Math.abs(Math.round(valor));
+          const partes = valorAbs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+          return `${signo}$ ${partes}`;
+        };
+
+        const fechaHoy = () => {
+          const d = new Date();
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const dia = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${dia}`;
+        };
+
+        const primerDiaMes = () => {
+          const d = new Date();
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          return `${y}-${m}-01`;
+        };
+
+        const notificar = (titulo, mensaje) => {
+          if (typeof window !== 'undefined') {
+            window.alert(`${titulo}\n\n${mensaje}`);
+          }
+        };
+
+        function App() {
+          const [tab, setTab] = useState('inicio');
+
+          const [cuentas, setCuentas] = useState(() =>
+            cargarDeStorage('mia_cuentas_v2', CUENTAS_BASE)
+          );
+
+          const [movimientos, setMovimientos] = useState(() =>
+            cargarDeStorage('mia_movimientos_v2', [])
+          );
+
+          useEffect(() => {
+            guardarEnStorage('mia_cuentas_v2', cuentas);
+          }, [cuentas]);
+
+          useEffect(() => {
+            guardarEnStorage('mia_movimientos_v2', movimientos);
+          }, [movimientos]);
+
+          const [tipoMovimiento, setTipoMovimiento] = useState('Gasto');
+          const [cuentaSeleccionada, setCuentaSeleccionada] = useState(cuentas[0]?.id || '1');
+          const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(CATEGORIAS_GASTO[0]);
+          const [concepto, setConcepto] = useState('');
+          const [valor, setValor] = useState('');
+          const [fechaMovimiento, setFechaMovimiento] = useState(fechaHoy());
+
+          const [modalNuevaCuenta, setModalNuevaCuenta] = useState(false);
+          const [nuevoNombre, setNuevoNombre] = useState('');
+          const [nuevoTipo, setNuevoTipo] = useState('Banco');
+          const [nuevoSaldoInit, setNuevoSaldoInit] = useState('');
+
+          const [modalEditarSaldo, setModalEditarSaldo] = useState(false);
+          const [cuentaAEditar, setCuentaAEditar] = useState(null);
+          const [saldoEditadoValor, setSaldoEditadoValor] = useState('');
+
+          const [fechaDesde, setFechaDesde] = useState(primerDiaMes());
+          const [fechaHasta, setFechaHasta] = useState(fechaHoy());
+
+          const obtenerSaldoCuenta = (cuentaId) => {
+            const c = cuentas.find((item) => item.id === cuentaId);
+            if (!c) return 0;
+            const ing = movimientos
+              .filter((m) => m.cuentaId === cuentaId && m.tipo === 'Ingreso')
+              .reduce((acc, m) => acc + m.valor, 0);
+            const gas = movimientos
+              .filter((m) => m.cuentaId === cuentaId && m.tipo === 'Gasto')
+              .reduce((acc, m) => acc + m.valor, 0);
+            return c.saldoInicial + ing - gas;
+          };
+
+          const patrimonioTotal = cuentas.reduce((acc, c) => acc + obtenerSaldoCuenta(c.id), 0);
+
+          const guardarMovimiento = () => {
+            const num = parseInt(valor.replace(/\D/g, ''), 10);
+            if (!concepto.trim() || isNaN(num) || num <= 0) {
+              notificar('Datos incompletos', 'Escribe un concepto y un valor numérico válido en COP.');
+              return;
+            }
+
+            const nuevo = {
+              id: Date.now(),
+              cuentaId: cuentaSeleccionada,
+              categoria: categoriaSeleccionada,
+              concepto: concepto.trim(),
+              valor: num,
+              tipo: tipoMovimiento,
+              fecha: fechaMovimiento.trim() || fechaHoy(),
+            };
+
+            setMovimientos((prev) => [nuevo, ...prev]);
+            setConcepto('');
+            setValor('');
+            notificar('¡Registrado!', `${tipoMovimiento} guardado con éxito.`);
+          };
+
+          const guardarNuevaCuenta = () => {
+            const saldo = parseInt(nuevoSaldoInit.replace(/\D/g, ''), 10) || 0;
+            if (!nuevoNombre.trim()) {
+              notificar('Falta el nombre', 'Ingresa el nombre del banco o cuenta.');
+              return;
+            }
+
+            const iconos = { Efectivo: '💵', Banco: '🏦', Billetera: '📱' };
+
+            const nueva = {
+              id: Date.now().toString(),
+              nombre: nuevoNombre.trim(),
+              tipo: nuevoTipo,
+              saldoInicial: saldo,
+              icono: iconos[nuevoTipo],
+            };
+
+            setCuentas((prev) => [...prev, nueva]);
+            setNuevoNombre('');
+            setNuevoSaldoInit('');
+            setModalNuevaCuenta(false);
+          };
+
+          const actualizarSaldoInicial = () => {
+            if (!cuentaAEditar) return;
+            const nuevoMonto = parseInt(saldoEditadoValor.replace(/\D/g, ''), 10) || 0;
+
+            setCuentas((prev) =>
+              prev.map((c) => (c.id === cuentaAEditar.id ? { ...c, saldoInicial: nuevoMonto } : c))
+            );
+            setModalEditarSaldo(false);
+            setCuentaAEditar(null);
+            notificar('Saldo Actualizado', 'El saldo inicial ha sido modificado.');
+          };
+
+          const reiniciarTodo = () => {
+            const confirmar = window.confirm('¿Deseas borrar todos tus movimientos y empezar en limpio?');
+            if (confirmar) {
+              setCuentas(CUENTAS_BASE);
+              setMovimientos([]);
+              guardarEnStorage('mia_cuentas_v2', CUENTAS_BASE);
+              guardarEnStorage('mia_movimientos_v2', []);
+              notificar('Reinicio completo', 'Tus datos se han reiniciado.');
+            }
+          };
+
+          const movimientosReporte = movimientos.filter((m) => {
+            if (!fechaDesde && !fechaHasta) return true;
+            if (fechaDesde && m.fecha < fechaDesde) return false;
+            if (fechaHasta && m.fecha > fechaHasta) return false;
+            return true;
+          });
+
+          const totalGastosReporte = movimientosReporte
+            .filter((m) => m.tipo === 'Gasto')
+            .reduce((acc, m) => acc + m.valor, 0);
+
+          const totalIngresosReporte = movimientosReporte
+            .filter((m) => m.tipo === 'Ingreso')
+            .reduce((acc, m) => acc + m.valor, 0);
+
+          const rubrosAgrupados = movimientosReporte
+            .filter((m) => m.tipo === 'Gasto')
+            .reduce((acc, m) => {
+              acc[m.categoria] = (acc[m.categoria] || 0) + m.valor;
+              return acc;
+            }, {});
+
+          const listaRubros = Object.entries(rubrosAgrupados).sort((a, b) => b[1] - a[1]);
+
+          return (
+            <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
+              {/* Header */}
+              <div className="p-4 pb-2 text-center">
+                <h1 className="text-3xl font-extrabold text-[#1B4332]">MIA</h1>
+                <p className="text-xs font-semibold text-[#40916C]">Mi Inteligencia de Ahorro</p>
+              </div>
+
+              {/* Contenido scrolleable */}
+              <div className="flex-1 overflow-y-auto p-4 pb-24">
+                {/* --- INICIO --- */}
+                {tab === 'inicio' && (
+                  <div>
+                    <div className="bg-[#1B4332] rounded-2xl p-5 mb-4 shadow-md text-white">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[11px] font-bold text-[#B7E4C7] tracking-wider">PATRIMONIO TOTAL DISPONIBLE</span>
+                        <button onClick={() => setTab('cuentas')} className="text-[#B7E4C7] text-xs font-bold hover:underline">⚙️ Ajustar saldos</button>
+                      </div>
+                      <h2 className="text-3xl font-extrabold my-2">{formatoCOP(patrimonioTotal)}</h2>
+                      <p className="text-[11px] text-[#D8F3DC]">Suma consolidada de saldos iniciales + ingresos - gastos</p>
+                    </div>
+
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-[17px] font-bold text-[#1B4332]">Tus Fondos</h3>
+                      <button onClick={() => setTab('cuentas')} className="text-xs text-[#2D6A4F] font-bold hover:underline">Ver saldos iniciales ›</button>
+                    </div>
+
+                    <div className="flex gap-2 overflow-x-auto mb-3 pb-1">
+                      {cuentas.map((c) => (
+                        <div key={c.id} className="bg-white p-3 rounded-2xl min-w-[125px] shadow-sm border border-slate-100">
+                          <span className="text-2xl">{c.icono}</span>
+                          <p className="text-xs font-semibold text-slate-700 mt-1 truncate">{c.nombre}</p>
+                          <p className="text-[13px] font-bold text-[#205B43] mt-0.5">{formatoCOP(obtenerSaldoCuenta(c.id))}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Registrar Movimiento</h3>
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setTipoMovimiento('Gasto'); setCategoriaSeleccionada(CATEGORIAS_GASTO[0]); }}
+                          className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Gasto' ? 'bg-[#C94A4A] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}
+                        >
+                          Gasto
+                        </button>
+                        <button
+                          onClick={() => { setTipoMovimiento('Ingreso'); setCategoriaSeleccionada(CATEGORIAS_INGRESO[0]); }}
+                          className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Ingreso' ? 'bg-[#2D6A4F] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}
+                        >
+                          Ingreso
+                        </button>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-[#52725F] block mb-1">¿En qué cuenta se mueve el dinero?</label>
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                          {cuentas.map((c) => (
+                            <button
+                              key={c.id}
+                              onClick={() => setCuentaSeleccionada(c.id)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition ${cuentaSeleccionada === c.id ? 'bg-[#205B43] text-white shadow' : 'bg-[#E8EFE9] text-[#205B43]'}`}
+                            >
+                              {c.icono} {c.nombre}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-[#52725F] block mb-1">Rubro o Categoría:</label>
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                          {(tipoMovimiento === 'Gasto' ? CATEGORIAS_GASTO : CATEGORIAS_INGRESO).map((cat) => (
+                            <button
+                              key={cat}
+                              onClick={() => setCategoriaSeleccionada(cat)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition ${categoriaSeleccionada === cat ? 'bg-[#205B43] text-white shadow' : 'bg-[#E8EFE9] text-[#205B43]'}`}
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-[#52725F] block mb-1">Fecha (AAAA-MM-DD):</label>
+                        <input
+                          type="text"
+                          value={fechaMovimiento}
+                          onChange={(e) => setFechaMovimiento(e.target.value)}
+                          className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none"
+                        />
+                      </div>
+
+                      <input
+                        type="text"
+                        placeholder="Concepto (ej. Almuerzo, Mercado, Nómina)"
+                        value={concepto}
+                        onChange={(e) => setConcepto(e.target.value)}
+                        className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none placeholder-[#8F9F95]"
+                      />
+
+                      <input
+                        type="number"
+                        placeholder="Valor en pesos (ej. 45000)"
+                        value={valor}
+                        onChange={(e) => setValor(e.target.value)}
+                        className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none placeholder-[#8F9F95]"
+                      />
+
+                      <button
+                        onClick={guardarMovimiento}
+                        className="w-full bg-[#205B43] text-white font-bold py-3.5 rounded-xl shadow-md mt-2 hover:bg-[#1B4332] transition"
+                      >
+                        + Guardar Movimiento
+                      </button>
+                    </div>
+
+                    <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Movimientos Recientes</h3>
+                    {movimientos.length === 0 ? (
+                      <p className="text-center text-[#718078] my-6 italic text-sm">Aún no has registrado movimientos. ¡Agrega tu primero arriba!</p>
+                    ) : (
+                      movimientos.slice(0, 5).map((m) => {
+                        const cuentaAsociada = cuentas.find((c) => c.id === m.cuentaId);
+                        return (
+                          <div key={m.id} className="bg-white rounded-xl p-3.5 my-1.5 flex justify-between items-center shadow-sm border border-slate-100">
+                            <div>
+                              <p className="text-sm font-semibold text-[#1F2937]">{m.concepto}</p>
+                              <p className="text-[11px] text-[#718078] mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
+                            </div>
+                            <span className={`text-sm font-bold ${m.tipo === 'Ingreso' ? 'text-[#2D6A4F]' : 'text-[#C94A4A]'}`}>
+                              {m.tipo === 'Ingreso' ? '+' : '-'} {formatoCOP(m.valor)}
+                            </span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+
+                {/* --- CUENTAS --- */}
+                {tab === 'cuentas' && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-[17px] font-bold text-[#1B4332]">Cuentas y Saldos Iniciales</h3>
+                      <button onClick={() => setModalNuevaCuenta(true)} className="bg-[#2D6A4F] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow hover:bg-[#205B43] transition">
+                        + Crear Cuenta
+                      </button>
+                    </div>
+
+                    <p className="text-[13px] text-[#52725F] mb-4">Define el dinero con el que arrancas en cada cuenta. La información se guarda exclusivamente en este dispositivo.</p>
+
+                    {cuentas.map((c) => {
+                      const saldoActual = obtenerSaldoCuenta(c.id);
+                      return (
+                        <div key={c.id} className="bg-white rounded-2xl p-4 my-2 shadow-sm border border-slate-100">
+                          <div className="flex items-center">
+                            <span className="text-3xl">{c.icono}</span>
+                            <div className="ml-3 flex-1">
+                              <h4 className="text-base font-bold text-[#1F2937]">{c.nombre}</h4>
+                              <p className="text-xs text-[#718078]">Tipo: {c.tipo}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[11px] text-[#718078]">Saldo Actual:</span>
+                              <p className="text-base font-bold text-[#205B43]">{formatoCOP(saldoActual)}</p>
+                            </div>
+                          </div>
+
+                          <div className="h-[1px] bg-[#EEF2EE] my-3"></div>
+
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="text-[10px] font-bold text-[#718078] tracking-wider">SALDO INICIAL:</span>
+                              <p className="text-[15px] font-bold text-[#1F2937] mt-0.5">{formatoCOP(c.saldoInicial)}</p>
+                            </div>
+                            <button
+                              onClick={() => { setCuentaAEditar(c); setSaldoEditadoValor(c.saldoInicial.toString()); setModalEditarSaldo(true); }}
+                              className="bg-[#E8EFE9] px-3 py-2 rounded-xl text-xs font-bold text-[#205B43] hover:bg-slate-200 transition"
+                            >
+                              ✏️ Modificar Saldo Inicial
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    <button onClick={reiniciarTodo} className="w-full mt-4 p-3 bg-[#FDE8E8] rounded-xl text-[#9B1C1C] font-bold text-xs border border-[#F8B4B4] hover:bg-red-100 transition">
+                      🗑️ Reiniciar datos de este celular
+                    </button>
+                  </div>
+                )}
+
+                {/* --- REPORTES --- */}
+                {tab === 'reportes' && (
+                  <div>
+                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Reporte por Rango de Fechas</h3>
+
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3">
+                      <label className="text-xs font-semibold text-[#52725F] block mb-2">Período de consulta (AAAA-MM-DD):</label>
+                      <div className="flex gap-2 mb-2">
+                        <div className="flex-1">
+                          <span className="text-[11px] font-semibold text-[#718078] block mb-1">Fecha Desde:</span>
+                          <input type="text" value={fechaDesde} onChange={(e) => setFechaDesde(e.target.value)} className="w-full bg-[#F8FAF8] rounded-lg p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                        </div>
+                        <div className="flex-1">
+                          <span className="text-[11px] font-semibold text-[#718078] block mb-1">Fecha Hasta:</span>
+                          <input type="text" value={fechaHasta} onChange={(e) => setFechaHasta(e.target.value)} className="w-full bg-[#F8FAF8] rounded-lg p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button onClick={() => { setFechaDesde(fechaHoy()); setFechaHasta(fechaHoy()); }} className="flex-1 py-1.5 bg-[#E8EFE9] rounded-lg text-xs font-bold text-[#205B43] hover:bg-slate-200 transition">Hoy</button>
+                        <button onClick={() => { setFechaDesde(primerDiaMes()); setFechaHasta(fechaHoy()); }} className="flex-1 py-1.5 bg-[#E8EFE9] rounded-lg text-xs font-bold text-[#205B43] hover:bg-slate-200 transition">Este Mes</button>
+                        <button onClick={() => { setFechaDesde('2026-01-01'); setFechaHasta('2026-12-31'); }} className="flex-1 py-1.5 bg-[#E8EFE9] rounded-lg text-xs font-bold text-[#205B43] hover:bg-slate-200 transition">Todo el Año</button>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3">
+                      <span className="text-[11px] font-bold text-[#718078]">GASTOS DEL PERÍODO</span>
+                      <h2 className="text-2xl font-extrabold text-[#C94A4A] my-1">{formatoCOP(totalGastosReporte)}</h2>
+                      <div className="border-t border-[#EEF2EE] pt-2 mt-2 space-y-1">
+                        <p className="text-xs text-[#52725F] font-semibold">Ingresos en el rango: {formatoCOP(totalIngresosReporte)}</p>
+                        <p className="text-xs text-[#52725F] font-semibold">Ahorro neto: {formatoCOP(totalIngresosReporte - totalGastosReporte)}</p>
+                      </div>
+                    </div>
+
+                    <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Distribución por Rubro ({listaRubros.length})</h3>
+
+                    {totalGastosReporte === 0 ? (
+                      <p className="text-center text-[#718078] my-6 italic text-sm">No existen gastos registrados entre {fechaDesde} y {fechaHasta}.</p>
+                    ) : (
+                      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                        <div className="h-4 flex rounded-lg overflow-hidden bg-[#E2E8F0] mb-4">
+                          {listaRubros.map(([rubro, total], idx) => {
+                            const pct = Math.max(1, Math.round((total / totalGastosReporte) * 100));
+                            const paleta = ['#1B4332', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
+                            return <div key={rubro} style={{ width: `${pct}%`, backgroundColor: paleta[idx % paleta.length] }} className="h-full"></div>;
+                          })}
+                        </div>
+
+                        {listaRubros.map(([rubro, total], idx) => {
+                          const porcentaje = Math.round((total / totalGastosReporte) * 100);
+                          const paleta = ['#1B4332', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
+                          const color = paleta[idx % paleta.length];
+
+                          return (
+                            <div key={rubro} className="mt-3">
+                              <div className="flex justify-between items-center mb-1">
+                                <div className="flex items-center">
+                                  <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: color }}></div>
+                                  <span className="text-xs font-semibold text-[#1F2937]">{rubro}</span>
+                                </div>
+                                <span className="text-xs font-bold text-[#52725F]">{formatoCOP(total)} ({porcentaje}%)</span>
+                              </div>
+                              <div className="h-1.5 bg-[#F1F5F1] rounded-full overflow-hidden">
+                                <div className="h-full rounded-full" style={{ width: `${porcentaje}%`, backgroundColor: color }}></div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* --- MODAL EDITAR SALDO --- */}
+              {modalEditarSaldo && (
+                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
+                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
+                    <h3 className="text-lg font-extrabold text-[#1B4332] text-center mb-2">Modificar Saldo Inicial</h3>
+                    <p className="text-xs text-[#52725F] mb-3 text-center">Cuenta: <span className="font-bold">{cuentaAEditar?.nombre}</span></p>
+
+                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Nuevo saldo de arranque en COP:</label>
+                    <input type="number" value={saldoEditadoValor} onChange={(e) => setSaldoEditadoValor(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
+
+                    <div className="flex gap-2">
+                      <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
+                      <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#1B4332] transition">Guardar Saldo</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- MODAL NUEVA CUENTA --- */}
+              {modalNuevaCuenta && (
+                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
+                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
+                    <h3 className="text-lg font-extrabold text-[#1B4332] text-center mb-3">Nueva Cuenta o Banco</h3>
+
+                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Nombre de la cuenta:</label>
+                    <input type="text" placeholder="Ej. Daviplata, BBVA" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
+
+                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Tipo:</label>
+                    <div className="flex gap-2 mb-3">
+                      {['Banco', 'Billetera', 'Efectivo'].map((t) => (
+                        <button key={t} onClick={() => setNuevoTipo(t)} className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${nuevoTipo === t ? 'bg-[#205B43] text-white shadow' : 'bg-[#E8EFE9] text-[#205B43]'}`}>
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+
+                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Saldo inicial en COP:</label>
+                    <input type="number" placeholder="Monto en pesos" value={nuevoSaldoInit} onChange={(e) => setNuevoSaldoInit(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
+
+                    <div className="flex gap-2">
+                      <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
+                      <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#1B4332] transition">Crear Cuenta</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- NAVEGACIÓN INFERIOR --- */}
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-white flex border-t border-[#E2E8F0] shadow-lg z-40">
+                <button onClick={() => setTab('inicio')} className="flex-1 flex flex-col items-center justify-center">
+                  <span className={`text-xl transition ${tab === 'inicio' ? 'opacity-100 scale-110' : 'opacity-40'}`}>🏠</span>
+                  <span className={`text-[11px] ${tab === 'inicio' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Inicio</span>
+                </button>
+                <button onClick={() => setTab('cuentas')} className="flex-1 flex flex-col items-center justify-center">
+                  <span className={`text-xl transition ${tab === 'cuentas' ? 'opacity-100 scale-110' : 'opacity-40'}`}>🏦</span>
+                  <span className={`text-[11px] ${tab === 'cuentas' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Cuentas</span>
+                </button>
+                <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center">
+                  <span className={`text-xl transition ${tab === 'reportes' ? 'opacity-100 scale-110' : 'opacity-40'}`}>📊</span>
+                  <span className={`text-[11px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Reportes</span>
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
