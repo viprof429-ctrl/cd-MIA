@@ -1,4 +1,47 @@
-            if (data) return JSON.parse(data);
+     <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIA - Mi Inteligencia de Ahorro</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#F3F7F2] text-slate-800 flex justify-center items-center min-h-screen m-0">
+    <div id="root" class="w-full max-w-md h-screen md:h-[850px] bg-[#F3F7F2] shadow-2xl flex flex-col relative overflow-hidden"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const CUENTAS_BASE = [
+          { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, icono: '💵' },
+          { id: '2', nombre: 'Bancolombia', tipo: 'Banco', saldoInicial: 0, icono: '🏦' },
+          { id: '3', nombre: 'Nequi', tipo: 'Billetera', saldoInicial: 0, icono: '📱' },
+        ];
+
+        const CATEGORIAS_GASTO = [
+          'Alimentación', 'Transporte', 'Servicios / Hogar', 'Ocio / Salidas', 'Salud', 'Educación', 'Otros Gastos'
+        ];
+
+        const CATEGORIAS_INGRESO = [
+          'Salario / Nómina', 'Ventas / Negocio', 'Otros Ingresos'
+        ];
+
+        const guardarEnStorage = (clave, valor) => {
+          try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+              window.localStorage.setItem(clave, JSON.stringify(valor));
+            }
+          } catch (e) {}
+        };
+
+        const cargarDeStorage = (clave, valorPorDefecto) => {
+          try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+              const data = window.localStorage.getItem(clave);
+              if (data) return JSON.parse(data);
             }
           } catch (e) {}
           return valorPorDefecto;
@@ -45,11 +88,11 @@
           );
 
           const [cuentasPorCobrar, setCuentasPorCobrar] = useState(() =>
-            cargarDeStorage('mia_cxco_v2', [])
+            cargarDeStorage('mia_cxco_v3', [])
           );
 
           const [cuentasPorPagar, setCuentasPorPagar] = useState(() =>
-            cargarDeStorage('mia_cxpa_v2', [])
+            cargarDeStorage('mia_cxpa_v3', [])
           );
 
           useEffect(() => {
@@ -61,11 +104,11 @@
           }, [movimientos]);
 
           useEffect(() => {
-            guardarEnStorage('mia_cxco_v2', cuentasPorCobrar);
+            guardarEnStorage('mia_cxco_v3', cuentasPorCobrar);
           }, [cuentasPorCobrar]);
 
           useEffect(() => {
-            guardarEnStorage('mia_cxpa_v2', cuentasPorPagar);
+            guardarEnStorage('mia_cxpa_v3', cuentasPorPagar);
           }, [cuentasPorPagar]);
 
           // Formulario Movimiento General
@@ -76,20 +119,29 @@
           const [valor, setValor] = useState('');
           const [fechaMovimiento, setFechaMovimiento] = useState(fechaHoy());
 
-          // Formularios CxC y CxP (con Saldo Inicial)
+          // Formularios CxC y CxP (con Saldo Inicial y Fecha de Vencimiento)
           const [terceroCxC, setTerceroCxC] = useState('');
           const [conceptoCxC, setConceptoCxC] = useState('');
           const [saldoInicialCxC, setSaldoInicialCxC] = useState('');
-          const [fechaCxC, setFechaCxC] = useState(fechaHoy());
+          const [vencimientoCxC, setVencimientoCxC] = useState(fechaHoy());
           const [cuentaCxC, setCuentaCxC] = useState(cuentas[0]?.id || '1');
           const [obsCxC, setObsCxC] = useState('');
 
           const [terceroCxP, setTerceroCxP] = useState('');
           const [conceptoCxP, setConceptoCxP] = useState('');
           const [saldoInicialCxP, setSaldoInicialCxP] = useState('');
-          const [fechaCxP, setFechaCxP] = useState(fechaHoy());
+          const [vencimientoCxP, setVencimientoCxP] = useState(fechaHoy());
           const [cuentaCxP, setCuentaCxP] = useState(cuentas[0]?.id || '1');
           const [obsCxP, setObsCxP] = useState('');
+
+          // Estados para pagos parciales/totales desde el Inicio
+          const [pagoIdCxC, setPagoIdCxC] = useState('');
+          const [montoPagoCxC, setMontoPagoCxC] = useState('');
+          const [cuentaPagoCxC, setCuentaPagoCxC] = useState(cuentas[0]?.id || '1');
+
+          const [pagoIdCxP, setPagoIdCxP] = useState('');
+          const [montoPagoCxP, setMontoPagoCxP] = useState('');
+          const [cuentaPagoCxP, setCuentaPagoCxP] = useState(cuentas[0]?.id || '1');
 
           const [modalNuevaCuenta, setModalNuevaCuenta] = useState(false);
           const [nuevoNombre, setNuevoNombre] = useState('');
@@ -150,34 +202,55 @@
               id: Date.now(),
               tercero: terceroCxC.trim(),
               concepto: conceptoCxC.trim(),
-              valor: num,
-              fecha: fechaCxC,
+              valorTotal: num,
+              saldoPendiente: num,
+              vencimiento: vencimientoCxC,
               cuentaId: cuentaCxC,
               observacion: obsCxC.trim(),
-              pagado: false
+              estado: 'Pendiente'
             };
             setCuentasPorCobrar(prev => [nuevaCxC, ...prev]);
             setTerceroCxC('');
             setConceptoCxC('');
             setSaldoInicialCxC('');
             setObsCxC('');
-            notificar('Cuenta por Cobrar', 'Tercero y saldo inicial registrados correctamente.');
+            notificar('Cuenta por Cobrar', 'Tercero y plazo registrados correctamente.');
           };
 
-          const cobrarCxC = (item) => {
-            if (item.pagado) return;
+          // Procesar Abono / Pago Parcial o Total de CxC desde Inicio
+          const procesarCobroInicio = () => {
+            const item = cuentasPorCobrar.find(c => c.id.toString() === pagoIdCxC);
+            const abono = parseInt(montoPagoCxC.replace(/\D/g, ''), 10);
+
+            if (!item || isNaN(abono) || abono <= 0) {
+              notificar('Datos inválidos', 'Selecciona una cuenta por cobrar e ingresa un monto válido.');
+              return;
+            }
+            if (abono > item.saldoPendiente) {
+              notificar('Monto excedentario', 'El abono no puede ser mayor al saldo pendiente.');
+              return;
+            }
+
+            // Registrar ingreso en la cuenta seleccionada
             const movimientoIngreso = {
               id: Date.now(),
-              cuentaId: item.cuentaId,
+              cuentaId: cuentaPagoCxC,
               categoria: 'Otros Ingresos',
-              concepto: `Cobro a ${item.tercero}: ${item.concepto}`,
-              valor: item.valor,
+              concepto: `Abono/Cobro a ${item.tercero} (${item.concepto})`,
+              valor: abono,
               tipo: 'Ingreso',
               fecha: fechaHoy(),
             };
             setMovimientos(prev => [movimientoIngreso, ...prev]);
-            setCuentasPorCobrar(prev => prev.map(c => c.id === item.id ? { ...c, pagado: true } : c));
-            notificar('¡Cobro exitoso!', `Se ingresaron ${formatoCOP(item.valor)} a la cuenta seleccionada.`);
+
+            // Actualizar saldo pendiente
+            const nuevoSaldo = item.saldoPendiente - abono;
+            const nuevoEstado = nuevoSaldo === 0 ? 'Pagado' : 'Parcial';
+
+            setCuentasPorCobrar(prev => prev.map(c => c.id === item.id ? { ...c, saldoPendiente: nuevoSaldo, estado: nuevoEstado } : c));
+            setPagoIdCxC('');
+            setMontoPagoCxC('');
+            notificar('¡Pago Recibido!', `Se registraron ${formatoCOP(abono)} con éxito.`);
           };
 
           const guardarCxP = () => {
@@ -190,34 +263,55 @@
               id: Date.now(),
               tercero: terceroCxP.trim(),
               concepto: conceptoCxP.trim(),
-              valor: num,
-              fecha: fechaCxP,
+              valorTotal: num,
+              saldoPendiente: num,
+              vencimiento: vencimientoCxP,
               cuentaId: cuentaCxP,
               observacion: obsCxP.trim(),
-              pagado: false
+              estado: 'Pendiente'
             };
             setCuentasPorPagar(prev => [nuevaCxP, ...prev]);
             setTerceroCxP('');
             setConceptoCxP('');
             setSaldoInicialCxP('');
             setObsCxP('');
-            notificar('Cuenta por Pagar', 'Tercero y saldo inicial registrados correctamente.');
+            notificar('Cuenta por Pagar', 'Tercero y plazo registrados correctamente.');
           };
 
-          const pagarCxP = (item) => {
-            if (item.pagado) return;
+          // Procesar Abono / Pago Parcial o Total de CxP desde Inicio
+          const procesarPagoInicio = () => {
+            const item = cuentasPorPagar.find(c => c.id.toString() === pagoIdCxP);
+            const abono = parseInt(montoPagoCxP.replace(/\D/g, ''), 10);
+
+            if (!item || isNaN(abono) || abono <= 0) {
+              notificar('Datos inválidos', 'Selecciona una cuenta por pagar e ingresa un monto válido.');
+              return;
+            }
+            if (abono > item.saldoPendiente) {
+              notificar('Monto excedentario', 'El pago no puede ser mayor al saldo pendiente.');
+              return;
+            }
+
+            // Registrar gasto en la cuenta seleccionada
             const movimientoGasto = {
               id: Date.now(),
-              cuentaId: item.cuentaId,
+              cuentaId: cuentaPagoCxP,
               categoria: 'Otros Gastos',
-              concepto: `Pago a ${item.tercero}: ${item.concepto}`,
-              valor: item.valor,
+              concepto: `Abono/Pago a ${item.tercero} (${item.concepto})`,
+              valor: abono,
               tipo: 'Gasto',
               fecha: fechaHoy(),
             };
             setMovimientos(prev => [movimientoGasto, ...prev]);
-            setCuentasPorPagar(prev => prev.map(c => c.id === item.id ? { ...c, pagado: true } : c));
-            notificar('¡Pago exitoso!', `Se descontaron ${formatoCOP(item.valor)} de la cuenta seleccionada.`);
+
+            // Actualizar saldo pendiente
+            const nuevoSaldo = item.saldoPendiente - abono;
+            const nuevoEstado = nuevoSaldo === 0 ? 'Pagado' : 'Parcial';
+
+            setCuentasPorPagar(prev => prev.map(c => c.id === item.id ? { ...c, saldoPendiente: nuevoSaldo, estado: nuevoEstado } : c));
+            setPagoIdCxP('');
+            setMontoPagoCxP('');
+            notificar('¡Pago Realizado!', `Se descontaron ${formatoCOP(abono)} con éxito.`);
           };
 
           const guardarNuevaCuenta = () => {
@@ -264,8 +358,8 @@
               setCuentasPorPagar([]);
               guardarEnStorage('mia_cuentas_v2', CUENTAS_BASE);
               guardarEnStorage('mia_movimientos_v2', []);
-              guardarEnStorage('mia_cxco_v2', []);
-              guardarEnStorage('mia_cxpa_v2', []);
+              guardarEnStorage('mia_cxco_v3', []);
+              guardarEnStorage('mia_cxpa_v3', []);
               notificar('Reinicio completo', 'Tus datos se han reiniciado.');
             }
           };
@@ -331,7 +425,48 @@
                       ))}
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Registrar Movimiento</h3>
+                    {/* SECCIÓN PAGOS Y COBROS RÁPIDOS DESDE INICIO (CxP / CxC) */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 my-4 space-y-4">
+                      <h3 className="text-sm font-bold text-[#1B4332]">⚡ Gestión Rápida de CxP / CxC (Pagos y Cobros)</h3>
+                      
+                      {/* Recibir Cobro CxC */}
+                      <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB]">
+                        <label className="text-[11px] font-bold text-[#2D6A4F] block mb-1">📥 Registrar Cobro / Abono (CxC)</label>
+                        <select value={pagoIdCxC} onChange={(e) => setPagoIdCxC(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
+                          <option value="">-- Seleccionar Cuenta por Cobrar Pendiente --</option>
+                          {cuentasPorCobrar.filter(c => c.estado !== 'Pagado').map(c => (
+                            <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente)})</option>
+                          ))}
+                        </select>
+                        <div className="flex gap-2 mb-2">
+                          <input type="number" placeholder="Monto a abonar" value={montoPagoCxC} onChange={(e) => setMontoPagoCxC(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                          <select value={cuentaPagoCxC} onChange={(e) => setCuentaPagoCxC(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
+                            {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
+                          </select>
+                        </div>
+                        <button onClick={procesarCobroInicio} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-lg text-xs hover:bg-[#205B43] transition">Recibir Pago en Cuenta</button>
+                      </div>
+
+                      {/* Realizar Pago CxP */}
+                      <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB]">
+                        <label className="text-[11px] font-bold text-[#C94A4A] block mb-1">📤 Registrar Pago / Abono Deuda (CxP)</label>
+                        <select value={pagoIdCxP} onChange={(e) => setPagoIdCxP(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
+                          <option value="">-- Seleccionar Cuenta por Pagar Pendiente --</option>
+                          {cuentasPorPagar.filter(c => c.estado !== 'Pagado').map(c => (
+                            <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente)})</option>
+                          ))}
+                        </select>
+                        <div className="flex gap-2 mb-2">
+                          <input type="number" placeholder="Monto a abonar" value={montoPagoCxP} onChange={(e) => setMontoPagoCxP(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                          <select value={cuentaPagoCxP} onChange={(e) => setCuentaPagoCxP(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
+                            {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
+                          </select>
+                        </div>
+                        <button onClick={procesarPagoInicio} className="w-full bg-[#C94A4A] text-white font-bold py-2 rounded-lg text-xs hover:bg-red-700 transition">Pagar Deuda desde Cuenta</button>
+                      </div>
+                    </div>
+
+                    <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Registrar Movimiento General</h3>
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
                       <div className="flex gap-2">
                         <button
@@ -486,19 +621,22 @@
                   </div>
                 )}
 
-                {/* --- MÓDULO: CUENTAS POR COBRAR Y POR PAGAR (CON SALDO INICIAL) --- */}
+                {/* --- MÓDULO: CREACIÓN DE TERCEROS (CxC / CxP) --- */}
                 {tab === 'deudas' && (
                   <div>
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Gestión de Terceros (CxC / CxP)</h3>
+                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Registro de Terceros (CxC / CxP)</h3>
 
-                    {/* SECCIÓN CUENTAS POR COBRAR */}
+                    {/* REGISTRAR CUENTA POR COBRAR */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
-                      <h4 className="text-sm font-bold text-[#2D6A4F] mb-2">📥 Registrar Cuenta por Cobrar</h4>
+                      <h4 className="text-sm font-bold text-[#2D6A4F] mb-2">📥 Nueva Cuenta por Cobrar</h4>
                       <input type="text" placeholder="Tercero (Cliente / Deudor)" value={terceroCxC} onChange={(e) => setTerceroCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                       <input type="text" placeholder="Concepto" value={conceptoCxC} onChange={(e) => setConceptoCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                       <div className="flex gap-2 mb-2">
                         <input type="number" placeholder="Saldo Inicial (COP)" value={saldoInicialCxC} onChange={(e) => setSaldoInicialCxC(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                        <input type="date" value={fechaCxC} onChange={(e) => setFechaCxC(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                        <div className="flex-1">
+                          <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
+                          <input type="date" value={vencimientoCxC} onChange={(e) => setVencimientoCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                        </div>
                       </div>
                       <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Cuenta afectada al cobrar:</label>
                       <select value={cuentaCxC} onChange={(e) => setCuentaCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
@@ -508,48 +646,17 @@
                       <button onClick={guardarCxC} className="w-full bg-[#2D6A4F] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-[#205B43] transition">Guardar Cuenta por Cobrar</button>
                     </div>
 
-                    <h5 className="text-xs font-bold text-[#718078] mb-2 uppercase tracking-wider">Listado por Cobrar</h5>
-                    {cuentasPorCobrar.length === 0 ? (
-                      <p className="text-center text-[#718078] my-3 italic text-xs">No hay cuentas por cobrar registradas.</p>
-                    ) : (
-                      cuentasPorCobrar.map((item) => {
-                        const cAsoc = cuentas.find(c => c.id === item.cuentaId);
-                        return (
-                          <div key={item.id} className={`bg-white rounded-xl p-3 my-2 border ${item.pagado ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-100 shadow-sm'}`}>
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="text-xs font-bold text-[#1F2937]">👤 {item.tercero} - <span className="text-[#2D6A4F]">{item.concepto}</span></p>
-                                <p className="text-[11px] text-[#718078] mt-0.5">📅 Fecha: {item.fecha} · Cuenta: {cAsoc?.nombre}</p>
-                                {item.observacion && <p className="text-[11px] text-slate-500 italic mt-1">📝 {item.observacion}</p>}
-                              </div>
-                              <div className="text-right">
-                                <span className="text-[10px] text-slate-400 block">Saldo Inicial</span>
-                                <span className="text-xs font-extrabold text-[#2D6A4F]">{formatoCOP(item.valor)}</span>
-                              </div>
-                            </div>
-                            <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.pagado ? 'bg-emerald-200 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                                {item.pagado ? 'Cobrado (Ingresado)' : 'Pendiente de Cobro'}
-                              </span>
-                              {!item.pagado && (
-                                <button onClick={() => cobrarCxC(item)} className="bg-[#205B43] text-white px-3 py-1 rounded-lg text-[11px] font-bold hover:bg-[#1B4332] transition">
-                                  Recibir Pago 💵
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-
-                    {/* SECCIÓN CUENTAS POR PAGAR */}
+                    {/* REGISTRAR CUENTA POR PAGAR */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mt-6 mb-4">
-                      <h4 className="text-sm font-bold text-[#C94A4A] mb-2">📤 Registrar Cuenta por Pagar</h4>
+                      <h4 className="text-sm font-bold text-[#C94A4A] mb-2">📤 Nueva Cuenta por Pagar</h4>
                       <input type="text" placeholder="Tercero (Proveedor / Acreedor)" value={terceroCxP} onChange={(e) => setTerceroCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                       <input type="text" placeholder="Concepto" value={conceptoCxP} onChange={(e) => setConceptoCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                       <div className="flex gap-2 mb-2">
                         <input type="number" placeholder="Saldo Inicial (COP)" value={saldoInicialCxP} onChange={(e) => setSaldoInicialCxP(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                        <input type="date" value={fechaCxP} onChange={(e) => setFechaCxP(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                        <div className="flex-1">
+                          <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
+                          <input type="date" value={vencimientoCxP} onChange={(e) => setVencimientoCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                        </div>
                       </div>
                       <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Cuenta afectada al pagar:</label>
                       <select value={cuentaCxP} onChange={(e) => setCuentaCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
@@ -558,47 +665,79 @@
                       <input type="text" placeholder="Observación / Nota" value={obsCxP} onChange={(e) => setObsCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-3" />
                       <button onClick={guardarCxP} className="w-full bg-[#C94A4A] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-red-700 transition">Guardar Cuenta por Pagar</button>
                     </div>
-
-                    <h5 className="text-xs font-bold text-[#718078] mb-2 uppercase tracking-wider">Listado por Pagar</h5>
-                    {cuentasPorPagar.length === 0 ? (
-                      <p className="text-center text-[#718078] my-3 italic text-xs">No hay cuentas por pagar registradas.</p>
-                    ) : (
-                      cuentasPorPagar.map((item) => {
-                        const cAsoc = cuentas.find(c => c.id === item.cuentaId);
-                        return (
-                          <div key={item.id} className={`bg-white rounded-xl p-3 my-2 border ${item.pagado ? 'border-red-200 bg-red-50/50' : 'border-slate-100 shadow-sm'}`}>
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="text-xs font-bold text-[#1F2937]">🏢 {item.tercero} - <span className="text-[#C94A4A]">{item.concepto}</span></p>
-                                <p className="text-[11px] text-[#718078] mt-0.5">📅 Fecha: {item.fecha} · Cuenta: {cAsoc?.nombre}</p>
-                                {item.observacion && <p className="text-[11px] text-slate-500 italic mt-1">📝 {item.observacion}</p>}
-                              </div>
-                              <div className="text-right">
-                                <span className="text-[10px] text-slate-400 block">Saldo Inicial</span>
-                                <span className="text-xs font-extrabold text-[#C94A4A]">{formatoCOP(item.valor)}</span>
-                              </div>
-                            </div>
-                            <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.pagado ? 'bg-red-200 text-red-800' : 'bg-amber-100 text-amber-800'}`}>
-                                {item.pagado ? 'Pagado (Descontado)' : 'Pendiente de Pago'}
-                              </span>
-                              {!item.pagado && (
-                                <button onClick={() => pagarCxP(item)} className="bg-[#C94A4A] text-white px-3 py-1 rounded-lg text-[11px] font-bold hover:bg-red-700 transition">
-                                  Pagar Deuda 💳
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
                   </div>
                 )}
 
-                {/* --- REPORTES --- */}
+                {/* --- REPORTES (INCLUYE ESTADOS DE CXC Y CXP) --- */}
                 {tab === 'reportes' && (
                   <div>
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Reporte por Rango de Fechas</h3>
+                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Reportes y Estado de Deudas</h3>
+
+                    {/* LISTADO DE CUENTAS POR COBRAR */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
+                      <h4 className="text-sm font-bold text-[#2D6A4F] mb-3">📥 Cuentas por Cobrar (Clientes)</h4>
+                      {cuentasPorCobrar.length === 0 ? (
+                        <p className="text-center text-[#718078] my-2 italic text-xs">No hay cuentas por cobrar registradas.</p>
+                      ) : (
+                        cuentasPorCobrar.map((item) => {
+                          const cAsoc = cuentas.find(c => c.id === item.cuentaId);
+                          return (
+                            <div key={item.id} className="bg-[#F8FAF8] rounded-xl p-3 my-2 border border-slate-200">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-xs font-bold text-[#1F2937]">👤 {item.tercero} - <span className="text-[#2D6A4F]">{item.concepto}</span></p>
+                                  <p className="text-[11px] text-[#718078] mt-0.5">📅 Vence: {item.vencimiento} · Cuenta: {cAsoc?.nombre}</p>
+                                  {item.observacion && <p className="text-[11px] text-slate-500 italic mt-1">📝 {item.observacion}</p>}
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-[10px] text-slate-400 block">Pendiente</span>
+                                  <span className="text-xs font-extrabold text-[#2D6A4F]">{formatoCOP(item.saldoPendiente)}</span>
+                                </div>
+                              </div>
+                              <div className="mt-2 pt-2 border-t border-slate-200 flex justify-between items-center">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.estado === 'Pagado' ? 'bg-emerald-200 text-emerald-800' : item.estado === 'Parcial' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>
+                                  Estado: {item.estado} (Total: {formatoCOP(item.valorTotal)})
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    {/* LISTADO DE CUENTAS POR PAGAR */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
+                      <h4 className="text-sm font-bold text-[#C94A4A] mb-3">📤 Cuentas por Pagar (Proveedores / Deudas)</h4>
+                      {cuentasPorPagar.length === 0 ? (
+                        <p className="text-center text-[#718078] my-2 italic text-xs">No hay cuentas por pagar registradas.</p>
+                      ) : (
+                        cuentasPorPagar.map((item) => {
+                          const cAsoc = cuentas.find(c => c.id === item.cuentaId);
+                          return (
+                            <div key={item.id} className="bg-[#F8FAF8] rounded-xl p-3 my-2 border border-slate-200">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-xs font-bold text-[#1F2937]">🏢 {item.tercero} - <span className="text-[#C94A4A]">{item.concepto}</span></p>
+                                  <p className="text-[11px] text-[#718078] mt-0.5">📅 Vence: {item.vencimiento} · Cuenta: {cAsoc?.nombre}</p>
+                                  {item.observacion && <p className="text-[11px] text-slate-500 italic mt-1">📝 {item.observacion}</p>}
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-[10px] text-slate-400 block">Pendiente</span>
+                                  <span className="text-xs font-extrabold text-[#C94A4A]">{formatoCOP(item.saldoPendiente)}</span>
+                                </div>
+                              </div>
+                              <div className="mt-2 pt-2 border-t border-slate-200 flex justify-between items-center">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.estado === 'Pagado' ? 'bg-red-200 text-red-800' : item.estado === 'Parcial' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>
+                                  Estado: {item.estado} (Total: {formatoCOP(item.valorTotal)})
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3 mt-6">Reporte Financiero por Fechas</h3>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3">
                       <label className="text-xs font-semibold text-[#52725F] block mb-2">Período de consulta (AAAA-MM-DD):</label>
@@ -742,5 +881,4 @@
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
-</html>  
-  
+</html>   
