@@ -2,9 +2,72 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>MIA App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIA - Aplicación</title>
+    <!-- Cargamos React y React Native Web desde CDN para que funcione al instante en el navegador -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #root {
+            width: 100%;
+            max-width: 480px;
+            height: 100%;
+            max-height: 850px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header {
+            background-color: #2563eb;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .btn {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>¡Proyecto MIA funcionando con éxito!</h1>
+
+    <div id="root">
+        <div class="header">MIA</div>
+        <div class="content">
+            <h2>¡Tu aplicación ya está en línea!</h2>
+            <p>Aquí es donde cargará la interfaz completa de tu proyecto conectado desde React.</p>
+            <button class="btn" onclick="alert('¡MIA funcionando al 100%!')">Probar Botón</button>
+        </div>
+    </div>
+
 </body>
 </html>
