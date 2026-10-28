@@ -90,6 +90,29 @@
           }
         };
 
+        // COMPONENTE DEL LOGO OFICIAL SELECCIONADO (ESCUDO + CARTERA + MIA EN EL ARO INFERIOR)
+        const LogoMIA = ({ className = "h-14" }) => (
+          <svg viewBox="0 0 140 140" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Aro exterior */}
+            <circle cx="70" cy="70" r="58" stroke="#E2E8F0" strokeWidth="5" fill="none"/>
+            
+            {/* Escudo poligonal central */}
+            <path d="M70 24L102 38V72C102 92 70 106 70 106C70 106 38 92 38 72V38L70 24Z" fill="#F8FAF8" stroke="#CBD5E1" strokeWidth="3"/>
+            
+            {/* Cartera / Billetera interior */}
+            <rect x="52" y="52" width="36" height="26" rx="4" fill="#1B4332" stroke="#112A20" strokeWidth="1.5"/>
+            <path d="M79 60H83C84.1 60 85 60.9 85 62V68C85 69.1 84.1 70 83 79H79" stroke="#E2E8F0" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="81" cy="65" r="1.5" fill="#E2E8F0"/>
+            <path d="M56 52V49C56 47.3 57.3 46 59 46H77C78.7 46 80 47.3 80 49V52" stroke="#E2E8F0" strokeWidth="1.5"/>
+
+            {/* Texto MIA curvado en la parte inferior del aro */}
+            <path id="curvePath" d="M 32 88 A 45 45 0 0 0 108 88" fill="none"/>
+            <text fill="#1B4332" fontSize="13" fontWeight="900" fontFamily="Arial, sans-serif" letterSpacing="2">
+              <textPath href="#curvePath" startOffset="50%" textAnchor="middle">MIA</textPath>
+            </text>
+          </svg>
+        );
+
         const CUENTAS_BASE = [
           { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, icono: '💵' },
           { id: '2', nombre: 'Bancolombia', tipo: 'Banco', saldoInicial: 0, icono: '🏦' },
@@ -486,7 +509,6 @@
             notificar('¡Pago Realizado!', `Se descontaron ${formatoCOP(abono)} con éxito.`);
           };
 
-          // EXPORTAR PDF OPTIMIZADO PARA MÓVILES (CREA UN BLOQUE HTML LIMPIO DESCARGABLE)
           const exportarPDFCuenta = (cuentaObj, movimientosCuenta, saldoActualCuenta) => {
             if (!cuentaObj) return;
             const contenidoHtml = `
@@ -666,13 +688,14 @@
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
 
-          // PANTALLA DE LOGIN / INICIO DE SESIÓN
+          // PANTALLA DE LOGIN CON EL LOGO NUEVO
           if (!sesion) {
             return (
               <div className="flex flex-col h-full bg-[#1B4332] justify-center items-center p-6 w-full text-white">
-                <div className="text-center mb-8">
-                  <h1 className="text-4xl font-extrabold tracking-wider">MIA</h1>
-                  <p className="text-xs text-[#B7E4C7] mt-1">Mi Inteligencia de Ahorro</p>
+                <div className="text-center mb-6 flex flex-col items-center">
+                  <LogoMIA className="h-20 mb-2 drop-shadow-md" />
+                  <h1 className="text-3xl font-extrabold tracking-wider">MIA</h1>
+                  <p className="text-xs text-[#B7E4C7] mt-1 font-medium">Mi Inteligencia de Ahorro</p>
                 </div>
 
                 <div className="bg-white text-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
@@ -723,14 +746,17 @@
             );
           }
 
-          // APLICACIÓN PRINCIPAL UNA VEZ AUTENTICADO
+          // APLICACIÓN PRINCIPAL CON EL LOGO EN EL ENCABEZADO
           return (
             <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
-              {/* Header */}
-              <div className="p-4 pb-2 flex justify-between items-center bg-white border-b border-slate-100">
-                <div>
-                  <h1 className="text-2xl font-extrabold text-[#1B4332]">MIA</h1>
-                  <p className="text-[10px] font-semibold text-[#40916C]">Usuario: {sesion.user.email}</p>
+              {/* Header con Logo Integrado */}
+              <div className="p-3 px-4 flex justify-between items-center bg-white border-b border-slate-100 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <LogoMIA className="h-10" />
+                  <div>
+                    <h1 className="text-xl font-extrabold text-[#1B4332] leading-tight">MIA</h1>
+                    <p className="text-[9px] font-semibold text-[#40916C]">Mi Inteligencia de Ahorro</p>
+                  </div>
                 </div>
                 <button onClick={cerrarSesion} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 hover:bg-red-100 transition">
                   Cerrar Sesión
