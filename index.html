@@ -164,7 +164,6 @@
           const [conceptosDeuda, setConceptosDeuda] = useState([...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión']);
           const [datosCargados, setDatosCargados] = useState(false);
 
-          // Cargar datos de la nube al iniciar sesión
           useEffect(() => {
             if (sesion && sesion.access_token && !datosCargados) {
               supabaseApi.cargarDatosNube(sesion.access_token).then((cloudData) => {
@@ -179,7 +178,6 @@
             }
           }, [sesion]);
 
-          // Guardar en la nube automáticamente cuando cambian los datos
           useEffect(() => {
             if (sesion && sesion.access_token && datosCargados) {
               const payload = {
@@ -190,7 +188,6 @@
             }
           }, [cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, datosCargados]);
 
-          // Recordatorios automáticos
           useEffect(() => {
             if (!sesion) return;
             const ahora = new Date();
@@ -489,10 +486,10 @@
             notificar('¡Pago Realizado!', `Se descontaron ${formatoCOP(abono)} con éxito.`);
           };
 
+          // EXPORTAR PDF OPTIMIZADO PARA MÓVILES (CREA UN BLOQUE HTML LIMPIO DESCARGABLE)
           const exportarPDFCuenta = (cuentaObj, movimientosCuenta, saldoActualCuenta) => {
             if (!cuentaObj) return;
-            const ventana = window.open('', '_blank');
-            ventana.document.write(`
+            const contenidoHtml = `
               <html>
                 <head>
                   <title>Reporte Cuenta - MIA</title>
@@ -500,6 +497,7 @@
                     body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
                     .ingreso { color: #2D6A4F; font-weight: bold; }
                     .gasto { color: #C94A4A; font-weight: bold; }
+                    .btn-volver { display: block; width: 100%; padding: 12px; background: #205B43; color: white; text-align: center; text-decoration: none; font-weight: bold; border-radius: 8px; margin-top: 20px; }
                   </style>
                 </head>
                 <body>
@@ -520,11 +518,13 @@
                   </ul>
                   <br/><hr/>
                   <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
+                  <a href="javascript:window.close();" class="btn-volver">Cerrar y Volver a la App</a>
                 </body>
               </html>
-            `);
-            ventana.document.close();
-            ventana.print();
+            `;
+            const blob = new Blob([contenidoHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
           };
 
           const exportarCSVCuenta = (cuentaObj, movimientosCuenta) => {
@@ -557,8 +557,7 @@
 
           const exportarPDF = (terceroItem) => {
             if (!terceroItem) return;
-            const ventana = window.open('', '_blank');
-            ventana.document.write(`
+            const contenidoHtml = `
               <html>
                 <head>
                   <title>Reporte Tercero - MIA</title>
@@ -566,6 +565,7 @@
                     body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
                     .ingreso { color: #2D6A4F; font-weight: bold; }
                     .gasto { color: #C94A4A; font-weight: bold; }
+                    .btn-volver { display: block; width: 100%; padding: 12px; background: #205B43; color: white; text-align: center; text-decoration: none; font-weight: bold; border-radius: 8px; margin-top: 20px; }
                   </style>
                 </head>
                 <body>
@@ -587,11 +587,13 @@
                   </ul>
                   <br/><hr/>
                   <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
+                  <a href="javascript:window.close();" class="btn-volver">Cerrar y Volver a la App</a>
                 </body>
               </html>
-            `);
-            ventana.document.close();
-            ventana.print();
+            `;
+            const blob = new Blob([contenidoHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
           };
 
           const guardarNuevaCuenta = () => {
@@ -880,7 +882,7 @@
                               <p className="text-sm font-semibold text-[#1F2937]">{m.concepto}</p>
                               <p className="text-[11px] text-[#718078] mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
                             </div>
-                            <span className={`text-sm font-bold ${esIngreso ? 'text-[#2D6A4F]' : 'text-[#C94A4A]'}`}>
+                            <span className={`text-sm font-bold ${esIngreso ? 'text-[#2D6A4F] ' : 'text-[#C94A4A]'}`}>
                               {esIngreso ? '+ ' : '- '}{formatoCOP(m.valor)}
                             </span>
                           </div>
@@ -1204,7 +1206,7 @@
                                 📊 Exportar a Excel (CSV)
                               </button>
                               <button onClick={() => exportarPDF(itemSel)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#2D6A4F] transition">
-                                📄 Exportar a PDF
+                                📄 PDF
                               </button>
                             </div>
                           </div>
@@ -1365,7 +1367,7 @@
                 </button>
                 <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center">
                   <span className={`text-lg transition ${tab === 'reportes' ? 'opacity-100 scale-110' : 'opacity-40'}`}>📊</span>
-                  <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`} >Reportes</span>
+                  <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Reportes</span>
                 </button>
               </div>
             </div>
