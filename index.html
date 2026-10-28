@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase CDN -->
+    <!-- Supabase CDN v2 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @media print {
@@ -23,11 +23,9 @@
         const { useState, useEffect } = React;
 
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyOTgwNTksImV4cCI6MjA3Njg3NDA1OX0.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyOTgwNTksImV4cCI6MjA3Njg3NDA1OX0";
+        const SUPABASE_ANON_KEY = "sb_publishable_0LIW_Ux72iyK2dSyxTqPwQ_A0do3lok";
         
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
-        });
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const CUENTAS_BASE = [
           { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, icono: '💵' },
@@ -1218,7 +1216,7 @@
                     </div>
 
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Saldo inicial en COP:</label>
-                    <input type="text" placeholder="Monto en pesos" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
+                    <input type="text" placeholder="Monto en pesos" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
 
                     <div className="flex gap-2">
                       <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
@@ -1238,7 +1236,7 @@
                   <span className={`text-lg transition ${tab === 'cuentas' ? 'opacity-100 scale-110' : 'opacity-40'}`}>🏦</span>
                   <span className={`text-[10px] ${tab === 'cuentas' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Cuentas</span>
                 </button>
-                <button onClick={() => setTab('deudas')} className="flex-1 flex flex-col items-center justify-center">
+                <button onClick={() => {}} className="flex-1 flex flex-col items-center justify-center" onClick={() => setTab('deudas')}>
                   <span className={`text-lg transition ${tab === 'deudas' ? 'opacity-100 scale-110' : 'opacity-40'}`}>📑</span>
                   <span className={`text-[10px] ${tab === 'deudas' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>CxC / CxP</span>
                 </button>
@@ -1254,5 +1252,4 @@
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
-</html>  
- 
+</html> 
