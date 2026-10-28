@@ -23,7 +23,7 @@
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
 
-        const supabaseAuth = {
+        const supabaseApi = {
           async signUp(email, password) {
             try {
               const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
@@ -50,6 +50,42 @@
               return { data, error: null };
             } catch (err) {
               return { data: null, error: err };
+            }
+          },
+          async cargarDatosNube(token) {
+            try {
+              const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?select=data`, {
+                method: 'GET',
+                headers: {
+                  'apikey': SUPABASE_ANON_KEY,
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+              if (!res.ok) return null;
+              const rows = await res.json();
+              if (rows && rows.length > 0) {
+                return rows[0].data;
+              }
+              return null;
+            } catch (err) {
+              console.error("Error cargando de la nube:", err);
+              return null;
+            }
+          },
+          async guardarDatosNube(token, payload) {
+            try {
+              await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'apikey': SUPABASE_ANON_KEY,
+                  'Authorization': `Bearer ${token}`,
+                  'Prefer': 'resolution=merge-duplicates'
+                },
+                body: JSON.stringify(payload)
+              });
+            } catch (err) {
+              console.error("Error guardando en la nube:", err);
             }
           }
         };
@@ -119,31 +155,44 @@
           const [modoRegistro, setModoRegistro] = useState(false);
 
           const [tab, setTab] = useState('inicio');
-          const [cuentas, setCuentas] = useState(() => {
-            const saved = localStorage.getItem('mia_cuentas');
-            return saved ? JSON.parse(saved) : CUENTAS_BASE;
-          });
-          const [movimientos, setMovimientos] = useState(() => {
-            const saved = localStorage.getItem('mia_movimientos');
-            return saved ? JSON.parse(saved) : [];
-          });
-          const [cuentasPorCobrar, setCuentasPorCobrar] = useState(() => {
-            const saved = localStorage.getItem('mia_cxc');
-            return saved ? JSON.parse(saved) : [];
-          });
-          const [cuentasPorPagar, setCuentasPorPagar] = useState(() => {
-            const saved = localStorage.getItem('mia_cxp');
-            return saved ? JSON.parse(saved) : [];
-          });
+          const [cuentas, setCuentas] = useState(CUENTAS_BASE);
+          const [movimientos, setMovimientos] = useState([]);
+          const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
+          const [cuentasPorPagar, setCuentasPorPagar] = useState([]);
           const [categoriasGasto, setCategoriasGasto] = useState(CATEGORIAS_GASTO_BASE);
           const [categoriasIngreso, setCategoriasIngreso] = useState(CATEGORIAS_INGRESO_BASE);
           const [conceptosDeuda, setConceptosDeuda] = useState([...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión']);
+          const [datosCargados, setDatosCargados] = useState(false);
 
-          // EFECTO DE RECORDATORIOS AUTOMÁTICOS
+          // Cargar datos de la nube al iniciar sesión
+          useEffect(() => {
+            if (sesion && sesion.access_token && !datosCargados) {
+              supabaseApi.cargarDatosNube(sesion.access_token).then((cloudData) => {
+                if (cloudData) {
+                  if (cloudData.cuentas) setCuentas(cloudData.cuentas);
+                  if (cloudData.movimientos) setMovimientos(cloudData.movimientos);
+                  if (cloudData.cuentasPorCobrar) setCuentasPorCobrar(cloudData.cuentasPorCobrar);
+                  if (cloudData.cuentasPorPagar) setCuentasPorPagar(cloudData.cuentasPorPagar);
+                }
+                setDatosCargados(true);
+              });
+            }
+          }, [sesion]);
+
+          // Guardar en la nube automáticamente cuando cambian los datos
+          useEffect(() => {
+            if (sesion && sesion.access_token && datosCargados) {
+              const payload = {
+                user_id: sesion.user_id || sesion.user.id,
+                data: { cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar }
+              };
+              supabaseApi.guardarDatosNube(sesion.access_token, payload);
+            }
+          }, [cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, datosCargados]);
+
+          // Recordatorios automáticos
           useEffect(() => {
             if (!sesion) return;
-
-            // 1. Recordatorio por inactividad a partir de las 10:00 a.m.
             const ahora = new Date();
             const horaActual = ahora.getHours();
             const hoyStr = fechaHoy();
@@ -154,7 +203,6 @@
               localStorage.setItem('mia_ultima_visita', hoyStr);
             }
 
-            // 2. Alerta de vencimiento (cuando falte 1 día para el vencimiento de CxC o CxP)
             const mañana = new Date();
             mañana.setDate(mañana.getDate() + 1);
             const mañanaStr = `${mañana.getFullYear()}-${String(mañana.getMonth() + 1).padStart(2, '0')}-${String(mañana.getDate()).padStart(2, '0')}`;
@@ -170,23 +218,22 @@
             }
           }, [sesion, cuentasPorCobrar, cuentasPorPagar]);
 
-          // Sincronización local persistente
-          useEffect(() => { localStorage.setItem('mia_cuentas', JSON.stringify(cuentas)); }, [cuentas]);
-          useEffect(() => { localStorage.setItem('mia_movimientos', JSON.stringify(movimientos)); }, [movimientos]);
-          useEffect(() => { localStorage.setItem('mia_cxc', JSON.stringify(cuentasPorCobrar)); }, [cuentasPorCobrar]);
-          useEffect(() => { localStorage.setItem('mia_cxp', JSON.stringify(cuentasPorPagar)); }, [cuentasPorPagar]);
-
           const manejarLogin = async () => {
             if (!emailInput || !passInput) {
               notificar('Datos incompletos', 'Ingresa tu correo y contraseña.');
               return;
             }
-            const { data, error } = await supabaseAuth.signIn(emailInput, passInput);
+            const { data, error } = await supabaseApi.signIn(emailInput, passInput);
             if (error) {
               notificar('Error de Acceso', error.message);
             } else {
-              const userSession = { user: { email: emailInput }, access_token: data.access_token };
+              const userSession = { 
+                user: { email: emailInput }, 
+                user_id: data.user.id, 
+                access_token: data.access_token 
+              };
               setSesion(userSession);
+              setDatosCargados(false);
               localStorage.setItem('mia_sesion', JSON.stringify(userSession));
             }
           };
@@ -196,7 +243,7 @@
               notificar('Datos incompletos', 'Ingresa un correo y contraseña válidos.');
               return;
             }
-            const { error } = await supabaseAuth.signUp(emailInput, passInput);
+            const { error } = await supabaseApi.signUp(emailInput, passInput);
             if (error) {
               notificar('Error de Registro', error.message);
             } else {
@@ -208,6 +255,7 @@
           const cerrarSesion = () => {
             localStorage.removeItem('mia_sesion');
             setSesion(null);
+            setDatosCargados(false);
           };
 
           const [tipoMovimiento, setTipoMovimiento] = useState('Gasto');
@@ -1317,7 +1365,7 @@
                 </button>
                 <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center">
                   <span className={`text-lg transition ${tab === 'reportes' ? 'opacity-100 scale-110' : 'opacity-40'}`}>📊</span>
-                  <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Reportes</span>
+                  <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`} >Reportes</span>
                 </button>
               </div>
             </div>
