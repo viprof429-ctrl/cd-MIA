@@ -23,6 +23,11 @@
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
 
+        // ==========================================
+        // AQUÍ PUEDES PEGAR EL ENLACE DIRECTO DE TU LOGO
+        // ==========================================
+        const URL_LOGO_OFICIAL = "PEGA_AQUI_EL_ENLACE_DIRECTO_DE_TU_IMAGEN"; 
+
         const supabaseApi = {
           async signUp(email, password) {
             try {
@@ -90,21 +95,17 @@
           }
         };
 
-        // LOGOTIPO COMPACTO, PROPORCIONADO Y FIJO
-        const LogoMIA_Limpio = ({ className = "h-16 w-16" }) => (
-          <div className={`flex items-center justify-center shrink-0 ${className}`}>
-            <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-md" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="goldClean" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{ stopColor: '#FFF8DC', stopOpacity: 1 }} />
-                  <stop offset="50%" style={{ stopColor: '#DAA520', stopOpacity: 1 }} />
-                  <stop offset="100%" style={{ stopColor: '#B8860B', stopOpacity: 1 }} />
-                </linearGradient>
-              </defs>
-              <circle cx="50" cy="50" r="46" stroke="url(#goldClean)" strokeWidth="5" fill="#112A20" />
-              <path d="M28 32V68L50 48L72 68V32" stroke="url(#goldClean)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              <path d="M50 32V68" stroke="url(#goldClean)" strokeWidth="5" strokeLinecap="round"/>
-            </svg>
+        // COMPONENTE PARA MOSTRAR LA IMAGEN FIJA DEL LOGO
+        const LogoImagenFija = ({ className = "w-44 h-44" }) => (
+          <div className={`flex items-center justify-center overflow-hidden rounded-2xl ${className}`}>
+            {URL_LOGO_OFICIAL.includes("http") ? (
+              <img src={URL_LOGO_OFICIAL} alt="Logo MIA" className="w-full h-full object-contain" />
+            ) : (
+              <div className="bg-[#0b1c15] border-2 border-dashed border-[#D4AF37] p-4 text-center rounded-2xl">
+                <span className="text-xs text-[#D4AF37] font-bold block">⚠️ FALTA CONFIGURAR EL LOGO</span>
+                <span className="text-[10px] text-white">Pega el enlace de tu imagen en la variable URL_LOGO_OFICIAL arriba en el código.</span>
+              </div>
+            )}
           </div>
         );
 
@@ -659,9 +660,7 @@
           if (!sesion) {
             return (
               <div className="flex flex-col h-full bg-[#112A20] justify-center items-center p-4 w-full text-white overflow-y-auto">
-                <div className="mb-4 flex items-center justify-center">
-                  <LogoMIA_Limpio className="h-28 w-28" />
-                </div>
+                <LogoImagenFija className="w-56 h-48 mb-2" />
 
                 <div className="bg-white text-slate-800 rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 shrink-0">
                   <h2 className="text-lg font-bold text-center text-[#112A20]">
@@ -714,8 +713,8 @@
           return (
             <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
               <div className="p-2 px-4 flex justify-between items-center bg-white border-b border-slate-100 shadow-sm">
-                <div className="flex items-center">
-                  <LogoMIA_Limpio className="h-10 w-10" />
+                <div className="w-28 h-9 flex items-center">
+                  <img src={URL_LOGO_OFICIAL} alt="Logo" className="w-full h-full object-contain" />
                 </div>
                 <button onClick={cerrarSesion} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 hover:bg-red-100 transition">
                   Cerrar Sesión
