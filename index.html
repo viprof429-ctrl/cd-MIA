@@ -1,3 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIA - Mi Inteligencia de Ahorro</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body class="bg-[#112A20] text-slate-800 flex justify-center items-center min-h-screen m-0">
+    <div id="root" class="w-full max-w-md h-screen md:h-[850px] bg-[#F3F7F2] shadow-2xl flex flex-col relative overflow-hidden"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
+
+        const supabaseApi = {
+          async signUp(email, password) {
+            try {
+              const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+                body: JSON.stringify({ email, password })
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.msg || data.error_description || 'Error en el registro');
+              return { data, error: null };
             } catch (err) {
               return { data: null, error: err };
             }
@@ -54,59 +90,21 @@
           }
         };
 
-        // RENDERIZADO VECTORIAL PERFECTO Y FIEL AL LOGOTIPO OFICIAL
-        const LogoOficialMIA = ({ className = "w-52 h-48" }) => (
-          <div className={`flex flex-col items-center justify-center shrink-0 ${className}`}>
-            <svg viewBox="0 0 500 520" className="w-full h-full drop-shadow-2xl" fill="none" xmlns="http://www.w3.org/2000/svg">
+        // LOGOTIPO COMPACTO, PROPORCIONADO Y FIJO
+        const LogoMIA_Limpio = ({ className = "h-16 w-16" }) => (
+          <div className={`flex items-center justify-center shrink-0 ${className}`}>
+            <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-md" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <linearGradient id="goldOfficial" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FFF2B2"/>
-                  <stop offset="30%" stopColor="#E6C657"/>
-                  <stop offset="50%" stopColor="#C5A028"/>
-                  <stop offset="70%" stopColor="#9E7815"/>
-                  <stop offset="100%" stopColor="#F5E08A"/>
-                </linearGradient>
-                <filter id="shadow3D" x="-10%" y="-10%" width="120%" height="120%">
-                  <feDropShadow dx="2" dy="4" stdDeviation="3" floodColor="#000000" floodOpacity="0.6"/>
-                </filter>
-              </defs>
-
-              {/* Anillo Circular Exterior Dorado */}
-              <circle cx="250" cy="180" r="150" stroke="url(#goldOfficial)" strokeWidth="18" fill="#112A20" filter="url(#shadow3D)"/>
-
-              {/* Monograma Entrelazado M-I-A Exacto */}
-              {/* M Estilizada con pico central */}
-              <path d="M 145 110 L 205 270 L 250 185 L 295 270 L 355 110" stroke="url(#goldOfficial)" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" filter="url(#shadow3D)"/>
-              {/* Barra Vertical Central (I) */}
-              <path d="M 250 110 V 285" stroke="url(#goldOfficial)" strokeWidth="16" strokeLinecap="round" filter="url(#shadow3D)"/>
-              {/* Letra A Lateral (Derecha) */}
-              <path d="M 355 110 H 295 V 285 H 355" stroke="url(#goldOfficial)" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" filter="url(#shadow3D)"/>
-
-              {/* Texto MIA Inferior */}
-              <text x="250" y="380" textAnchor="middle" fill="url(#goldOfficial)" fontFamily="Georgia, serif" fontSize="68" fontWeight="bold" letterSpacing="14" filter="url(#shadow3D)">MIA</text>
-              {/* Subtítulo */}
-              <text x="250" y="435" textAnchor="middle" fill="#E6C657" fontFamily="Georgia, serif" fontSize="24" fontWeight="normal" letterSpacing="2" filter="url(#shadow3D)">Mi Inteligencia de Ahorro</text>
-            </svg>
-          </div>
-        );
-
-        // Versión Compacta para la barra superior (Header)
-        const LogoHeaderMIA = () => (
-          <div className="flex items-center">
-            <svg viewBox="0 0 100 100" className="w-9 h-9 mr-2" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="50" r="44" stroke="url(#goldH)" strokeWidth="6" fill="#112A20"/>
-              <path d="M 30 30 L 42 68 L 50 48 L 58 68 L 70 30" stroke="url(#goldH)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M 50 30 V 72" stroke="url(#goldH)" strokeWidth="5" strokeLinecap="round"/>
-              <path d="M 70 30 H 60 V 72 H 70" stroke="url(#goldH)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-              <defs>
-                <linearGradient id="goldH" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FFF2B2"/>
-                  <stop offset="50%" stopColor="#C5A028"/>
-                  <stop offset="100%" stopColor="#9E7815"/>
+                <linearGradient id="goldClean" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{ stopColor: '#FFF8DC', stopOpacity: 1 }} />
+                  <stop offset="50%" style={{ stopColor: '#DAA520', stopOpacity: 1 }} />
+                  <stop offset="100%" style={{ stopColor: '#B8860B', stopOpacity: 1 }} />
                 </linearGradient>
               </defs>
+              <circle cx="50" cy="50" r="46" stroke="url(#goldClean)" strokeWidth="5" fill="#112A20" />
+              <path d="M28 32V68L50 48L72 68V32" stroke="url(#goldClean)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <path d="M50 32V68" stroke="url(#goldClean)" strokeWidth="5" strokeLinecap="round"/>
             </svg>
-            <span style={{ fontFamily: 'Georgia, serif', fontWeight: 'bold', fontSize: '20px', letterSpacing: '4px', background: 'linear-gradient(135deg, #FFF2B2 0%, #C5A028 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>MIA</span>
           </div>
         );
 
@@ -660,8 +658,10 @@
 
           if (!sesion) {
             return (
-              <div className="flex flex-col h-full bg-[#112A20] justify-center items-center p-3 w-full text-white overflow-y-auto">
-                <LogoOficialMIA className="w-56 h-44 mb-1" />
+              <div className="flex flex-col h-full bg-[#112A20] justify-center items-center p-4 w-full text-white overflow-y-auto">
+                <div className="mb-4 flex items-center justify-center">
+                  <LogoMIA_Limpio className="h-28 w-28" />
+                </div>
 
                 <div className="bg-white text-slate-800 rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 shrink-0">
                   <h2 className="text-lg font-bold text-center text-[#112A20]">
@@ -714,7 +714,9 @@
           return (
             <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
               <div className="p-2 px-4 flex justify-between items-center bg-white border-b border-slate-100 shadow-sm">
-                <LogoHeaderMIA />
+                <div className="flex items-center">
+                  <LogoMIA_Limpio className="h-10 w-10" />
+                </div>
                 <button onClick={cerrarSesion} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 hover:bg-red-100 transition">
                   Cerrar Sesión
                 </button>
@@ -1352,5 +1354,4 @@
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
-</html>   
- 
+</html> 
