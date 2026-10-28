@@ -12,6 +12,82 @@
         @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
+        /* Estilos CSS nativos garantizados para el Logo Dorado Oficial */
+        .mia-logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+        .mia-badge {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 7px solid #D4AF37;
+            background: #112A20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        }
+        .mia-monogram {
+            font-family: 'Georgia', serif;
+            font-size: 52px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #FFF2B2 0%, #D4AF37 50%, #AA771C 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+        .mia-title-gold {
+            font-family: 'Georgia', serif;
+            font-size: 32px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #FFF2B2 0%, #D4AF37 50%, #AA771C 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 8px;
+            margin-top: 10px;
+        }
+        .mia-subtitle {
+            font-family: sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: #E2E8F0;
+            letter-spacing: 1.5px;
+            margin-top: 2px;
+        }
+        /* Versión compacta para Header */
+        .mia-header-badge {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 3px solid #D4AF37;
+            background: #112A20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mia-header-mono {
+            font-family: 'Georgia', serif;
+            font-size: 16px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #FFF2B2 0%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .mia-header-text {
+            font-family: 'Georgia', serif;
+            font-size: 20px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #FFF2B2 0%, #D4AF37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 4px;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body class="bg-[#112A20] text-slate-800 flex justify-center items-center min-h-screen m-0">
@@ -90,58 +166,23 @@
           }
         };
 
-        // COMPONENTE DEL LOGO OFICIAL USANDO LA IMAGEN REAL EN ALTA CALIDAD
-        const LogoOficialMIA = ({ className = "h-32 w-32" }) => (
-          <div className={`flex items-center justify-center overflow-hidden rounded-2xl ${className}`}>
-            <img 
-              src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=" 
-              alt="MIA Logo Oficial" 
-              className="w-full h-full object-cover"
-              onError={(e)=>{
-                // Respaldo visual directo con la URL base64 o diseño vectorial equivalente si el binario requiere contenedor web
-                e.target.style.display='none';
-              }}
-            />
-            {/* Contenedor gráfico optimizado con la estetica exacta de la imagen oficial */}
-            <div className="w-full h-full flex flex-col items-center justify-center bg-[#112A20] p-1">
-              <svg viewBox="0 0 400 420" className="w-full h-full drop-shadow-lg" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="200" cy="165" r="135" stroke="url(#goldGrad)" strokeWidth="18" fill="#112A20"/>
-                {/* Monograma exacto M-I-A */}
-                <path d="M 125 100 L 165 210 L 200 150 L 235 210 L 275 100" stroke="url(#goldGrad)" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M 200 100 V 230" stroke="url(#goldGrad)" strokeWidth="16" strokeLinecap="round"/>
-                <path d="M 275 100 H 235 V 230 H 275" stroke="url(#goldGrad)" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"/>
-                <defs>
-                  <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#FFF2B2"/>
-                    <stop offset="35%" stopColor="#D4AF37"/>
-                    <stop offset="70%" stopColor="#AA771C"/>
-                    <stop offset="100%" stopColor="#FFF8DC"/>
-                  </linearGradient>
-                </defs>
-                <text x="200" y="325" textAnchor="middle" fill="url(#goldGrad)" fontFamily="Georgia, serif" fontSize="58" fontWeight="bold" letterSpacing="10">MIA</text>
-                <text x="200" y="375" textAnchor="middle" fill="#D4AF37" fontFamily="sans-serif" fontSize="21" fontWeight="500" letterSpacing="1.5">Mi Inteligencia de Ahorro</text>
-              </svg>
+        // COMPONENTES HTML/CSS PURO GARANTIZADOS PARA EL LOGO
+        const LogoOficialMIA = () => (
+          <div className="mia-logo-container">
+            <div className="mia-badge">
+              <span className="mia-monogram">MIA</span>
             </div>
+            <h1 className="mia-title-gold">MIA</h1>
+            <p className="mia-subtitle">Mi Inteligencia de Ahorro</p>
           </div>
         );
 
-        // Versión compacta para la barra superior (Header) sin subtítulo
-        const LogoHeaderMIA = ({ className = "h-10 w-28" }) => (
-          <div className={`flex items-center justify-start ${className}`}>
-            <svg viewBox="0 0 320 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="50" r="42" stroke="url(#goldGradH)" strokeWidth="6" fill="#112A20"/>
-              <path d="M 30 30 L 44 68 L 50 48 L 56 68 L 70 30" stroke="url(#goldGradH)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M 50 30 V 72" stroke="url(#goldGradH)" strokeWidth="5" strokeLinecap="round"/>
-              <path d="M 70 30 H 58 V 72 H 70" stroke="url(#goldGradH)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-              <defs>
-                <linearGradient id="goldGradH" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FFF2B2"/>
-                  <stop offset="50%" stopColor="#D4AF37"/>
-                  <stop offset="100%" stopColor="#AA771C"/>
-                </linearGradient>
-              </defs>
-              <text x="110" y="62" fill="url(#goldGradH)" fontFamily="Georgia, serif" fontSize="38" fontWeight="bold" letterSpacing="6">MIA</text>
-            </svg>
+        const LogoHeaderMIA = () => (
+          <div className="flex items-center">
+            <div className="mia-header-badge">
+              <span className="mia-header-mono">M</span>
+            </div>
+            <span className="mia-header-text">MIA</span>
           </div>
         );
 
@@ -695,12 +736,10 @@
 
           if (!sesion) {
             return (
-              <div className="flex flex-col h-full bg-[#112A20] justify-center items-center p-6 w-full text-white">
-                <div className="text-center mb-6 flex flex-col items-center">
-                  <LogoOficialMIA className="h-48 w-48 mb-2" />
-                </div>
+              <div className="flex flex-col h-full bg-[#112A20] justify-center items-center p-4 w-full text-white overflow-y-auto">
+                <LogoOficialMIA />
 
-                <div className="bg-white text-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+                <div className="bg-white text-slate-800 rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 shrink-0 mt-4">
                   <h2 className="text-lg font-bold text-center text-[#112A20]">
                     {modoRegistro ? 'Crea tu cuenta' : 'Iniciar Sesión'}
                   </h2>
@@ -739,7 +778,7 @@
 
                   <button 
                     onClick={() => setModoRegistro(!modoRegistro)} 
-                    className="w-full text-center text-xs text-[#2D6A4F] font-bold hover:underline pt-2"
+                    className="w-full text-center text-xs text-[#2D6A4F] font-bold hover:underline pt-1"
                   >
                     {modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí'}
                   </button>
@@ -750,17 +789,13 @@
 
           return (
             <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
-              {/* Header con el logotipo exacto (sin repetir texto) */}
               <div className="p-2 px-4 flex justify-between items-center bg-white border-b border-slate-100 shadow-sm">
-                <div className="flex items-center">
-                  <LogoHeaderMIA className="h-10 w-28" />
-                </div>
+                <LogoHeaderMIA />
                 <button onClick={cerrarSesion} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 hover:bg-red-100 transition">
                   Cerrar Sesión
                 </button>
               </div>
 
-              {/* Contenido scrolleable */}
               <div className="flex-1 overflow-y-auto p-4 pb-24">
                 {tab === 'inicio' && (
                   <div>
@@ -1393,5 +1428,5 @@
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
-</html>   
+</html> 
  
