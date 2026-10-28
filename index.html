@@ -12,29 +12,6 @@
         @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
-        .gold-3d-text {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 900;
-            background: linear-gradient(135deg, #FFF8DC 10%, #DAA520 40%, #B8860B 60%, #DAA520 90%, #FFF8DC 100%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            filter: drop-shadow(1px 1px 0px rgba(0,0,0,0.3));
-        }
-        .gold-3d-emblem {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-        .gold-3d-emblem::before {
-            content: '';
-            position: absolute;
-            inset: -5px;
-            background: radial-gradient(circle at center, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
-            filter: blur(5px);
-            z-index: -1;
-            border-radius: 50%;
-        }
     </style>
 </head>
 <body class="bg-[#F3F7F2] text-slate-800 flex justify-center items-center min-h-screen m-0">
@@ -98,7 +75,7 @@
           async guardarDatosNube(token, payload) {
             try {
               await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
-                method: 'POST',
+                model: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
                   'apikey': SUPABASE_ANON_KEY,
@@ -113,23 +90,51 @@
           }
         };
 
-        const LogoMIA_Definitivo = ({ className = "h-14 w-14" }) => (
-          <div className={`gold-3d-emblem ${className}`}>
-            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        // COMPONENTE DEL LOGO DEFINITIVO EXACTO BASADO EN TU IMAGEN
+        const LogoMIA_Oficial = ({ className = "h-20 w-20" }) => (
+          <div className={`flex flex-col items-center justify-center ${className}`}>
+            <svg viewBox="0 0 400 450" className="w-full h-full drop-shadow-md" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Círculo dorado exterior con monograma */}
+              <circle cx="200" cy="180" r="150" stroke="url(#goldGrad)" strokeWidth="22" fill="#112A20"/>
+              
+              {/* Barras y letras internas doradas */}
+              <path d="M 125 105 L 175 235 L 200 160 L 225 235 L 275 105" stroke="url(#goldGrad)" strokeWidth="22" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M 200 105 V 255" stroke="url(#goldGrad)" strokeWidth="22" strokeLinecap="round"/>
+              <path d="M 275 105 H 225 V 255 H 275" stroke="url(#goldGrad)" strokeWidth="22" strokeLinecap="round" strokeLinejoin="round"/>
+
               <defs>
                 <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%"   style={{ stopColor: '#FFF8DC', stopOpacity: 1 }} />
-                  <stop offset="45%"  style={{ stopColor: '#DAA520', stopOpacity: 1 }} />
-                  <stop offset="55%"  style={{ stopColor: '#B8860B', stopOpacity: 1 }} />
-                  <stop offset="100%" style={{ stopColor: '#DAA520', stopOpacity: 1 }} />
+                  <stop offset="0%" stopColor="#FFF2B2"/>
+                  <stop offset="40%" stopColor="#D4AF37"/>
+                  <stop offset="70%" stopColor="#AA771C"/>
+                  <stop offset="100%" stopColor="#FFF8DC"/>
                 </linearGradient>
-                <filter id="shadow">
-                  <feDropShadow dx="1" dy="1" stdDeviation="0.5" floodColor="#000000" floodOpacity="0.5"/>
-                </filter>
               </defs>
-              <circle cx="50" cy="50" r="48" stroke="url(#goldGrad)" strokeWidth="4" fill="none" filter="url(#shadow)" />
-              <path d="M22 30V70L50 44L78 70V30" stroke="url(#goldGrad)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" fill="none" filter="url(#shadow)"/>
-              <path d="M50 30V70" stroke="url(#goldGrad)" strokeWidth="6" strokeLinecap="round" filter="url(#shadow)"/>
+
+              {/* Texto MIA Dorado debajo del círculo */}
+              <text x="200" y="360" textAnchor="middle" fill="url(#goldGrad)" fontFamily="serif" fontSize="65" fontWeight="bold" letterSpacing="12">MIA</text>
+              {/* Subtítulo */}
+              <text x="200" y="415" textAnchor="middle" fill="#E2E8F0" fontFamily="sans-serif" fontSize="24" fontWeight="600" letterSpacing="2">Mi Inteligencia de Ahorro</text>
+            </svg>
+          </div>
+        );
+
+        // Versión compacta para la barra superior (Header) sin subtítulo para que no se repita
+        const LogoMIA_Header = ({ className = "h-10 w-10" }) => (
+          <div className={`flex items-center justify-center ${className}`}>
+            <svg viewBox="0 0 400 450" className="w-full h-full drop-shadow-sm" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="200" cy="180" r="150" stroke="url(#goldGradHeader)" strokeWidth="22" fill="#112A20"/>
+              <path d="M 125 105 L 175 235 L 200 160 L 225 235 L 275 105" stroke="url(#goldGradHeader)" strokeWidth="22" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M 200 105 V 255" stroke="url(#goldGradHeader)" strokeWidth="22" strokeLinecap="round"/>
+              <path d="M 275 105 H 225 V 255 H 275" stroke="url(#goldGradHeader)" strokeWidth="22" strokeLinecap="round" strokeLinejoin="round"/>
+              <defs>
+                <linearGradient id="goldGradHeader" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#FFF2B2"/>
+                  <stop offset="50%" stopColor="#D4AF37"/>
+                  <stop offset="100%" stopColor="#AA771C"/>
+                </linearGradient>
+              </defs>
+              <text x="200" y="360" textAnchor="middle" fill="url(#goldGradHeader)" fontFamily="serif" fontSize="65" fontWeight="bold" letterSpacing="12">MIA</text>
             </svg>
           </div>
         );
@@ -231,33 +236,6 @@
               supabaseApi.guardarDatosNube(sesion.access_token, payload);
             }
           }, [cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, datosCargados]);
-
-          useEffect(() => {
-            if (!sesion) return;
-            const ahora = new Date();
-            const horaActual = ahora.getHours();
-            const hoyStr = fechaHoy();
-            const ultimaVisita = localStorage.getItem('mia_ultima_visita');
-
-            if (horaActual >= 10 && ultimaVisita !== hoyStr) {
-              notificar('⏰ Recordatorio MIA', '¡Hola! Aún no has ingresado a MIA hoy. Tómate un momento para revisar tus finanzas.');
-              localStorage.setItem('mia_ultima_visita', hoyStr);
-            }
-
-            const mañana = new Date();
-            mañana.setDate(mañana.getDate() + 1);
-            const mañanaStr = `${mañana.getFullYear()}-${String(mañana.getMonth() + 1).padStart(2, '0')}-${String(mañana.getDate()).padStart(2, '0')}`;
-
-            const porCobrarVencimiento = cuentasPorCobrar.filter(c => c.estado !== 'Pagado' && c.vencimiento === mañanaStr);
-            const porPagarVencimiento = cuentasPorPagar.filter(c => c.estado !== 'Pagado' && c.vencimiento === mañanaStr);
-
-            if (porCobrarVencimiento.length > 0 || porPagarVencimiento.length > 0) {
-              let msg = '⚠️ Tienes elementos próximos a vencer mañana:\n';
-              porCobrarVencimiento.forEach(c => { msg += `• Cobrar a ${c.tercero}: ${formatoCOP(c.saldoPendiente)}\n`; });
-              porPagarVencimiento.forEach(c => { msg += `• Pagar a ${c.tercero}: ${formatoCOP(c.saldoPendiente)}\n`; });
-              notificar('🚨 Alerta de Vencimiento', msg);
-            }
-          }, [sesion, cuentasPorCobrar, cuentasPorPagar]);
 
           const manejarLogin = async () => {
             if (!emailInput || !passInput) {
@@ -711,15 +689,13 @@
 
           if (!sesion) {
             return (
-              <div className="flex flex-col h-full bg-[#1B4332] justify-center items-center p-6 w-full text-white">
+              <div className="flex flex-col h-full bg-[#112A20] justify-center items-center p-6 w-full text-white">
                 <div className="text-center mb-6 flex flex-col items-center">
-                  <LogoMIA_Definitivo className="h-24 w-24 mb-3" />
-                  <h1 className="gold-3d-text text-3xl font-extrabold tracking-wider">MIA</h1>
-                  <p className="text-xs text-[#B7E4C7] mt-1 font-medium">Mi Inteligencia de Ahorro</p>
+                  <LogoMIA_Oficial className="h-44 w-44 mb-2" />
                 </div>
 
                 <div className="bg-white text-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
-                  <h2 className="text-lg font-bold text-center text-[#1B4332]">
+                  <h2 className="text-lg font-bold text-center text-[#112A20]">
                     {modoRegistro ? 'Crea tu cuenta' : 'Iniciar Sesión'}
                   </h2>
 
@@ -746,11 +722,11 @@
                   </div>
 
                   {modoRegistro ? (
-                    <button onClick={manejarRegistro} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#1B4332] transition">
+                    <button onClick={manejarRegistro} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition">
                       Registrarse
                     </button>
                   ) : (
-                    <button onClick={manejarLogin} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#1B4332] transition">
+                    <button onClick={manejarLogin} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition">
                       Ingresar
                     </button>
                   )}
@@ -768,10 +744,10 @@
 
           return (
             <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
-              {/* Header con el logotipo definitivo único (sin textos repetidos) */}
-              <div className="p-3 px-4 flex justify-between items-center bg-white border-b border-slate-100 shadow-sm">
+              {/* Header con el logotipo exacto compacto (sin repetición de textos) */}
+              <div className="p-2 px-4 flex justify-between items-center bg-white border-b border-slate-100 shadow-sm">
                 <div className="flex items-center">
-                  <LogoMIA_Definitivo className="h-10 w-10" />
+                  <LogoMIA_Header className="h-12 w-32" />
                 </div>
                 <button onClick={cerrarSesion} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 hover:bg-red-100 transition">
                   Cerrar Sesión
@@ -782,7 +758,7 @@
               <div className="flex-1 overflow-y-auto p-4 pb-24">
                 {tab === 'inicio' && (
                   <div>
-                    <div className="bg-[#1B4332] rounded-2xl p-5 mb-4 shadow-md text-white">
+                    <div className="bg-[#112A20] rounded-2xl p-5 mb-4 shadow-md text-white">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-[11px] font-bold text-[#B7E4C7] tracking-wider">PATRIMONIO TOTAL DISPONIBLE</span>
                         <button onClick={() => setTab('cuentas')} className="text-[#B7E4C7] text-xs font-bold hover:underline">⚙️ Ajustar saldos</button>
@@ -792,7 +768,7 @@
                     </div>
 
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-[17px] font-bold text-[#1B4332]">Tus Fondos y Deudas Activas</h3>
+                      <h3 className="text-[17px] font-bold text-[#112A20]">Tus Fondos y Deudas Activas</h3>
                       <button onClick={() => setTab('cuentas')} className="text-xs text-[#2D6A4F] font-bold hover:underline">Ver cuentas ›</button>
                     </div>
 
@@ -832,7 +808,7 @@
                       )}
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Registrar Movimiento General</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">Registrar Movimiento General</h3>
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
                       <div className="flex gap-2">
                         <button
@@ -903,13 +879,13 @@
 
                       <button
                         onClick={guardarMovimiento}
-                        className="w-full bg-[#205B43] text-white font-bold py-3.5 rounded-xl shadow-md mt-2 hover:bg-[#1B4332] transition"
+                        className="w-full bg-[#205B43] text-white font-bold py-3.5 rounded-xl shadow-md mt-2 hover:bg-[#112A20] transition"
                       >
                         + Guardar Movimiento
                       </button>
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Movimientos Recientes</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">Movimientos Recientes</h3>
                     {movimientos.length === 0 ? (
                       <p className="text-center text-[#718078] my-6 italic text-sm">Aún no has registrado movimientos. ¡Agrega tu primero arriba!</p>
                     ) : (
@@ -935,7 +911,7 @@
                 {tab === 'cuentas' && (
                   <div>
                     <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-[17px] font-bold text-[#1B4332]">Cuentas y Saldos Iniciales</h3>
+                      <h3 className="text-[17px] font-bold text-[#112A20]">Cuentas y Saldos Iniciales</h3>
                       <button onClick={() => setModalNuevaCuenta(true)} className="bg-[#2D6A4F] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow hover:bg-[#205B43] transition">
                         + Crear Cuenta
                       </button>
@@ -986,7 +962,7 @@
                               const movsCuenta = movimientos.filter(m => m.cuentaId === c.id);
                               return (
                                 <div className="mt-3 p-3 bg-[#F8FAF8] rounded-xl border border-slate-200 space-y-2">
-                                  <p className="text-xs font-bold text-[#1B4332]">Movimientos de {c.nombre}:</p>
+                                  <p className="text-xs font-bold text-[#112A20]">Movimientos de {c.nombre}:</p>
                                   {movsCuenta.length === 0 ? (
                                     <p className="text-[11px] text-slate-500 italic">No hay movimientos registrados en esta cuenta.</p>
                                   ) : (
@@ -1005,7 +981,7 @@
                                     </div>
                                   )}
                                   <div className="flex gap-2 pt-2">
-                                    <button onClick={() => exportarCSVCuenta(c, movsCuenta)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#1B4332] transition">
+                                    <button onClick={() => exportarCSVCuenta(c, movsCuenta)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#112A20] transition">
                                       📊 Excel (CSV)
                                     </button>
                                     <button onClick={() => exportarPDFCuenta(c, movsCuenta, saldoActual)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#2D6A4F] transition">
@@ -1028,16 +1004,16 @@
 
                 {tab === 'deudas' && (
                   <div>
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Gestión de Terceros (CxC / CxP)</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">Gestión de Terceros (CxC / CxP)</h3>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
                       <div>
-                        <label className="text-xs font-bold text-[#1B4332] block mb-1">📅 Fecha del Registro:</label>
+                        <label className="text-xs font-bold text-[#112A20] block mb-1">📅 Fecha del Registro:</label>
                         <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold" />
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-[#1B4332] block mb-1">Tipo:</label>
+                        <label className="text-xs font-bold text-[#112A20] block mb-1">Tipo:</label>
                         <select 
                           value={tipoCxUnified} 
                           onChange={(e) => setTipoCxUnified(e.target.value)} 
@@ -1086,7 +1062,7 @@
                             {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
                           </select>
                           <input type="text" placeholder="Observación / Nota" value={obsCxC} onChange={(e) => setObsCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-3" />
-                          <button onClick={guardarCxC} className="w-full bg-[#2D6A4F] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-[#205B43] transition">Guardar Cuenta por Cobrar</button>
+                          <button onClick={guardarCxC} className="w-full bg-[#2D6A4F] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-[#112A20] transition">Guardar Cuenta por Cobrar</button>
                         </div>
                       ) : (
                         <div>
@@ -1130,7 +1106,7 @@
                     </div>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-                      <h4 className="text-sm font-bold text-[#1B4332]">⚡ Registrar Abono o Pago</h4>
+                      <h4 className="text-sm font-bold text-[#112A20]">⚡ Registrar Abono o Pago</h4>
                       
                       <div>
                         <label className="text-[11px] font-bold text-[#52725F] block mb-1">Fecha del Abono:</label>
@@ -1169,7 +1145,7 @@
                               {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
                             </select>
                           </div>
-                          <button onClick={procesarCobroUnificado} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-lg text-xs hover:bg-[#205B43] transition">Recibir Pago en Cuenta</button>
+                          <button onClick={procesarCobroUnificado} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-lg text-xs hover:bg-[#112A20] transition">Recibir Pago en Cuenta</button>
                         </div>
                       ) : (
                         <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
@@ -1196,10 +1172,10 @@
 
                 {tab === 'reportes' && (
                   <div>
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Reportes y Estado de Deudas</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">Reportes y Estado de Deudas</h3>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
-                      <h4 className="text-sm font-bold text-[#1B4332] mb-2">📑 Reporte Detallado por Tercero (CxC / CxP)</h4>
+                      <h4 className="text-sm font-bold text-[#112A20] mb-2">📑 Reporte Detallado por Tercero (CxC / CxP)</h4>
                       <div className="flex gap-2 mb-2">
                         <select value={tipoReporteTercero} onChange={(e) => { setTipoReporteTercero(e.target.value); setTerceroSeleccionadoId(''); }} className="flex-1 bg-[#F8FAF8] rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold">
                           <option value="CxC">Cuentas por Cobrar</option>
@@ -1227,7 +1203,7 @@
                             {itemSel.observacion && <p className="text-xs italic text-slate-500">Nota: {itemSel.observacion}</p>}
 
                             <div className="mt-3 pt-2 border-t border-slate-200">
-                              <p className="text-[11px] font-bold text-[#1B4332] mb-1">📜 Historial de Movimientos:</p>
+                              <p className="text-[11px] font-bold text-[#112A20] mb-1">📜 Historial de Movimientos:</p>
                               <div className="text-[11px] space-y-1 bg-white p-2 rounded-lg border border-slate-100">
                                 <p className="text-emerald-700 font-semibold">🟢 {itemSel.fechaInicial || 'Inicio'} — Saldo Inicial: +{formatoCOP(itemSel.valorTotal)}</p>
                                 {(itemSel.historialPagos || []).map((p, idx) => (
@@ -1239,7 +1215,7 @@
                             </div>
 
                             <div className="flex gap-2 pt-2">
-                              <button onClick={() => exportarCSV(itemSel)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#1B4332] transition">
+                              <button onClick={() => exportarCSV(itemSel)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#112A20] transition">
                                 📊 Exportar a Excel (CSV)
                               </button>
                               <button onClick={() => exportarPDF(itemSel)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#2D6A4F] transition">
@@ -1252,7 +1228,7 @@
                     </div>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
-                      <h4 className="text-sm font-bold text-[#1B4332] mb-3">📊 Balance General de Deudas</h4>
+                      <h4 className="text-sm font-bold text-[#112A20] mb-3">📊 Balance General de Deudas</h4>
                       
                       <div className="flex justify-between items-center mb-1 text-xs">
                         <span className="font-semibold text-[#2D6A4F]">📥 CxC: {formatoCOP(totalCxCPendiente)} ({pctCxC}%)</span>
@@ -1270,7 +1246,7 @@
                       </div>
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3 mt-6">Reporte Financiero por Fechas</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3 mt-6">Reporte Financiero por Fechas</h3>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3">
                       <label className="text-xs font-semibold text-[#52725F] block mb-2">Período de consulta (AAAA-MM-DD):</label>
@@ -1301,7 +1277,7 @@
                       </div>
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Distribución por Rubro ({listaRubros.length})</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">Distribución por Rubro ({listaRubros.length})</h3>
 
                     {totalGastosReporte === 0 ? (
                       <p className="text-center text-[#718078] my-6 italic text-sm">No existen gastos registrados entre {fechaDesde} y {fechaHasta}.</p>
@@ -1310,14 +1286,14 @@
                         <div className="h-4 flex rounded-lg overflow-hidden bg-[#E2E8F0] mb-4">
                           {listaRubros.map(([rubro, total], idx) => {
                             const pct = Math.max(1, Math.round((total / totalGastosReporte) * 100));
-                            const paleta = ['#1B4332', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
+                            const paleta = ['#112A20', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
                             return <div key={rubro} style={{ width: `${pct}%`, backgroundColor: paleta[idx % paleta.length] }} className="h-full"></div>;
                           })}
                         </div>
 
                         {listaRubros.map(([rubro, total], idx) => {
                           const porcentaje = Math.round((total / totalGastosReporte) * 100);
-                          const paleta = ['#1B4332', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
+                          const paleta = ['#112A20', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
                           const color = paleta[idx % paleta.length];
 
                           return (
@@ -1344,7 +1320,7 @@
               {modalEditarSaldo && (
                 <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
                   <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
-                    <h3 className="text-lg font-extrabold text-[#1B4332] text-center mb-2">Modificar Saldo Inicial</h3>
+                    <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-2">Modificar Saldo Inicial</h3>
                     <p className="text-xs text-[#52725F] mb-3 text-center">Cuenta: <span className="font-bold">{cuentaAEditar?.nombre}</span></p>
 
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Nuevo saldo de arranque en COP:</label>
@@ -1352,7 +1328,7 @@
 
                     <div className="flex gap-2">
                       <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
-                      <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#1B4332] transition">Guardar Saldo</button>
+                      <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#112A20] transition">Guardar Saldo</button>
                     </div>
                   </div>
                 </div>
@@ -1361,7 +1337,7 @@
               {modalNuevaCuenta && (
                 <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
                   <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
-                    <h3 className="text-lg font-extrabold text-[#1B4332] text-center mb-3">Nueva Cuenta o Banco</h3>
+                    <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-3">Nueva Cuenta o Banco</h3>
 
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Nombre de la cuenta:</label>
                     <input type="text" placeholder="Ej. Daviplata, BBVA" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
@@ -1380,7 +1356,7 @@
 
                     <div className="flex gap-2">
                       <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
-                      <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#1B4332] transition">Crear Cuenta</button>
+                      <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#112A20] transition">Crear Cuenta</button>
                     </div>
                   </div>
                 </div>
