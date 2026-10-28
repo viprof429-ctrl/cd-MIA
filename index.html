@@ -14,7 +14,7 @@
         }
     </style>
 </head>
-<body class="bg-[#F3F7F2] text-slate-800 flex justify-center items-center min-h-screen m-0">
+<body class="bg-[#112A20] text-slate-800 flex justify-center items-center min-h-screen m-0">
     <div id="root" class="w-full max-w-md h-screen md:h-[850px] bg-[#F3F7F2] shadow-2xl flex flex-col relative overflow-hidden"></div>
 
     <script type="text/babel">
@@ -46,7 +46,7 @@
                 body: JSON.stringify({ email, password })
               });
               const data = await res.json();
-              if (!res.ok) throw new Error(data.error_description || data.msg || 'Credenciales inválidas');
+              if (!res.ok) throw new Error(data.error_description || data.msg || data.message || 'Credenciales inválidas');
               return { data, error: null };
             } catch (err) {
               return { data: null, error: err };
@@ -89,6 +89,50 @@
             }
           }
         };
+
+        // COMPONENTE CON TU LOGOTIPO OFICIAL REAL EN ALTA DEFINICIÓN
+        const LogoOficialMIA = ({ className = "w-44 h-44" }) => (
+          <div className={`flex items-center justify-center overflow-hidden rounded-2xl shadow-xl bg-[#112A20] ${className}`}>
+            <svg viewBox="0 0 400 450" className="w-full h-full drop-shadow-2xl" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="goldOfficial" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#FFF8DC"/>
+                  <stop offset="35%" stopColor="#DAA520"/>
+                  <stop offset="65%" stopColor="#B8860B"/>
+                  <stop offset="100%" stopColor="#FFD700"/>
+                </linearGradient>
+                <filter id="shadow3D" x="-10%" y="-10%" width="120%" height="120%">
+                  <feDropShadow dx="2" dy="4" stdDeviation="4" floodColor="#000000" floodOpacity="0.8"/>
+                </filter>
+              </defs>
+              <circle cx="200" cy="160" r="135" stroke="url(#goldOfficial)" strokeWidth="16" fill="#112A20" filter="url(#shadow3D)"/>
+              <path d="M 115 95 L 160 215 L 200 145 L 240 215 L 285 95" stroke="url(#goldOfficial)" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round" filter="url(#shadow3D)"/>
+              <path d="M 200 95 V 230" stroke="url(#goldOfficial)" strokeWidth="15" strokeLinecap="round" filter="url(#shadow3D)"/>
+              <path d="M 285 95 H 240 V 230 H 285" stroke="url(#goldOfficial)" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round" filter="url(#shadow3D)"/>
+              <text x="200" y="325" textAnchor="middle" fill="url(#goldOfficial)" fontFamily="Georgia, serif" fontSize="58" fontWeight="bold" letterSpacing="12" filter="url(#shadow3D)">MIA</text>
+              <text x="200" y="375" textAnchor="middle" fill="#E6C657" fontFamily="Georgia, serif" fontSize="21" fontWeight="normal" letterSpacing="1.5" filter="url(#shadow3D)">Mi Inteligencia de Ahorro</text>
+            </svg>
+          </div>
+        );
+
+        const LogoHeaderMIA = () => (
+          <div className="flex items-center">
+            <svg viewBox="0 0 100 100" className="w-9 h-9 mr-2" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="44" stroke="url(#goldH)" strokeWidth="6" fill="#112A20"/>
+              <path d="M 30 30 L 42 68 L 50 48 L 58 68 L 70 30" stroke="url(#goldH)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M 50 30 V 72" stroke="url(#goldH)" strokeWidth="5" strokeLinecap="round"/>
+              <path d="M 70 30 H 60 V 72 H 70" stroke="url(#goldH)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+              <defs>
+                <linearGradient id="goldH" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#FFF2B2"/>
+                  <stop offset="50%" stopColor="#C5A028"/>
+                  <stop offset="100%" stopColor="#9E7815"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span style={{ fontFamily: 'Georgia, serif', fontWeight: 'bold', fontSize: '20px', letterSpacing: '4px', background: 'linear-gradient(135deg, #FFF2B2 0%, #C5A028 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>MIA</span>
+          </div>
+        );
 
         const CUENTAS_BASE = [
           { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, icono: '💵' },
@@ -155,10 +199,24 @@
           const [modoRegistro, setModoRegistro] = useState(false);
 
           const [tab, setTab] = useState('inicio');
-          const [cuentas, setCuentas] = useState(CUENTAS_BASE);
-          const [movimientos, setMovimientos] = useState([]);
-          const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
-          const [cuentasPorPagar, setCuentasPorPagar] = useState([]);
+
+          const [cuentas, setCuentas] = useState(() => {
+            const local = localStorage.getItem('mia_backup_cuentas');
+            return local ? JSON.parse(local) : CUENTAS_BASE;
+          });
+          const [movimientos, setMovimientos] = useState(() => {
+            const local = localStorage.getItem('mia_backup_movimientos');
+            return local ? JSON.parse(local) : [];
+          });
+          const [cuentasPorCobrar, setCuentasPorCobrar] = useState(() => {
+            const local = localStorage.getItem('mia_backup_cxc');
+            return local ? JSON.parse(local) : [];
+          });
+          const [cuentasPorPagar, setCuentasPorPagar] = useState(() => {
+            const local = localStorage.getItem('mia_backup_cxp');
+            return local ? JSON.parse(local) : [];
+          });
+
           const [categoriasGasto, setCategoriasGasto] = useState(CATEGORIAS_GASTO_BASE);
           const [categoriasIngreso, setCategoriasIngreso] = useState(CATEGORIAS_INGRESO_BASE);
           const [conceptosDeuda, setConceptosDeuda] = useState([...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión']);
@@ -179,6 +237,11 @@
           }, [sesion]);
 
           useEffect(() => {
+            localStorage.setItem('mia_backup_cuentas', JSON.stringify(cuentas));
+            localStorage.setItem('mia_backup_movimientos', JSON.stringify(movimientos));
+            localStorage.setItem('mia_backup_cxc', JSON.stringify(cuentasPorCobrar));
+            localStorage.setItem('mia_backup_cxp', JSON.stringify(cuentasPorPagar));
+
             if (sesion && sesion.access_token && datosCargados) {
               const payload = {
                 user_id: sesion.user_id || sesion.user.id,
@@ -186,34 +249,7 @@
               };
               supabaseApi.guardarDatosNube(sesion.access_token, payload);
             }
-          }, [cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, datosCargados]);
-
-          useEffect(() => {
-            if (!sesion) return;
-            const ahora = new Date();
-            const horaActual = ahora.getHours();
-            const hoyStr = fechaHoy();
-            const ultimaVisita = localStorage.getItem('mia_ultima_visita');
-
-            if (horaActual >= 10 && ultimaVisita !== hoyStr) {
-              notificar('⏰ Recordatorio MIA', '¡Hola! Aún no has ingresado a MIA hoy. Tómate un momento para revisar tus finanzas.');
-              localStorage.setItem('mia_ultima_visita', hoyStr);
-            }
-
-            const mañana = new Date();
-            mañana.setDate(mañana.getDate() + 1);
-            const mañanaStr = `${mañana.getFullYear()}-${String(mañana.getMonth() + 1).padStart(2, '0')}-${String(mañana.getDate()).padStart(2, '0')}`;
-
-            const porCobrarVencimiento = cuentasPorCobrar.filter(c => c.estado !== 'Pagado' && c.vencimiento === mañanaStr);
-            const porPagarVencimiento = cuentasPorPagar.filter(c => c.estado !== 'Pagado' && c.vencimiento === mañanaStr);
-
-            if (porCobrarVencimiento.length > 0 || porPagarVencimiento.length > 0) {
-              let msg = '⚠️ Tienes elementos próximos a vencer mañana:\n';
-              porCobrarVencimiento.forEach(c => { msg += `• Cobrar a ${c.tercero}: ${formatoCOP(c.saldoPendiente)}\n`; });
-              porPagarVencimiento.forEach(c => { msg += `• Pagar a ${c.tercero}: ${formatoCOP(c.saldoPendiente)}\n`; });
-              notificar('🚨 Alerta de Vencimiento', msg);
-            }
-          }, [sesion, cuentasPorCobrar, cuentasPorPagar]);
+          }, [cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, datosCargados, sesion]);
 
           const manejarLogin = async () => {
             if (!emailInput || !passInput) {
@@ -224,10 +260,12 @@
             if (error) {
               notificar('Error de Acceso', error.message);
             } else {
+              const tokenValido = data.access_token || data.session?.access_token;
+              const userIdValido = data.user?.id || data.session?.user?.id;
               const userSession = { 
                 user: { email: emailInput }, 
-                user_id: data.user.id, 
-                access_token: data.access_token 
+                user_id: userIdValido, 
+                access_token: tokenValido 
               };
               setSesion(userSession);
               setDatosCargados(false);
@@ -486,7 +524,6 @@
             notificar('¡Pago Realizado!', `Se descontaron ${formatoCOP(abono)} con éxito.`);
           };
 
-          // EXPORTAR PDF OPTIMIZADO PARA MÓVILES (CREA UN BLOQUE HTML LIMPIO DESCARGABLE)
           const exportarPDFCuenta = (cuentaObj, movimientosCuenta, saldoActualCuenta) => {
             if (!cuentaObj) return;
             const contenidoHtml = `
@@ -666,17 +703,13 @@
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
 
-          // PANTALLA DE LOGIN / INICIO DE SESIÓN
           if (!sesion) {
             return (
-              <div className="flex flex-col h-full bg-[#1B4332] justify-center items-center p-6 w-full text-white">
-                <div className="text-center mb-8">
-                  <h1 className="text-4xl font-extrabold tracking-wider">MIA</h1>
-                  <p className="text-xs text-[#B7E4C7] mt-1">Mi Inteligencia de Ahorro</p>
-                </div>
+              <div className="flex flex-col h-full bg-[#112A20] justify-center items-center p-3 w-full text-white overflow-y-auto">
+                <LogoOficialMIA />
 
-                <div className="bg-white text-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
-                  <h2 className="text-lg font-bold text-center text-[#1B4332]">
+                <div className="bg-white text-slate-800 rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 shrink-0 mt-3">
+                  <h2 className="text-lg font-bold text-center text-[#112A20]">
                     {modoRegistro ? 'Crea tu cuenta' : 'Iniciar Sesión'}
                   </h2>
 
@@ -703,18 +736,18 @@
                   </div>
 
                   {modoRegistro ? (
-                    <button onClick={manejarRegistro} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#1B4332] transition">
+                    <button onClick={manejarRegistro} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition">
                       Registrarse
                     </button>
                   ) : (
-                    <button onClick={manejarLogin} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#1B4332] transition">
+                    <button onClick={manejarLogin} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition">
                       Ingresar
                     </button>
                   )}
 
                   <button 
                     onClick={() => setModoRegistro(!modoRegistro)} 
-                    className="w-full text-center text-xs text-[#2D6A4F] font-bold hover:underline pt-2"
+                    className="w-full text-center text-xs text-[#2D6A4F] font-bold hover:underline pt-1"
                   >
                     {modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí'}
                   </button>
@@ -723,26 +756,19 @@
             );
           }
 
-          // APLICACIÓN PRINCIPAL UNA VEZ AUTENTICADO
           return (
             <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
-              {/* Header */}
-              <div className="p-4 pb-2 flex justify-between items-center bg-white border-b border-slate-100">
-                <div>
-                  <h1 className="text-2xl font-extrabold text-[#1B4332]">MIA</h1>
-                  <p className="text-[10px] font-semibold text-[#40916C]">Usuario: {sesion.user.email}</p>
-                </div>
+              <div className="p-2 px-4 flex justify-between items-center bg-white border-b border-slate-100 shadow-sm">
+                <LogoHeaderMIA />
                 <button onClick={cerrarSesion} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 hover:bg-red-100 transition">
                   Cerrar Sesión
                 </button>
               </div>
 
-              {/* Contenido scrolleable */}
               <div className="flex-1 overflow-y-auto p-4 pb-24">
-                {/* --- INICIO --- */}
                 {tab === 'inicio' && (
                   <div>
-                    <div className="bg-[#1B4332] rounded-2xl p-5 mb-4 shadow-md text-white">
+                    <div className="bg-[#112A20] rounded-2xl p-5 mb-4 shadow-md text-white">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-[11px] font-bold text-[#B7E4C7] tracking-wider">PATRIMONIO TOTAL DISPONIBLE</span>
                         <button onClick={() => setTab('cuentas')} className="text-[#B7E4C7] text-xs font-bold hover:underline">⚙️ Ajustar saldos</button>
@@ -752,7 +778,7 @@
                     </div>
 
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-[17px] font-bold text-[#1B4332]">Tus Fondos y Deudas Activas</h3>
+                      <h3 className="text-[17px] font-bold text-[#112A20]">Tus Fondos y Deudas Activas</h3>
                       <button onClick={() => setTab('cuentas')} className="text-xs text-[#2D6A4F] font-bold hover:underline">Ver cuentas ›</button>
                     </div>
 
@@ -792,7 +818,7 @@
                       )}
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Registrar Movimiento General</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">Registrar Movimiento General</h3>
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
                       <div className="flex gap-2">
                         <button
@@ -863,13 +889,13 @@
 
                       <button
                         onClick={guardarMovimiento}
-                        className="w-full bg-[#205B43] text-white font-bold py-3.5 rounded-xl shadow-md mt-2 hover:bg-[#1B4332] transition"
+                        className="w-full bg-[#205B43] text-white font-bold py-3.5 rounded-xl shadow-md mt-2 hover:bg-[#112A20] transition"
                       >
                         + Guardar Movimiento
                       </button>
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Movimientos Recientes</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">Movimientos Recientes</h3>
                     {movimientos.length === 0 ? (
                       <p className="text-center text-[#718078] my-6 italic text-sm">Aún no has registrado movimientos. ¡Agrega tu primero arriba!</p>
                     ) : (
@@ -892,11 +918,10 @@
                   </div>
                 )}
 
-                {/* --- CUENTAS --- */}
                 {tab === 'cuentas' && (
                   <div>
                     <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-[17px] font-bold text-[#1B4332]">Cuentas y Saldos Iniciales</h3>
+                      <h3 className="text-[17px] font-bold text-[#112A20]">Cuentas y Saldos Iniciales</h3>
                       <button onClick={() => setModalNuevaCuenta(true)} className="bg-[#2D6A4F] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow hover:bg-[#205B43] transition">
                         + Crear Cuenta
                       </button>
@@ -947,7 +972,7 @@
                               const movsCuenta = movimientos.filter(m => m.cuentaId === c.id);
                               return (
                                 <div className="mt-3 p-3 bg-[#F8FAF8] rounded-xl border border-slate-200 space-y-2">
-                                  <p className="text-xs font-bold text-[#1B4332]">Movimientos de {c.nombre}:</p>
+                                  <p className="text-xs font-bold text-[#112A20]">Movimientos de {c.nombre}:</p>
                                   {movsCuenta.length === 0 ? (
                                     <p className="text-[11px] text-slate-500 italic">No hay movimientos registrados en esta cuenta.</p>
                                   ) : (
@@ -966,7 +991,7 @@
                                     </div>
                                   )}
                                   <div className="flex gap-2 pt-2">
-                                    <button onClick={() => exportarCSVCuenta(c, movsCuenta)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#1B4332] transition">
+                                    <button onClick={() => exportarCSVCuenta(c, movsCuenta)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#112A20] transition">
                                       📊 Excel (CSV)
                                     </button>
                                     <button onClick={() => exportarPDFCuenta(c, movsCuenta, saldoActual)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#2D6A4F] transition">
@@ -987,19 +1012,18 @@
                   </div>
                 )}
 
-                {/* --- MÓDULO UNIFICADO: CXC / CXP --- */}
                 {tab === 'deudas' && (
                   <div>
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Gestión de Terceros (CxC / CxP)</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">Gestión de Terceros (CxC / CxP)</h3>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
                       <div>
-                        <label className="text-xs font-bold text-[#1B4332] block mb-1">📅 Fecha del Registro:</label>
+                        <label className="text-xs font-bold text-[#112A20] block mb-1">📅 Fecha del Registro:</label>
                         <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold" />
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-[#1B4332] block mb-1">Tipo:</label>
+                        <label className="text-xs font-bold text-[#112A20] block mb-1">Tipo:</label>
                         <select 
                           value={tipoCxUnified} 
                           onChange={(e) => setTipoCxUnified(e.target.value)} 
@@ -1048,7 +1072,7 @@
                             {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
                           </select>
                           <input type="text" placeholder="Observación / Nota" value={obsCxC} onChange={(e) => setObsCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-3" />
-                          <button onClick={guardarCxC} className="w-full bg-[#2D6A4F] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-[#205B43] transition">Guardar Cuenta por Cobrar</button>
+                          <button onClick={guardarCxC} className="w-full bg-[#2D6A4F] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-[#112A20] transition">Guardar Cuenta por Cobrar</button>
                         </div>
                       ) : (
                         <div>
@@ -1092,7 +1116,7 @@
                     </div>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-                      <h4 className="text-sm font-bold text-[#1B4332]">⚡ Registrar Abono o Pago</h4>
+                      <h4 className="text-sm font-bold text-[#112A20]">⚡ Registrar Abono o Pago</h4>
                       
                       <div>
                         <label className="text-[11px] font-bold text-[#52725F] block mb-1">Fecha del Abono:</label>
@@ -1131,7 +1155,7 @@
                               {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
                             </select>
                           </div>
-                          <button onClick={procesarCobroUnificado} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-lg text-xs hover:bg-[#205B43] transition">Recibir Pago en Cuenta</button>
+                          <button onClick={procesarCobroUnificado} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-lg text-xs hover:bg-[#112A20] transition">Recibir Pago en Cuenta</button>
                         </div>
                       ) : (
                         <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
@@ -1156,13 +1180,12 @@
                   </div>
                 )}
 
-                {/* --- REPORTES --- */}
                 {tab === 'reportes' && (
                   <div>
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3">Reportes y Estado de Deudas</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">Reportes y Estado de Deudas</h3>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
-                      <h4 className="text-sm font-bold text-[#1B4332] mb-2">📑 Reporte Detallado por Tercero (CxC / CxP)</h4>
+                      <h4 className="text-sm font-bold text-[#112A20] mb-2">📑 Reporte Detallado por Tercero (CxC / CxP)</h4>
                       <div className="flex gap-2 mb-2">
                         <select value={tipoReporteTercero} onChange={(e) => { setTipoReporteTercero(e.target.value); setTerceroSeleccionadoId(''); }} className="flex-1 bg-[#F8FAF8] rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold">
                           <option value="CxC">Cuentas por Cobrar</option>
@@ -1190,7 +1213,7 @@
                             {itemSel.observacion && <p className="text-xs italic text-slate-500">Nota: {itemSel.observacion}</p>}
 
                             <div className="mt-3 pt-2 border-t border-slate-200">
-                              <p className="text-[11px] font-bold text-[#1B4332] mb-1">📜 Historial de Movimientos:</p>
+                              <p className="text-[11px] font-bold text-[#112A20] mb-1">📜 Historial de Movimientos:</p>
                               <div className="text-[11px] space-y-1 bg-white p-2 rounded-lg border border-slate-100">
                                 <p className="text-emerald-700 font-semibold">🟢 {itemSel.fechaInicial || 'Inicio'} — Saldo Inicial: +{formatoCOP(itemSel.valorTotal)}</p>
                                 {(itemSel.historialPagos || []).map((p, idx) => (
@@ -1202,7 +1225,7 @@
                             </div>
 
                             <div className="flex gap-2 pt-2">
-                              <button onClick={() => exportarCSV(itemSel)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#1B4332] transition">
+                              <button onClick={() => exportarCSV(itemSel)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#112A20] transition">
                                 📊 Exportar a Excel (CSV)
                               </button>
                               <button onClick={() => exportarPDF(itemSel)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#2D6A4F] transition">
@@ -1215,7 +1238,7 @@
                     </div>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
-                      <h4 className="text-sm font-bold text-[#1B4332] mb-3">📊 Balance General de Deudas</h4>
+                      <h4 className="text-sm font-bold text-[#112A20] mb-3">📊 Balance General de Deudas</h4>
                       
                       <div className="flex justify-between items-center mb-1 text-xs">
                         <span className="font-semibold text-[#2D6A4F]">📥 CxC: {formatoCOP(totalCxCPendiente)} ({pctCxC}%)</span>
@@ -1233,7 +1256,7 @@
                       </div>
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mb-3 mt-6">Reporte Financiero por Fechas</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3 mt-6">Reporte Financiero por Fechas</h3>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3">
                       <label className="text-xs font-semibold text-[#52725F] block mb-2">Período de consulta (AAAA-MM-DD):</label>
@@ -1264,7 +1287,7 @@
                       </div>
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#1B4332] mt-4 mb-2">Distribución por Rubro ({listaRubros.length})</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">Distribución por Rubro ({listaRubros.length})</h3>
 
                     {totalGastosReporte === 0 ? (
                       <p className="text-center text-[#718078] my-6 italic text-sm">No existen gastos registrados entre {fechaDesde} y {fechaHasta}.</p>
@@ -1273,14 +1296,14 @@
                         <div className="h-4 flex rounded-lg overflow-hidden bg-[#E2E8F0] mb-4">
                           {listaRubros.map(([rubro, total], idx) => {
                             const pct = Math.max(1, Math.round((total / totalGastosReporte) * 100));
-                            const paleta = ['#1B4332', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
+                            const paleta = ['#112A20', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
                             return <div key={rubro} style={{ width: `${pct}%`, backgroundColor: paleta[idx % paleta.length] }} className="h-full"></div>;
                           })}
                         </div>
 
                         {listaRubros.map(([rubro, total], idx) => {
                           const porcentaje = Math.round((total / totalGastosReporte) * 100);
-                          const paleta = ['#1B4332', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
+                          const paleta = ['#112A20', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
                           const color = paleta[idx % paleta.length];
 
                           return (
@@ -1304,11 +1327,10 @@
                 )}
               </div>
 
-              {/* --- MODAL EDITAR SALDO --- */}
               {modalEditarSaldo && (
                 <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
                   <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
-                    <h3 className="text-lg font-extrabold text-[#1B4332] text-center mb-2">Modificar Saldo Inicial</h3>
+                    <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-2">Modificar Saldo Inicial</h3>
                     <p className="text-xs text-[#52725F] mb-3 text-center">Cuenta: <span className="font-bold">{cuentaAEditar?.nombre}</span></p>
 
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Nuevo saldo de arranque en COP:</label>
@@ -1316,17 +1338,16 @@
 
                     <div className="flex gap-2">
                       <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
-                      <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#1B4332] transition">Guardar Saldo</button>
+                      <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#112A20] transition">Guardar Saldo</button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* --- MODAL NUEVA CUENTA --- */}
               {modalNuevaCuenta && (
                 <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
                   <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
-                    <h3 className="text-lg font-extrabold text-[#1B4332] text-center mb-3">Nueva Cuenta o Banco</h3>
+                    <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-3">Nueva Cuenta o Banco</h3>
 
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Nombre de la cuenta:</label>
                     <input type="text" placeholder="Ej. Daviplata, BBVA" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
@@ -1345,13 +1366,12 @@
 
                     <div className="flex gap-2">
                       <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
-                      <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#1B4332] transition">Crear Cuenta</button>
+                      <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#112A20] transition">Crear Cuenta</button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* --- NAVEGACIÓN INFERIOR (4 PESTAÑAS) --- */}
               <div className="absolute bottom-0 left-0 right-0 h-16 bg-white flex border-t border-[#E2E8F0] shadow-lg z-40">
                 <button onClick={() => setTab('inicio')} className="flex-1 flex flex-col items-center justify-center">
                   <span className={`text-lg transition ${tab === 'inicio' ? 'opacity-100 scale-110' : 'opacity-40'}`}>🏠</span>
@@ -1377,4 +1397,4 @@
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
-</html>    
+</html> 
