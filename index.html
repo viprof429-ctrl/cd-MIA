@@ -21,7 +21,7 @@
         const { useState, useEffect } = React;
 
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
 
         const supabaseApi = {
           async signUp(email, password) {
@@ -90,7 +90,7 @@
           }
         };
 
-        // COMPONENTE DEL LOGO OFICIAL SELECCIONADO (ESCUDO + CARTERA + MIA EN EL ARO INFERIOR)
+        // COMPONENTE DEL LOGO OFICIAL (ESCUDO + CARTERA VERDE CON TEXTO MIA)
         const LogoMIA = ({ className = "h-14" }) => (
           <svg viewBox="0 0 140 140" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
             {/* Aro exterior */}
@@ -99,17 +99,14 @@
             {/* Escudo poligonal central */}
             <path d="M70 24L102 38V72C102 92 70 106 70 106C70 106 38 92 38 72V38L70 24Z" fill="#F8FAF8" stroke="#CBD5E1" strokeWidth="3"/>
             
-            {/* Cartera / Billetera interior */}
-            <rect x="52" y="52" width="36" height="26" rx="4" fill="#1B4332" stroke="#112A20" strokeWidth="1.5"/>
-            <path d="M79 60H83C84.1 60 85 60.9 85 62V68C85 69.1 84.1 70 83 79H79" stroke="#E2E8F0" strokeWidth="1.5" strokeLinecap="round"/>
-            <circle cx="81" cy="65" r="1.5" fill="#E2E8F0"/>
-            <path d="M56 52V49C56 47.3 57.3 46 59 46H77C78.7 46 80 47.3 80 49V52" stroke="#E2E8F0" strokeWidth="1.5"/>
+            {/* Cartera / Billetera verde interior */}
+            <rect x="46" y="44" width="48" height="36" rx="6" fill="#1B4332" stroke="#112A20" strokeWidth="1.5"/>
+            <path d="M81 54H85C86.1 54 87 54.9 87 56V64C87 65.1 86.1 66 85 66H81" stroke="#E2E8F0" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="84" cy="60" r="1.5" fill="#E2E8F0"/>
+            <path d="M52 44V40C52 38.3 53.3 37 55 37H85C86.7 37 88 38.3 88 40V44" stroke="#E2E8F0" strokeWidth="1.5"/>
 
-            {/* Texto MIA curvado en la parte inferior del aro */}
-            <path id="curvePath" d="M 32 88 A 45 45 0 0 0 108 88" fill="none"/>
-            <text fill="#1B4332" fontSize="13" fontWeight="900" fontFamily="Arial, sans-serif" letterSpacing="2">
-              <textPath href="#curvePath" startOffset="50%" textAnchor="middle">MIA</textPath>
-            </text>
+            {/* Texto MIA centrado dentro de la cartera */}
+            <text x="70" y="67" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="20" fontWeight="bold" fill="white" letterSpacing="2">MIA</text>
           </svg>
         );
 
