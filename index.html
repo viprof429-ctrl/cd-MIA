@@ -23,16 +23,12 @@
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
 
-        // Conexión nativa robusta vía Fetch API para evitar errores de CDN
         const supabaseAuth = {
           async signUp(email, password) {
             try {
               const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'apikey': SUPABASE_ANON_KEY
-                },
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
                 body: JSON.stringify({ email, password })
               });
               const data = await res.json();
@@ -46,10 +42,7 @@
             try {
               const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'apikey': SUPABASE_ANON_KEY
-                },
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
                 body: JSON.stringify({ email, password })
               });
               const data = await res.json();
@@ -126,13 +119,62 @@
           const [modoRegistro, setModoRegistro] = useState(false);
 
           const [tab, setTab] = useState('inicio');
-          const [cuentas, setCuentas] = useState(CUENTAS_BASE);
-          const [movimientos, setMovimientos] = useState([]);
-          const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
-          const [cuentasPorPagar, setCuentasPorPagar] = useState([]);
+          const [cuentas, setCuentas] = useState(() => {
+            const saved = localStorage.getItem('mia_cuentas');
+            return saved ? JSON.parse(saved) : CUENTAS_BASE;
+          });
+          const [movimientos, setMovimientos] = useState(() => {
+            const saved = localStorage.getItem('mia_movimientos');
+            return saved ? JSON.parse(saved) : [];
+          });
+          const [cuentasPorCobrar, setCuentasPorCobrar] = useState(() => {
+            const saved = localStorage.getItem('mia_cxc');
+            return saved ? JSON.parse(saved) : [];
+          });
+          const [cuentasPorPagar, setCuentasPorPagar] = useState(() => {
+            const saved = localStorage.getItem('mia_cxp');
+            return saved ? JSON.parse(saved) : [];
+          });
           const [categoriasGasto, setCategoriasGasto] = useState(CATEGORIAS_GASTO_BASE);
           const [categoriasIngreso, setCategoriasIngreso] = useState(CATEGORIAS_INGRESO_BASE);
           const [conceptosDeuda, setConceptosDeuda] = useState([...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión']);
+
+          // EFECTO DE RECORDATORIOS AUTOMÁTICOS
+          useEffect(() => {
+            if (!sesion) return;
+
+            // 1. Recordatorio por inactividad a partir de las 10:00 a.m.
+            const ahora = new Date();
+            const horaActual = ahora.getHours();
+            const hoyStr = fechaHoy();
+            const ultimaVisita = localStorage.getItem('mia_ultima_visita');
+
+            if (horaActual >= 10 && ultimaVisita !== hoyStr) {
+              notificar('⏰ Recordatorio MIA', '¡Hola! Aún no has ingresado a MIA hoy. Tómate un momento para revisar tus finanzas.');
+              localStorage.setItem('mia_ultima_visita', hoyStr);
+            }
+
+            // 2. Alerta de vencimiento (cuando falte 1 día para el vencimiento de CxC o CxP)
+            const mañana = new Date();
+            mañana.setDate(mañana.getDate() + 1);
+            const mañanaStr = `${mañana.getFullYear()}-${String(mañana.getMonth() + 1).padStart(2, '0')}-${String(mañana.getDate()).padStart(2, '0')}`;
+
+            const porCobrarVencimiento = cuentasPorCobrar.filter(c => c.estado !== 'Pagado' && c.vencimiento === mañanaStr);
+            const porPagarVencimiento = cuentasPorPagar.filter(c => c.estado !== 'Pagado' && c.vencimiento === mañanaStr);
+
+            if (porCobrarVencimiento.length > 0 || porPagarVencimiento.length > 0) {
+              let msg = '⚠️ Tienes elementos próximos a vencer mañana:\n';
+              porCobrarVencimiento.forEach(c => { msg += `• Cobrar a ${c.tercero}: ${formatoCOP(c.saldoPendiente)}\n`; });
+              porPagarVencimiento.forEach(c => { msg += `• Pagar a ${c.tercero}: ${formatoCOP(c.saldoPendiente)}\n`; });
+              notificar('🚨 Alerta de Vencimiento', msg);
+            }
+          }, [sesion, cuentasPorCobrar, cuentasPorPagar]);
+
+          // Sincronización local persistente
+          useEffect(() => { localStorage.setItem('mia_cuentas', JSON.stringify(cuentas)); }, [cuentas]);
+          useEffect(() => { localStorage.setItem('mia_movimientos', JSON.stringify(movimientos)); }, [movimientos]);
+          useEffect(() => { localStorage.setItem('mia_cxc', JSON.stringify(cuentasPorCobrar)); }, [cuentasPorCobrar]);
+          useEffect(() => { localStorage.setItem('mia_cxp', JSON.stringify(cuentasPorPagar)); }, [cuentasPorPagar]);
 
           const manejarLogin = async () => {
             if (!emailInput || !passInput) {
