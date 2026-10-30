@@ -18,7 +18,7 @@
     <div id="root" class="w-full max-w-md h-screen md:h-[850px] bg-[#F3F7F2] shadow-2xl flex flex-col relative overflow-hidden"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
@@ -90,49 +90,87 @@
           }
         };
 
-        // COMPONENTE CON TU LOGOTIPO OFICIAL REAL EN ALTA DEFINICIÓN
-        const LogoOficialMIA = ({ className = "w-44 h-44" }) => (
-          <div className={`flex items-center justify-center overflow-hidden rounded-2xl shadow-xl bg-[#112A20] ${className}`}>
-            <svg viewBox="0 0 400 450" className="w-full h-full drop-shadow-2xl" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="goldOfficial" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FFF8DC"/>
-                  <stop offset="35%" stopColor="#DAA520"/>
-                  <stop offset="65%" stopColor="#B8860B"/>
-                  <stop offset="100%" stopColor="#FFD700"/>
-                </linearGradient>
-                <filter id="shadow3D" x="-10%" y="-10%" width="120%" height="120%">
-                  <feDropShadow dx="2" dy="4" stdDeviation="4" floodColor="#000000" floodOpacity="0.8"/>
-                </filter>
-              </defs>
-              <circle cx="200" cy="160" r="135" stroke="url(#goldOfficial)" strokeWidth="16" fill="#112A20" filter="url(#shadow3D)"/>
-              <path d="M 115 95 L 160 215 L 200 145 L 240 215 L 285 95" stroke="url(#goldOfficial)" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round" filter="url(#shadow3D)"/>
-              <path d="M 200 95 V 230" stroke="url(#goldOfficial)" strokeWidth="15" strokeLinecap="round" filter="url(#shadow3D)"/>
-              <path d="M 285 95 H 240 V 230 H 285" stroke="url(#goldOfficial)" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round" filter="url(#shadow3D)"/>
-              <text x="200" y="325" textAnchor="middle" fill="url(#goldOfficial)" fontFamily="Georgia, serif" fontSize="58" fontWeight="bold" letterSpacing="12" filter="url(#shadow3D)">MIA</text>
-              <text x="200" y="375" textAnchor="middle" fill="#E6C657" fontFamily="Georgia, serif" fontSize="21" fontWeight="normal" letterSpacing="1.5" filter="url(#shadow3D)">Mi Inteligencia de Ahorro</text>
-            </svg>
-          </div>
-        );
+        const LogoRealManager = ({ logoGuardado, onSubirLogo, modo = 'login' }) => {
+          const fileInputRef = useRef(null);
 
-        const LogoHeaderMIA = () => (
-          <div className="flex items-center">
-            <svg viewBox="0 0 100 100" className="w-9 h-9 mr-2" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="50" r="44" stroke="url(#goldH)" strokeWidth="6" fill="#112A20"/>
-              <path d="M 30 30 L 42 68 L 50 48 L 58 68 L 70 30" stroke="url(#goldH)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M 50 30 V 72" stroke="url(#goldH)" strokeWidth="5" strokeLinecap="round"/>
-              <path d="M 70 30 H 60 V 72 H 70" stroke="url(#goldH)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-              <defs>
-                <linearGradient id="goldH" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FFF2B2"/>
-                  <stop offset="50%" stopColor="#C5A028"/>
-                  <stop offset="100%" stopColor="#9E7815"/>
-                </linearGradient>
-              </defs>
-            </svg>
-            <span style={{ fontFamily: 'Georgia, serif', fontWeight: 'bold', fontSize: '20px', letterSpacing: '4px', background: 'linear-gradient(135deg, #FFF2B2 0%, #C5A028 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>MIA</span>
-          </div>
-        );
+          const procesarImagen = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const img = new Image();
+              img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxAncho = 600;
+                const escala = maxAncho / img.width;
+                canvas.width = maxAncho;
+                canvas.height = img.height * escala;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                onSubirLogo(dataUrl);
+              };
+              img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+          };
+
+          if (modo === 'header') {
+            return (
+              <div className="flex items-center gap-2">
+                <input type="file" accept="image/*" ref={fileInputRef} onChange={procesarImagen} className="hidden" />
+                <div onClick={() => fileInputRef.current.click()} className="w-9 h-9 rounded-xl overflow-hidden bg-[#112A20] flex items-center justify-center shadow cursor-pointer border border-yellow-500/40 relative group">
+                  {logoGuardado ? (
+                    <img src={logoGuardado} alt="Logo MIA" className="w-full h-full object-cover" />
+                  ) : (
+                    <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="50" cy="50" r="44" stroke="#D4AF37" strokeWidth="6" fill="#112A20"/>
+                      <path d="M 30 30 L 42 68 L 50 48 L 58 68 L 70 30" stroke="#D4AF37" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[9px] text-white font-bold transition">📷</div>
+                </div>
+                <div>
+                  <h1 className="text-base font-extrabold text-[#112A20] leading-none tracking-widest">MIA</h1>
+                  <span className="text-[9px] font-semibold text-[#52725F]">Mi Inteligencia de Ahorro</span>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className="flex flex-col items-center justify-center w-full mb-3 shrink-0">
+              <input type="file" accept="image/*" ref={fileInputRef} onChange={procesarImagen} className="hidden" />
+              <div className="flex flex-col items-center">
+                {logoGuardado ? (
+                  <div className="w-48 h-60 rounded-2xl overflow-hidden shadow-xl bg-[#112A20] flex items-center justify-center mb-2">
+                    <img src={logoGuardado} alt="Logo MIA" className="w-full h-full object-contain" />
+                  </div>
+                ) : (
+                  <svg viewBox="0 0 500 480" className="w-52 h-44 drop-shadow-2xl mb-1" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="goldOfficial" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#FFF8DC"/>
+                        <stop offset="35%" stopColor="#DAA520"/>
+                        <stop offset="65%" stopColor="#B8860B"/>
+                        <stop offset="100%" stopColor="#FFD700"/>
+                      </linearGradient>
+                    </defs>
+                    <circle cx="250" cy="130" r="110" stroke="url(#goldOfficial)" strokeWidth="13" fill="#112A20"/>
+                    <path d="M 185 80 L 215 170 L 250 115 L 285 170 L 315 80" stroke="url(#goldOfficial)" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M 250 80 V 182" stroke="url(#goldOfficial)" strokeWidth="11" strokeLinecap="round"/>
+                    <path d="M 315 80 H 285 V 182 H 315" stroke="url(#goldOfficial)" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round"/>
+                    <text x="250" y="295" textAnchor="middle" fill="url(#goldOfficial)" fontFamily="Georgia, serif" fontSize="52" fontWeight="bold" letterSpacing="12">MIA</text>
+                    <text x="250" y="355" textAnchor="middle" fill="#E6C657" fontFamily="Georgia, serif" fontSize="27" fontWeight="normal" letterSpacing="2">Mi Inteligencia de Ahorro</text>
+                  </svg>
+                )}
+                <button onClick={() => fileInputRef.current.click()} className="bg-[#D4AF37] text-[#112A20] px-3.5 py-1.5 rounded-xl text-xs font-extrabold shadow hover:bg-yellow-400 transition mt-1 flex items-center gap-1">
+                  📷 {logoGuardado ? 'Cambiar imagen del logo' : 'Cargar mi logo oficial'}
+                </button>
+              </div>
+            </div>
+          );
+        };
 
         const CUENTAS_BASE = [
           { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, icono: '💵' },
@@ -198,6 +236,15 @@
           const [passInput, setPassInput] = useState('');
           const [modoRegistro, setModoRegistro] = useState(false);
 
+          const [logoPersonalizado, setLogoPersonalizado] = useState(() => {
+            return localStorage.getItem('mia_logo_custom') || null;
+          });
+
+          const guardarLogoFijo = (dataUrl) => {
+            setLogoPersonalizado(dataUrl);
+            localStorage.setItem('mia_logo_custom', dataUrl);
+          };
+
           const [tab, setTab] = useState('inicio');
 
           const [cuentas, setCuentas] = useState(() => {
@@ -222,6 +269,11 @@
           const [conceptosDeuda, setConceptosDeuda] = useState([...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión']);
           const [datosCargados, setDatosCargados] = useState(false);
 
+          const [movimientoEditando, setMovimientoEditando] = useState(null);
+          const [editConcepto, setEditConcepto] = useState('');
+          const [editValorDisplay, setEditValorDisplay] = useState('');
+          const [editFecha, setEditFecha] = useState('');
+
           useEffect(() => {
             if (sesion && sesion.access_token && !datosCargados) {
               supabaseApi.cargarDatosNube(sesion.access_token).then((cloudData) => {
@@ -230,6 +282,10 @@
                   if (cloudData.movimientos) setMovimientos(cloudData.movimientos);
                   if (cloudData.cuentasPorCobrar) setCuentasPorCobrar(cloudData.cuentasPorCobrar);
                   if (cloudData.cuentasPorPagar) setCuentasPorPagar(cloudData.cuentasPorPagar);
+                  if (cloudData.logoPersonalizado) {
+                    setLogoPersonalizado(cloudData.logoPersonalizado);
+                    localStorage.setItem('mia_logo_custom', cloudData.logoPersonalizado);
+                  }
                 }
                 setDatosCargados(true);
               });
@@ -245,11 +301,11 @@
             if (sesion && sesion.access_token && datosCargados) {
               const payload = {
                 user_id: sesion.user_id || sesion.user.id,
-                data: { cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar }
+                data: { cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, logoPersonalizado }
               };
               supabaseApi.guardarDatosNube(sesion.access_token, payload);
             }
-          }, [cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, datosCargados, sesion]);
+          }, [cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, logoPersonalizado, datosCargados, sesion]);
 
           const manejarLogin = async () => {
             if (!emailInput || !passInput) {
@@ -382,6 +438,36 @@
             setConcepto('');
             setValorDisplay('');
             notificar('¡Registrado!', `${tipoMovimiento} guardado con éxito.`);
+          };
+
+          const eliminarMovimiento = (id) => {
+            if (window.confirm('¿Deseas eliminar este movimiento?')) {
+              setMovimientos(prev => prev.filter(m => m.id !== id));
+              notificar('Eliminado', 'El movimiento ha sido borrado y el saldo recalculado.');
+            }
+          };
+
+          const iniciarEdicionMovimiento = (m) => {
+            setMovimientoEditando(m);
+            setEditConcepto(m.concepto);
+            setEditValorDisplay(formatearInputEnVivo(m.valor));
+            setEditFecha(m.fecha);
+          };
+
+          const guardarMovimientoEditado = () => {
+            const nuevoVal = obtenerNumeroLimpio(editValorDisplay);
+            if (!editConcepto.trim() || isNaN(nuevoVal) || nuevoVal <= 0) {
+              notificar('Datos inválidos', 'Ingresa un concepto y un valor válido.');
+              return;
+            }
+            setMovimientos(prev => prev.map(m => m.id === movimientoEditando.id ? {
+              ...m,
+              concepto: editConcepto.trim(),
+              valor: nuevoVal,
+              fecha: editFecha || m.fecha
+            } : m));
+            setMovimientoEditando(null);
+            notificar('Modificado', 'El movimiento ha sido actualizado con éxito.');
           };
 
           const guardarCxC = () => {
@@ -705,50 +791,26 @@
 
           if (!sesion) {
             return (
-              <div className="flex flex-col h-full bg-[#112A20] justify-center items-center p-3 w-full text-white overflow-y-auto">
-                <LogoOficialMIA />
-
-                <div className="bg-white text-slate-800 rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 shrink-0 mt-3">
+              <div className="flex flex-col h-full bg-[#112A20] justify-start items-center p-3 w-full text-white overflow-y-auto">
+                <LogoRealManager logoGuardado={logoPersonalizado} onSubirLogo={guardarLogoFijo} modo="login" />
+                <div className="bg-white text-slate-800 rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 shrink-0">
                   <h2 className="text-lg font-bold text-center text-[#112A20]">
                     {modoRegistro ? 'Crea tu cuenta' : 'Iniciar Sesión'}
                   </h2>
-
                   <div>
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Correo electrónico:</label>
-                    <input 
-                      type="email" 
-                      placeholder="tucorreo@email.com" 
-                      value={emailInput} 
-                      onChange={(e) => setEmailInput(e.target.value)} 
-                      className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none" 
-                    />
+                    <input type="email" placeholder="tucorreo@email.com" value={emailInput} onChange={(e) => setEmailInput(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none" />
                   </div>
-
                   <div>
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Contraseña:</label>
-                    <input 
-                      type="password" 
-                      placeholder="••••••••" 
-                      value={passInput} 
-                      onChange={(e) => setPassInput(e.target.value)} 
-                      className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none" 
-                    />
+                    <input type="password" placeholder="••••••••" value={passInput} onChange={(e) => setPassInput(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none" />
                   </div>
-
                   {modoRegistro ? (
-                    <button onClick={manejarRegistro} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition">
-                      Registrarse
-                    </button>
+                    <button onClick={manejarRegistro} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition">Registrarse</button>
                   ) : (
-                    <button onClick={manejarLogin} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition">
-                      Ingresar
-                    </button>
+                    <button onClick={manejarLogin} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition">Ingresar</button>
                   )}
-
-                  <button 
-                    onClick={() => setModoRegistro(!modoRegistro)} 
-                    className="w-full text-center text-xs text-[#2D6A4F] font-bold hover:underline pt-1"
-                  >
+                  <button onClick={() => setModoRegistro(!modoRegistro)} className="w-full text-center text-xs text-[#2D6A4F] font-bold hover:underline pt-1">
                     {modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí'}
                   </button>
                 </div>
@@ -759,7 +821,7 @@
           return (
             <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
               <div className="p-2 px-4 flex justify-between items-center bg-white border-b border-slate-100 shadow-sm">
-                <LogoHeaderMIA />
+                <LogoRealManager logoGuardado={logoPersonalizado} onSubirLogo={guardarLogoFijo} modo="header" />
                 <button onClick={cerrarSesion} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 hover:bg-red-100 transition">
                   Cerrar Sesión
                 </button>
@@ -821,27 +883,13 @@
                     <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">Registrar Movimiento General</h3>
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => { setTipoMovimiento('Gasto'); setCategoriaSeleccionada(categoriasGasto[0]); }}
-                          className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Gasto' ? 'bg-[#C94A4A] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}
-                        >
-                          Gasto
-                        </button>
-                        <button
-                          onClick={() => { setTipoMovimiento('Ingreso'); setCategoriaSeleccionada(categoriasIngreso[0]); }}
-                          className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Ingreso' ? 'bg-[#2D6A4F] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}
-                        >
-                          Ingreso
-                        </button>
+                        <button onClick={() => { setTipoMovimiento('Gasto'); setCategoriaSeleccionada(categoriasGasto[0]); }} className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Gasto' ? 'bg-[#C94A4A] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}>Gasto</button>
+                        <button onClick={() => { setTipoMovimiento('Ingreso'); setCategoriaSeleccionada(categoriasIngreso[0]); }} className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Ingreso' ? 'bg-[#2D6A4F] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}>Ingreso</button>
                       </div>
 
                       <div>
                         <label className="text-xs font-semibold text-[#52725F] block mb-1">¿Qué medio de pago vas a utilizar?</label>
-                        <select
-                          value={cuentaSeleccionada}
-                          onChange={(e) => setCuentaSeleccionada(e.target.value)}
-                          className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none font-medium"
-                        >
+                        <select value={cuentaSeleccionada} onChange={(e) => setCuentaSeleccionada(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none font-medium">
                           {cuentas.map((c) => (
                             <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>
                           ))}
@@ -850,49 +898,22 @@
 
                       <div>
                         <label className="text-xs font-semibold text-[#52725F] block mb-1">Fecha (AAAA-MM-DD):</label>
-                        <input
-                          type="text"
-                          value={fechaMovimiento}
-                          onChange={(e) => setFechaMovimiento(e.target.value)}
-                          className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none"
-                        />
+                        <input type="text" value={fechaMovimiento} onChange={(e) => setFechaMovimiento(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none" />
                       </div>
 
                       <div>
                         <label className="text-xs font-semibold text-[#52725F] block mb-1">Rubro o Categoría:</label>
-                        <select
-                          value={categoriaSeleccionada}
-                          onChange={(e) => setCategoriaSeleccionada(e.target.value)}
-                          className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none font-medium"
-                        >
+                        <select value={categoriaSeleccionada} onChange={(e) => setCategoriaSeleccionada(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none font-medium">
                           {(tipoMovimiento === 'Gasto' ? categoriasGasto : categoriasIngreso).map((cat) => (
                             <option key={cat} value={cat}>{cat}</option>
                           ))}
                         </select>
                       </div>
 
-                      <input
-                        type="text"
-                        placeholder="Concepto (ej. Almuerzo, Mercado, Nómina)"
-                        value={concepto}
-                        onChange={(e) => setConcepto(e.target.value)}
-                        className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none placeholder-[#8F9F95]"
-                      />
+                      <input type="text" placeholder="Concepto (ej. Almuerzo, Mercado, Nómina)" value={concepto} onChange={(e) => setConcepto(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none placeholder-[#8F9F95]" />
+                      <input type="text" placeholder="Valor en pesos (ej. 45.000)" value={valorDisplay} onChange={(e) => setValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none placeholder-[#8F9F95]" />
 
-                      <input
-                        type="text"
-                        placeholder="Valor en pesos (ej. 45.000)"
-                        value={valorDisplay}
-                        onChange={(e) => setValorDisplay(formatearInputEnVivo(e.target.value))}
-                        className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none placeholder-[#8F9F95]"
-                      />
-
-                      <button
-                        onClick={guardarMovimiento}
-                        className="w-full bg-[#205B43] text-white font-bold py-3.5 rounded-xl shadow-md mt-2 hover:bg-[#112A20] transition"
-                      >
-                        + Guardar Movimiento
-                      </button>
+                      <button onClick={guardarMovimiento} className="w-full bg-[#205B43] text-white font-bold py-3.5 rounded-xl shadow-md mt-2 hover:bg-[#112A20] transition">+ Guardar Movimiento</button>
                     </div>
 
                     <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">Movimientos Recientes</h3>
@@ -922,12 +943,10 @@
                   <div>
                     <div className="flex justify-between items-center mb-3">
                       <h3 className="text-[17px] font-bold text-[#112A20]">Cuentas y Saldos Iniciales</h3>
-                      <button onClick={() => setModalNuevaCuenta(true)} className="bg-[#2D6A4F] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow hover:bg-[#205B43] transition">
-                        + Crear Cuenta
-                      </button>
+                      <button onClick={() => setModalNuevaCuenta(true)} className="bg-[#2D6A4F] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow hover:bg-[#205B43] transition">+ Crear Cuenta</button>
                     </div>
 
-                    <p className="text-[13px] text-[#52725F] mb-4">Define el dinero con el que arrancas en cada cuenta. Consulta sus reportes y exporta su historial abajo.</p>
+                    <p className="text-[13px] text-[#52725F] mb-4">Define el dinero con el que arrancas en cada cuenta. Despliega el reporte abajo para editar o eliminar cualquier movimiento.</p>
 
                     {cuentas.map((c) => {
                       const saldoActual = obtenerSaldoCuenta(c.id);
@@ -952,51 +971,46 @@
                               <span className="text-[10px] font-bold text-[#718078] tracking-wider">SALDO INICIAL:</span>
                               <p className="text-[14px] font-bold text-[#1F2937] mt-0.5">{formatoCOP(c.saldoInicial)}</p>
                             </div>
-                            <button
-                              onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setModalEditarSaldo(true); }}
-                              className="bg-[#E8EFE9] px-3 py-2 rounded-xl text-xs font-bold text-[#205B43] hover:bg-slate-200 transition"
-                            >
-                              ✏️ Modificar
-                            </button>
+                            <button onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setModalEditarSaldo(true); }} className="bg-[#E8EFE9] px-3 py-2 rounded-xl text-xs font-bold text-[#205B43] hover:bg-slate-200 transition">✏️ Modificar Saldo</button>
                           </div>
 
                           <div className="pt-2 border-t border-slate-100">
-                            <button 
-                              onClick={() => setCuentaReporteId(cuentaReporteId === c.id ? '' : c.id)}
-                              className="w-full py-2 bg-[#F8FAF8] rounded-xl text-xs font-bold text-[#2D6A4F] border border-[#DCE5DB] hover:bg-[#E8EFE9] transition"
-                            >
-                              {cuentaReporteId === c.id ? '🔼 Ocultar Reporte de Cuenta' : '📊 Ver Reporte y Exportar Movimientos'}
+                            <button onClick={() => setCuentaReporteId(cuentaReporteId === c.id ? '' : c.id)} className="w-full py-2.5 bg-[#205B43] text-white rounded-xl text-xs font-bold shadow hover:bg-[#112A20] transition">
+                              {cuentaReporteId === c.id ? '🔼 Ocultar Reporte y Movimientos' : '📊 Ver Reporte, Editar o Eliminar Movimientos'}
                             </button>
 
                             {cuentaReporteId === c.id && (() => {
                               const movsCuenta = movimientos.filter(m => m.cuentaId === c.id);
                               return (
                                 <div className="mt-3 p-3 bg-[#F8FAF8] rounded-xl border border-slate-200 space-y-2">
-                                  <p className="text-xs font-bold text-[#112A20]">Movimientos de {c.nombre}:</p>
+                                  <p className="text-xs font-bold text-[#112A20]">Movimientos en {c.nombre}:</p>
                                   {movsCuenta.length === 0 ? (
                                     <p className="text-[11px] text-slate-500 italic">No hay movimientos registrados en esta cuenta.</p>
                                   ) : (
-                                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                                    <div className="space-y-2 max-h-56 overflow-y-auto">
                                       {movsCuenta.map(m => {
                                         const esIngreso = m.tipo === 'Ingreso';
                                         return (
-                                          <div key={m.id} className="flex justify-between text-[11px] bg-white p-2 rounded border border-slate-100">
-                                            <span>{m.fecha} - {m.concepto}</span>
-                                            <span className={esIngreso ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>
-                                              {esIngreso ? '+' : '-'}{formatoCOP(m.valor)}
-                                            </span>
+                                          <div key={m.id} className="flex justify-between items-center text-[11px] bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                                            <div className="flex-1 pr-2">
+                                              <p className="font-bold text-slate-800 text-xs">{m.concepto}</p>
+                                              <p className="text-[10px] text-slate-500 mt-0.5">📅 {m.fecha} · {m.categoria}</p>
+                                              <p className={`font-extrabold mt-1 text-xs ${esIngreso ? 'text-emerald-700' : 'text-red-600'}`}>
+                                                {esIngreso ? '+ ' : '- '}{formatoCOP(m.valor)}
+                                              </p>
+                                            </div>
+                                            <div className="flex gap-1.5 shrink-0">
+                                              <button onClick={() => iniciarEdicionMovimiento(m)} className="bg-amber-100 text-amber-900 px-2.5 py-1.5 rounded-lg text-xs font-extrabold hover:bg-amber-200 transition shadow-sm" title="Editar este movimiento">✏️ Editar</button>
+                                              <button onClick={() => eliminarMovimiento(m.id)} className="bg-red-100 text-red-700 px-2.5 py-1.5 rounded-lg text-xs font-extrabold hover:bg-red-200 transition shadow-sm" title="Eliminar este movimiento">🗑️ Borrar</button>
+                                            </div>
                                           </div>
                                         );
                                       })}
                                     </div>
                                   )}
                                   <div className="flex gap-2 pt-2">
-                                    <button onClick={() => exportarCSVCuenta(c, movsCuenta)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#112A20] transition">
-                                      📊 Excel (CSV)
-                                    </button>
-                                    <button onClick={() => exportarPDFCuenta(c, movsCuenta, saldoActual)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#2D6A4F] transition">
-                                      📄 PDF
-                                    </button>
+                                    <button onClick={() => exportarCSVCuenta(c, movsCuenta)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#112A20] transition">📊 Excel (CSV)</button>
+                                    <button onClick={() => exportarPDFCuenta(c, movsCuenta, saldoActual)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#2D6A4F] transition">📄 PDF</button>
                                   </div>
                                 </div>
                               );
@@ -1006,41 +1020,31 @@
                       );
                     })}
 
-                    <button onClick={reiniciarTodo} className="w-full mt-4 p-3 bg-[#FDE8E8] rounded-xl text-[#9B1C1C] font-bold text-xs border border-[#F8B4B4] hover:bg-red-100 transition">
-                      🗑️ Reiniciar datos de este celular
-                    </button>
+                    <button onClick={reiniciarTodo} className="w-full mt-4 p-3 bg-[#FDE8E8] rounded-xl text-[#9B1C1C] font-bold text-xs border border-[#F8B4B4] hover:bg-red-100 transition">🗑️ Reiniciar datos de este celular</button>
                   </div>
                 )}
 
                 {tab === 'deudas' && (
                   <div>
                     <h3 className="text-[17px] font-bold text-[#112A20] mb-3">Gestión de Terceros (CxC / CxP)</h3>
-
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
                       <div>
                         <label className="text-xs font-bold text-[#112A20] block mb-1">📅 Fecha del Registro:</label>
                         <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold" />
                       </div>
-
                       <div>
                         <label className="text-xs font-bold text-[#112A20] block mb-1">Tipo:</label>
-                        <select 
-                          value={tipoCxUnified} 
-                          onChange={(e) => setTipoCxUnified(e.target.value)} 
-                          className="w-full bg-[#E8EFE9] text-[#205B43] font-extrabold rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none"
-                        >
+                        <select value={tipoCxUnified} onChange={(e) => setTipoCxUnified(e.target.value)} className="w-full bg-[#E8EFE9] text-[#205B43] font-extrabold rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none">
                           <option value="CxC">📥 Cuentas por Cobrar (CxC)</option>
                           <option value="CxP">📤 Cuentas por Pagar (CxP)</option>
                         </select>
                       </div>
-
                       <div className="h-[1px] bg-[#EEF2EE] my-2"></div>
 
                       {tipoCxUnified === 'CxC' ? (
                         <div>
                           <h4 className="text-sm font-bold text-[#2D6A4F] mb-2">Nuevo Registro - Cuenta por Cobrar</h4>
                           <input type="text" placeholder="Tercero (Cliente / Deudor)" value={terceroCxC} onChange={(e) => setTerceroCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          
                           <div className="mb-2">
                             <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Concepto / Rubro:</label>
                             {!usarNuevoConceptoCxC ? (
@@ -1048,9 +1052,7 @@
                                 <select value={conceptoCxC} onChange={(e) => setConceptoCxC(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-medium">
                                   {conceptosDeuda.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
-                                <button onClick={() => setUsarNuevoConceptoCxC(true)} className="bg-[#E8EFE9] text-[#205B43] px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap hover:bg-slate-200 transition">
-                                  + Nuevo
-                                </button>
+                                <button onClick={() => setUsarNuevoConceptoCxC(true)} className="bg-[#E8EFE9] text-[#205B43] px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap hover:bg-slate-200 transition">+ Nuevo</button>
                               </div>
                             ) : (
                               <div className="flex gap-2">
@@ -1059,14 +1061,11 @@
                               </div>
                             )}
                           </div>
-
                           <input type="text" placeholder="Saldo Inicial (COP)" value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          
                           <div className="mb-2">
                             <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
                             <input type="date" value={vencimientoCxC} onChange={(e) => setVencimientoCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                           </div>
-
                           <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Cuenta afectada al cobrar:</label>
                           <select value={cuentaCxC} onChange={(e) => setCuentaCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
                             {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
@@ -1078,7 +1077,6 @@
                         <div>
                           <h4 className="text-sm font-bold text-[#C94A4A] mb-2">Nuevo Registro - Cuenta por Pagar</h4>
                           <input type="text" placeholder="Tercero (Proveedor / Acreedor)" value={terceroCxP} onChange={(e) => setTerceroCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          
                           <div className="mb-2">
                             <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Concepto / Rubro:</label>
                             {!usarNuevoConceptoCxP ? (
@@ -1086,9 +1084,7 @@
                                 <select value={conceptoCxP} onChange={(e) => setConceptoCxP(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-medium">
                                   {conceptosDeuda.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
-                                <button onClick={() => setUsarNuevoConceptoCxP(true)} className="bg-[#E8EFE9] text-[#205B43] px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap hover:bg-slate-200 transition">
-                                  + Nuevo
-                                </button>
+                                <button onClick={() => setUsarNuevoConceptoCxP(true)} className="bg-[#E8EFE9] text-[#205B43] px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap hover:bg-slate-200 transition">+ Nuevo</button>
                               </div>
                             ) : (
                               <div className="flex gap-2">
@@ -1097,14 +1093,11 @@
                               </div>
                             )}
                           </div>
-
                           <input type="text" placeholder="Saldo Inicial (COP)" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          
                           <div className="mb-2">
                             <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
                             <input type="date" value={vencimientoCxP} onChange={(e) => setVencimientoCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                           </div>
-
                           <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Cuenta afectada al pagar:</label>
                           <select value={cuentaCxP} onChange={(e) => setCuentaCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
                             {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
@@ -1117,23 +1110,13 @@
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
                       <h4 className="text-sm font-bold text-[#112A20]">⚡ Registrar Abono o Pago</h4>
-                      
                       <div>
                         <label className="text-[11px] font-bold text-[#52725F] block mb-1">Fecha del Abono:</label>
                         <input type="date" value={fechaAbonoUnified} onChange={(e) => setFechaAbonoUnified(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold" />
                       </div>
-
                       <div>
                         <label className="text-[11px] font-bold text-[#52725F] block mb-1">Tipo de Operación:</label>
-                        <select 
-                          value={tipoAbonoUnified} 
-                          onChange={(e) => {
-                            setTipoAbonoUnified(e.target.value);
-                            setPagoIdCxC('');
-                            setPagoIdCxP('');
-                          }} 
-                          className="w-full bg-[#F8FAF8] text-[#1F2937] font-bold rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none"
-                        >
+                        <select value={tipoAbonoUnified} onChange={(e) => { setTipoAbonoUnified(e.target.value); setPagoIdCxC(''); setPagoIdCxP(''); }} className="w-full bg-[#F8FAF8] text-[#1F2937] font-bold rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none">
                           <option value="CxC">📥 Cuenta por Cobrar (CxC)</option>
                           <option value="CxP">📤 Cuenta por Pagar (CxP)</option>
                         </select>
@@ -1148,7 +1131,6 @@
                               <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente)})</option>
                             ))}
                           </select>
-
                           <div className="flex gap-2">
                             <input type="text" placeholder="Monto a abonar" value={montoPagoCxCDisplay} onChange={(e) => setMontoPagoCxCDisplay(formatearInputEnVivo(e.target.value))} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                             <select value={cuentaPagoCxC} onChange={(e) => setCuentaPagoCxC(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
@@ -1166,7 +1148,6 @@
                               <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente)})</option>
                             ))}
                           </select>
-
                           <div className="flex gap-2">
                             <input type="text" placeholder="Monto a abonar" value={montoPagoCxPDisplay} onChange={(e) => setMontoPagoCxPDisplay(formatearInputEnVivo(e.target.value))} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                             <select value={cuentaPagoCxP} onChange={(e) => setCuentaPagoCxP(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
@@ -1183,7 +1164,6 @@
                 {tab === 'reportes' && (
                   <div>
                     <h3 className="text-[17px] font-bold text-[#112A20] mb-3">Reportes y Estado de Deudas</h3>
-
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
                       <h4 className="text-sm font-bold text-[#112A20] mb-2">📑 Reporte Detallado por Tercero (CxC / CxP)</h4>
                       <div className="flex gap-2 mb-2">
@@ -1218,19 +1198,14 @@
                                 <p className="text-emerald-700 font-semibold">🟢 {itemSel.fechaInicial || 'Inicio'} — Saldo Inicial: +{formatoCOP(itemSel.valorTotal)}</p>
                                 {(itemSel.historialPagos || []).map((p, idx) => (
                                   <p key={idx} className="text-red-600 font-semibold">
-                                    🔴 {p.fecha} — Abono ({p.cuentaName}): -{formatoCOP(p.monto)}
+                                    🔴 {p.fecha} — Abono (${p.cuentaName}): -{formatoCOP(p.monto)}
                                   </p>
                                 ))}
                               </div>
                             </div>
-
                             <div className="flex gap-2 pt-2">
-                              <button onClick={() => exportarCSV(itemSel)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#112A20] transition">
-                                📊 Exportar a Excel (CSV)
-                              </button>
-                              <button onClick={() => exportarPDF(itemSel)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#2D6A4F] transition">
-                                📄 PDF
-                              </button>
+                              <button onClick={() => exportarCSV(itemSel)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#112A20] transition">📊 Exportar a Excel (CSV)</button>
+                              <button onClick={() => exportarPDF(itemSel)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#2D6A4F] transition">📄 PDF</button>
                             </div>
                           </div>
                         );
@@ -1239,17 +1214,14 @@
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
                       <h4 className="text-sm font-bold text-[#112A20] mb-3">📊 Balance General de Deudas</h4>
-                      
                       <div className="flex justify-between items-center mb-1 text-xs">
                         <span className="font-semibold text-[#2D6A4F]">📥 CxC: {formatoCOP(totalCxCPendiente)} ({pctCxC}%)</span>
                         <span className="font-semibold text-[#C94A4A]">📤 CxP: {formatoCOP(totalCxPPendiente)} ({pctCxP}%)</span>
                       </div>
-
                       <div className="h-4 flex rounded-lg overflow-hidden bg-[#E2E8F0] mb-3">
                         <div style={{ width: `${pctCxC}%`, backgroundColor: '#2D6A4F' }} className="h-full transition-all"></div>
                         <div style={{ width: `${pctCxP}%`, backgroundColor: '#C94A4A' }} className="h-full transition-all"></div>
                       </div>
-
                       <div className="flex justify-between text-[11px] text-slate-500 font-medium">
                         <span>Total por Cobrar</span>
                         <span>Total por Pagar</span>
@@ -1257,7 +1229,6 @@
                     </div>
 
                     <h3 className="text-[17px] font-bold text-[#112A20] mb-3 mt-6">Reporte Financiero por Fechas</h3>
-
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3">
                       <label className="text-xs font-semibold text-[#52725F] block mb-2">Período de consulta (AAAA-MM-DD):</label>
                       <div className="flex gap-2 mb-2">
@@ -1270,7 +1241,6 @@
                           <input type="text" value={fechaHasta} onChange={(e) => setFechaHasta(e.target.value)} className="w-full bg-[#F8FAF8] rounded-lg p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                         </div>
                       </div>
-
                       <div className="flex gap-2">
                         <button onClick={() => { setFechaDesde(fechaHoy()); setFechaHasta(fechaHoy()); }} className="flex-1 py-1.5 bg-[#E8EFE9] rounded-lg text-xs font-bold text-[#205B43] hover:bg-slate-200 transition">Hoy</button>
                         <button onClick={() => { setFechaDesde(primerDiaMes()); setFechaHasta(fechaHoy()); }} className="flex-1 py-1.5 bg-[#E8EFE9] rounded-lg text-xs font-bold text-[#205B43] hover:bg-slate-200 transition">Este Mes</button>
@@ -1288,7 +1258,6 @@
                     </div>
 
                     <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">Distribución por Rubro ({listaRubros.length})</h3>
-
                     {totalGastosReporte === 0 ? (
                       <p className="text-center text-[#718078] my-6 italic text-sm">No existen gastos registrados entre {fechaDesde} y {fechaHasta}.</p>
                     ) : (
@@ -1300,12 +1269,10 @@
                             return <div key={rubro} style={{ width: `${pct}%`, backgroundColor: paleta[idx % paleta.length] }} className="h-full"></div>;
                           })}
                         </div>
-
                         {listaRubros.map(([rubro, total], idx) => {
                           const porcentaje = Math.round((total / totalGastosReporte) * 100);
                           const paleta = ['#112A20', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
                           const color = paleta[idx % paleta.length];
-
                           return (
                             <div key={rubro} className="mt-3">
                               <div className="flex justify-between items-center mb-1">
@@ -1327,15 +1294,37 @@
                 )}
               </div>
 
+              {movimientoEditando && (
+                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
+                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-3">
+                    <h3 className="text-lg font-extrabold text-[#112A20] text-center">Editar Movimiento</h3>
+                    <div>
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Concepto:</label>
+                      <input type="text" value={editConcepto} onChange={(e) => setEditConcepto(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Valor en COP:</label>
+                      <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Fecha:</label>
+                      <input type="date" value={editFecha} onChange={(e) => setEditFecha(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none" />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <button onClick={() => setMovimientoEditando(null)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
+                      <button onClick={guardarMovimientoEditado} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#112A20] transition">Guardar Cambios</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {modalEditarSaldo && (
                 <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
                   <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
                     <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-2">Modificar Saldo Inicial</h3>
                     <p className="text-xs text-[#52725F] mb-3 text-center">Cuenta: <span className="font-bold">{cuentaAEditar?.nombre}</span></p>
-
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Nuevo saldo de arranque en COP:</label>
                     <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
-
                     <div className="flex gap-2">
                       <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
                       <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#112A20] transition">Guardar Saldo</button>
@@ -1348,22 +1337,16 @@
                 <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
                   <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
                     <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-3">Nueva Cuenta o Banco</h3>
-
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Nombre de la cuenta:</label>
                     <input type="text" placeholder="Ej. Daviplata, BBVA" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
-
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Tipo:</label>
                     <div className="flex gap-2 mb-3">
                       {['Banco', 'Billetera', 'Efectivo'].map((t) => (
-                        <button key={t} onClick={() => setNuevoTipo(t)} className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${nuevoTipo === t ? 'bg-[#205B43] text-white shadow' : 'bg-[#E8EFE9] text-[#205B43]'}`}>
-                          {t}
-                        </button>
+                        <button key={t} onClick={() => setNuevoTipo(t)} className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${nuevoTipo === t ? 'bg-[#205B43] text-white shadow' : 'bg-[#E8EFE9] text-[#205B43]'}`}>{t}</button>
                       ))}
                     </div>
-
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Saldo inicial en COP:</label>
                     <input type="text" placeholder="Monto en pesos" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
-
                     <div className="flex gap-2">
                       <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
                       <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#112A20] transition">Crear Cuenta</button>
@@ -1397,5 +1380,4 @@
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
-</html>     
- 
+</html> 
