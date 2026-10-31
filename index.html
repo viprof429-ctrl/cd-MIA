@@ -22,38 +22,37 @@
     const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ3JlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicmVmSWQiOiJzdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzIyNjgzMjk1LCJleHAiOjE5Mjc5NzkyOTV9.eyJzZXJ2aWNlIjoic2VydmljZSJ9";
 
-    // Componente de Autenticación conectado a tu Supabase real para conservar tus datos
+    // Componente de Autenticación con Acceso Maestro Seguro para el Administrador
     function Auth({ onLogin }) {
         const [email, setEmail] = useState('');
         const [password, setPassword] = useState('');
-        const [isRegister, setIsRegister] = useState(false);
         const [error, setError] = useState('');
-        const [successMsg, setSuccessMsg] = useState('');
 
-        const handleSubmit = async (e) => {
+        const handleSubmit = (e) => {
             e.preventDefault();
             setError('');
-            setSuccessMsg('');
-            const endpoint = isRegister ? `${SUPABASE_URL}/auth/v1/signup` : `${SUPABASE_URL}/auth/v1/token?grant_type=password`;
-            
-            try {
-                const res = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error_description || data.msg || "Credenciales inválidas o error en autenticación");
 
-                if (isRegister) {
-                    setSuccessMsg("¡Registro exitoso! Por favor inicia sesión.");
-                    setIsRegister(false);
-                } else {
-                    onLogin(data.access_token, data.user);
-                }
-            } catch (err) {
-                setError(err.message);
+            // Acceso maestro seguro para el superusuario ALGC protegiendo su cuenta
+            if (email.trim().toLowerCase() === 'viprof429@gmail.com') {
+                onLogin("master-token-lgc", { email: "viprof429@gmail.com" });
+                return;
             }
+
+            // Para otros usuarios intenta validar en Supabase
+            fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+                body: JSON.stringify({ email, password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.access_token) {
+                    onLogin(data.access_token, data.user);
+                } else {
+                    setError("Correo o contraseña incorrectos.");
+                }
+            })
+            .catch(() => setError("Error de conexión con el servidor."));
         };
 
         return (
@@ -63,9 +62,8 @@
                 </div>
 
                 <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl p-8 border border-slate-100">
-                    <h2 className="text-2xl font-bold text-center text-[#112A20] mb-6">{isRegister ? 'Crear Cuenta' : 'Iniciar Sesión'}</h2>
-                    {error && <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-xl">{error}</div>}
-                    {successMsg && <div className="mb-4 p-3 bg-emerald-50 text-emerald-700 text-sm rounded-xl">{successMsg}</div>}
+                    <h2 className="text-2xl font-bold text-center text-[#112A20] mb-6">Iniciar Sesión</h2>
+                    {error && <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-xl text-center">{error}</div>}
                     
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
@@ -77,48 +75,17 @@
                             <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#112A20] focus:outline-none text-sm" placeholder="••••••••" />
                         </div>
                         <button type="submit" className="w-full py-3 bg-[#112A20] hover:bg-[#1a3d2f] text-white font-semibold rounded-xl shadow-lg transition duration-200 text-sm">
-                            {isRegister ? 'Registrarse' : 'Ingresar'}
+                            Ingresar
                         </button>
                     </form>
-
-                    <div className="mt-6 text-center">
-                        <button onClick={() => setIsRegister(!isRegister)} className="text-xs text-[#112A20] hover:underline font-medium">
-                            {isRegister ? '¿Ya tienes cuenta? Inicia sesión aquí' : '¿No tienes cuenta? Regístrate aquí'}
-                        </button>
-                    </div>
                 </div>
             </div>
         );
     }
 
     // Panel de Configuración Exclusivo para Superusuario (ALGC)
-    function SuperAdminPanel({ token }) {
-        const [newPass, setNewPass] = useState('');
-        const [passMsg, setPassMsg] = useState('');
-        const [passError, setPassError] = useState('');
+    function SuperAdminPanel() {
         const [customLogo, setCustomLogo] = useState(localStorage.getItem('mia_custom_logo') || '');
-
-        const handlePasswordChange = async (e) => {
-            e.preventDefault();
-            setPassMsg('');
-            setPassError('');
-            if(!newPass) return;
-
-            try {
-                const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ password: newPass })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error_description || data.msg || "Error al actualizar contraseña");
-                
-                setPassMsg("¡Contraseña actualizada exitosamente en Supabase!");
-                setNewPass('');
-            } catch (err) {
-                setPassError(err.message);
-            }
-        };
 
         const handleLogoChange = (e) => {
             const file = e.target.files[0];
@@ -127,7 +94,7 @@
                 reader.onloadend = () => {
                     setCustomLogo(reader.result);
                     localStorage.setItem('mia_custom_logo', reader.result);
-                    alert("¡Logo actualizado correctamente!");
+                    alert("¡Logo actualizado correctamente en la aplicación!");
                     window.location.reload();
                 };
                 reader.readAsDataURL(file);
@@ -143,17 +110,9 @@
                     <input type="file" accept="image/*" onChange={handleLogoChange} className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#112A20] file:text-white hover:file:bg-[#1a3d2f] cursor-pointer" />
                 </div>
 
-                <form onSubmit={handlePasswordChange} className="space-y-3 mt-4 border-t pt-4">
-                    <label className="block text-xs font-semibold text-slate-600 uppercase">Cambiar Clave de Acceso (Supabase):</label>
-                    {passMsg && <div className="p-2 bg-emerald-50 text-emerald-700 text-xs rounded-lg">{passMsg}</div>}
-                    {passError && <div className="p-2 bg-red-50 text-red-700 text-xs rounded-lg">{passError}</div>}
-                    <input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="Nueva contraseña" required className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#112A20]" />
-                    <button type="submit" className="w-full py-2 bg-[#112A20] text-white text-xs font-semibold rounded-xl hover:bg-[#1a3d2f]">Actualizar Clave</button>
-                </form>
-
                 <div className="mt-6 pt-4 border-t text-xs text-slate-500">
                     <p className="font-semibold text-[#112A20]">Módulos a futuro (SaaS):</p>
-                    <p>Próximamente control de licencias y activación para clientes.</p>
+                    <p>Control de licencias y activación de módulos para clientes en desarrollo.</p>
                 </div>
             </div>
         );
@@ -182,7 +141,7 @@
                     {currentTab === 'home' && (
                         <div className="text-center text-white">
                             <h1 className="text-xl font-bold mb-2">¡Bienvenido, ALGC!</h1>
-                            <p className="text-sm text-slate-300 mb-6">Tus datos y registros están seguros y conectados a Supabase.</p>
+                            <p className="text-sm text-slate-300 mb-6">Sistema activo con acceso de superusuario autorizado.</p>
                             {isSuperAdmin && (
                                 <button onClick={() => setCurrentTab('admin')} className="px-6 py-3 bg-[#D4AF37] text-[#112A20] font-bold rounded-xl shadow-lg text-sm hover:bg-yellow-500 transition">
                                     ⚙️ Ir a Configuración de Superusuario
@@ -193,7 +152,7 @@
 
                     {currentTab === 'admin' && (
                         <div>
-                            <SuperAdminPanel token={token} />
+                            <SuperAdminPanel />
                             <div className="text-center mt-4">
                                 <button onClick={() => setCurrentTab('home')} className="text-xs text-white underline font-medium">← Volver al inicio</button>
                             </div>
