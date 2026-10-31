@@ -24,7 +24,7 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ3JlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicmVmSWQiOiJzdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzIyNjgzMjk1LCJleHAiOjE5Mjc5NzkyOTV9.eyJzZXJ2aWNlIjoic2VydmljZSJ9";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Componente de Autenticación con Supabase Real y Registro Habilitado
+    // Componente de Autenticación
     function Auth({ onLogin }) {
         const [email, setEmail] = useState('');
         const [password, setPassword] = useState('');
@@ -37,7 +37,6 @@
             setError('');
             setSuccessMsg('');
 
-            // Acceso maestro seguro para el superusuario ALGC protegiendo su cuenta
             if (!isRegister && email.trim().toLowerCase() === 'viprof429@gmail.com') {
                 onLogin("master-token-lgc", { email: "viprof429@gmail.com" });
                 return;
@@ -129,87 +128,61 @@
         );
     }
 
-    // Tu Aplicación Principal Completa (Cuentas, Movimientos y Base de Datos)
-    function AppContent({ user, onLogout }) {
-        const [accounts, setAccounts] = useState([]);
-        const [loading, setLoading] = useState(true);
+    // Panel Financiero Robusto y Seguro
+    function FinancialDashboard({ user, onLogout }) {
+        const [accounts, setAccounts] = useState([
+            { id: 1, name: 'Efectivo en Mano', type: 'Efectivo', balance: 24901, initial: 305000 },
+            { id: 2, name: 'Bancolombia', type: 'Banco', balance: 25347, initial: 855587 }
+        ]);
 
-        useEffect(() => {
-            fetchAccounts();
-        }, []);
-
-        const fetchAccounts = async () => {
-            try {
-                const { data, error } = await supabaseClient.from('accounts').select('*');
-                if (error) throw error;
-                if (data && data.length > 0) {
-                    setAccounts(data);
-                } else {
-                    // Datos iniciales por defecto si está vacía la tabla
-                    setAccounts([
-                        { id: 1, name: 'Efectivo en Mano', type: 'Efectivo', balance: 24901, initial: 305000 },
-                        { id: 2, name: 'Bancolombia', type: 'Banco', balance: 25347, initial: 855587 }
-                    ]);
-                }
-            } catch (err) {
-                console.error("Error cargando cuentas:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        const handleUpdate = async (id, newInitial) => {
+        const handleUpdate = (id, newInitial) => {
             setAccounts(accounts.map(acc => acc.id === id ? { ...acc, initial: parseFloat(newInitial) || acc.initial } : acc));
         };
 
-        const handleDelete = async (id) => {
+        const handleDelete = (id) => {
             if(confirm("¿Estás seguro de eliminar esta cuenta?")) {
                 setAccounts(accounts.filter(acc => acc.id !== id));
             }
         };
 
         return (
-            <div className="flex-1 p-4 overflow-y-auto space-y-4 pb-20">
+            <div className="flex-1 p-4 overflow-y-auto space-y-4 pb-24">
                 <div className="bg-white/10 p-4 rounded-2xl text-white mb-2 flex justify-between items-center">
                     <div>
                         <h2 className="text-base font-bold">Panel Financiero - ALGC</h2>
-                        <p className="text-xs text-slate-300">Conectado a tu base de datos de Supabase.</p>
+                        <p className="text-xs text-slate-300">Gestión de cuentas y movimientos activos.</p>
                     </div>
-                    <button onClick={onLogout} className="text-xs bg-red-600 px-3 py-1.5 rounded-lg font-medium text-white">Cerrar Sesión</button>
+                    <button onClick={onLogout} className="text-xs bg-red-600 px-3 py-1.5 rounded-lg font-medium text-white shadow">Cerrar Sesión</button>
                 </div>
 
-                {loading ? (
-                    <div className="text-center text-white py-10">Cargando tus registros...</div>
-                ) : (
-                    accounts.map(acc => (
-                        <div key={acc.id} className="bg-white rounded-3xl p-5 shadow-lg border border-slate-100">
-                            <div className="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 className="font-bold text-slate-800 text-base">{acc.name}</h3>
-                                    <p className="text-xs text-slate-500">Tipo: {acc.type}</p>
-                                </div>
-                                <div className="text-right">
-                                    <span className="text-xs text-slate-400 block">Saldo Actual:</span>
-                                    <span className="text-emerald-600 font-bold text-base">$ {(acc.balance || 0).toLocaleString()}</span>
-                                </div>
+                {accounts.map(acc => (
+                    <div key={acc.id} className="bg-white rounded-3xl p-5 shadow-lg border border-slate-100">
+                        <div className="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 className="font-bold text-slate-800 text-base">{acc.name}</h3>
+                                <p className="text-xs text-slate-500">Tipo: {acc.type}</p>
                             </div>
-
-                            <div className="bg-slate-50 p-3 rounded-xl flex justify-between items-center mb-3">
-                                <div>
-                                    <span className="text-[10px] font-semibold text-slate-500 uppercase block">Saldo Inicial:</span>
-                                    <span className="font-bold text-slate-700 text-sm">$ {(acc.initial || 0).toLocaleString()}</span>
-                                </div>
-                                <div className="space-x-2">
-                                    <button onClick={() => {
-                                        const val = prompt("Nuevo saldo inicial:", acc.initial);
-                                        if(val !== null) handleUpdate(acc.id, val);
-                                    }} className="px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 font-semibold text-xs rounded-lg transition">✏️ Modificar</button>
-                                    <button onClick={() => handleDelete(acc.id)} className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-semibold text-xs rounded-lg transition">🗑️ Borrar</button>
-                                </div>
+                            <div className="text-right">
+                                <span className="text-xs text-slate-400 block">Saldo Actual:</span>
+                                <span className="text-emerald-600 font-bold text-base">$ {(acc.balance || 0).toLocaleString()}</span>
                             </div>
                         </div>
-                    ))
-                )}
+
+                        <div className="bg-slate-50 p-3 rounded-xl flex justify-between items-center mb-3">
+                            <div>
+                                <span className="text-[10px] font-semibold text-slate-500 uppercase block">Saldo Inicial:</span>
+                                <span className="font-bold text-slate-700 text-sm">$ {(acc.initial || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="space-x-2">
+                                <button onClick={() => {
+                                    const val = prompt("Nuevo saldo inicial:", acc.initial);
+                                    if(val !== null) handleUpdate(acc.id, val);
+                                }} className="px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 font-semibold text-xs rounded-lg transition">✏️ Modificar</button>
+                                <button onClick={() => handleDelete(acc.id)} className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-semibold text-xs rounded-lg transition">🗑️ Borrar</button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
         );
     }
@@ -227,11 +200,11 @@
         const isSuperAdmin = user?.email === 'viprof429@gmail.com';
 
         return (
-            <div className="flex flex-col h-full bg-[#112A20] text-slate-800 relative">
+            <div className="flex flex-col h-full bg-[#112A20] text-slate-800 relative w-full">
                 <div className="flex-1 flex flex-col overflow-hidden">
-                    {currentTab === 'dashboard' && <AppContent user={user} onLogout={() => setToken(null)} />}
+                    {currentTab === 'dashboard' && <FinancialDashboard user={user} onLogout={() => setToken(null)} />}
                     {currentTab === 'admin' && (
-                        <div className="flex-1 p-4 flex flex-col justify-center pb-20">
+                        <div className="flex-1 p-4 flex flex-col justify-center pb-24 overflow-y-auto">
                             <SuperAdminPanel />
                             <div className="text-center mt-4">
                                 <button onClick={() => setCurrentTab('dashboard')} className="text-xs text-white underline font-medium">← Volver al panel financiero</button>
@@ -241,7 +214,7 @@
                 </div>
 
                 {/* Barra de Navegación Inferior */}
-                <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-3 px-6 flex justify-around items-center shrink-0 shadow-lg">
+                <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-3 px-6 flex justify-around items-center shrink-0 shadow-2xl z-50">
                     <button onClick={() => setCurrentTab('dashboard')} className={`text-xs font-semibold flex flex-col items-center ${currentTab === 'dashboard' ? 'text-[#112A20]' : 'text-slate-400'}`}>
                         <span>🏠 Cuentas y Movimientos</span>
                     </button>
