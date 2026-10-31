@@ -24,7 +24,7 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ3JlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicmVmSWQiOiJzdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzIyNjgzMjk1LCJleHAiOjE5Mjc5NzkyOTV9.eyJzZXJ2aWNlIjoic2VydmljZSJ9";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Componente de Autenticación
+    // Componente de Autenticación con Registro y Supabase
     function Auth({ onLogin }) {
         const [email, setEmail] = useState('');
         const [password, setPassword] = useState('');
@@ -93,7 +93,7 @@
         );
     }
 
-    // Panel de Configuración Exclusivo para Superusuario (ALGC)
+    // Panel de Superusuario Exclusivo (ALGC)
     function SuperAdminPanel() {
         const [customLogo, setCustomLogo] = useState(localStorage.getItem('mia_custom_logo') || '');
 
@@ -128,66 +128,111 @@
         );
     }
 
-    // Panel Financiero Robusto y Seguro
-    function FinancialDashboard({ user, onLogout }) {
+    // Aplicación Completa con Todos los Módulos Originales
+    function FullApp({ user, onLogout, currentTab, setCurrentTab }) {
         const [accounts, setAccounts] = useState([
             { id: 1, name: 'Efectivo en Mano', type: 'Efectivo', balance: 24901, initial: 305000 },
             { id: 2, name: 'Bancolombia', type: 'Banco', balance: 25347, initial: 855587 }
         ]);
-
-        const handleUpdate = (id, newInitial) => {
-            setAccounts(accounts.map(acc => acc.id === id ? { ...acc, initial: parseFloat(newInitial) || acc.initial } : acc));
-        };
-
-        const handleDelete = (id) => {
-            if(confirm("¿Estás seguro de eliminar esta cuenta?")) {
-                setAccounts(accounts.filter(acc => acc.id !== id));
-            }
-        };
+        const [transactions, setTransactions] = useState([
+            { id: 1, desc: 'Ahorro inicial', amount: 305000, type: 'income', account: 'Efectivo en Mano' }
+        ]);
 
         return (
-            <div className="flex-1 p-4 overflow-y-auto space-y-4 pb-24">
-                <div className="bg-white/10 p-4 rounded-2xl text-white mb-2 flex justify-between items-center">
+            <div className="flex flex-col h-full bg-[#112A20] text-slate-800 relative w-full">
+                {/* Cabecera Superior */}
+                <div className="p-4 bg-[#112A20] border-b border-white/10 flex justify-between items-center text-white shrink-0">
                     <div>
-                        <h2 className="text-base font-bold">Panel Financiero - ALGC</h2>
-                        <p className="text-xs text-slate-300">Gestión de cuentas y movimientos activos.</p>
+                        <h1 className="font-bold text-sm">MIA - Mi Inteligencia de Ahorro</h1>
+                        <p className="text-[10px] text-slate-300">Usuario: {user?.email}</p>
                     </div>
                     <button onClick={onLogout} className="text-xs bg-red-600 px-3 py-1.5 rounded-lg font-medium text-white shadow">Cerrar Sesión</button>
                 </div>
 
-                {accounts.map(acc => (
-                    <div key={acc.id} className="bg-white rounded-3xl p-5 shadow-lg border border-slate-100">
-                        <div className="flex justify-between items-start mb-3">
-                            <div>
-                                <h3 className="font-bold text-slate-800 text-base">{acc.name}</h3>
-                                <p className="text-xs text-slate-500">Tipo: {acc.type}</p>
+                {/* Contenido Dinámico según la Pestaña */}
+                <div className="flex-1 p-4 overflow-y-auto pb-24 space-y-4">
+                    {currentTab === 'dashboard' && (
+                        <div className="space-y-4">
+                            <div className="bg-white/10 p-4 rounded-2xl text-white">
+                                <h2 className="text-sm font-bold">Resumen Financiero</h2>
+                                <p className="text-xs text-slate-300">Balance general de tus cuentas y movimientos.</p>
                             </div>
-                            <div className="text-right">
-                                <span className="text-xs text-slate-400 block">Saldo Actual:</span>
-                                <span className="text-emerald-600 font-bold text-base">$ {(acc.balance || 0).toLocaleString()}</span>
-                            </div>
+                            {accounts.map(acc => (
+                                <div key={acc.id} className="bg-white rounded-3xl p-5 shadow-lg border border-slate-100">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 className="font-bold text-slate-800 text-base">{acc.name}</h3>
+                                            <p className="text-xs text-slate-500">Tipo: {acc.type}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-xs text-slate-400 block">Saldo Actual:</span>
+                                            <span className="text-emerald-600 font-bold text-base">$ {acc.balance.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-slate-50 p-3 rounded-xl flex justify-between items-center text-xs">
+                                        <span>Saldo Inicial: <b>$ {acc.initial.toLocaleString()}</b></span>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
+                    )}
 
-                        <div className="bg-slate-50 p-3 rounded-xl flex justify-between items-center mb-3">
-                            <div>
-                                <span className="text-[10px] font-semibold text-slate-500 uppercase block">Saldo Inicial:</span>
-                                <span className="font-bold text-slate-700 text-sm">$ {(acc.initial || 0).toLocaleString()}</span>
-                            </div>
-                            <div className="space-x-2">
-                                <button onClick={() => {
-                                    const val = prompt("Nuevo saldo inicial:", acc.initial);
-                                    if(val !== null) handleUpdate(acc.id, val);
-                                }} className="px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 font-semibold text-xs rounded-lg transition">✏️ Modificar</button>
-                                <button onClick={() => handleDelete(acc.id)} className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-semibold text-xs rounded-lg transition">🗑️ Borrar</button>
-                            </div>
+                    {currentTab === 'accounts' && (
+                        <div className="space-y-4 text-white">
+                            <h2 className="text-base font-bold">Gestión de Cuentas</h2>
+                            {accounts.map(acc => (
+                                <div key={acc.id} className="bg-white text-slate-800 rounded-3xl p-4 shadow">
+                                    <h3 className="font-bold">{acc.name}</h3>
+                                    <p className="text-xs text-slate-500">Saldo: $ {acc.balance.toLocaleString()}</p>
+                                </div>
+                            ))}
                         </div>
-                    </div>
-                ))}
+                    )}
+
+                    {currentTab === 'transactions' && (
+                        <div className="space-y-4 text-white">
+                            <h2 className="text-base font-bold">Movimientos Recientes</h2>
+                            {transactions.map(tx => (
+                                <div key={tx.id} className="bg-white text-slate-800 rounded-3xl p-4 shadow flex justify-between items-center">
+                                    <div>
+                                        <p className="font-bold text-sm">{tx.desc}</p>
+                                        <p className="text-xs text-slate-500">Cuenta: {tx.account}</p>
+                                    </div>
+                                    <span className="text-emerald-600 font-bold">+$ {tx.amount.toLocaleString()}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {currentTab === 'admin' && (
+                        <div className="flex flex-col justify-center h-full">
+                            <SuperAdminPanel />
+                        </div>
+                    )}
+                </div>
+
+                {/* Barra de Navegación Inferior Completa */}
+                <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-3 px-2 flex justify-around items-center shrink-0 shadow-2xl z-50">
+                    <button onClick={() => setCurrentTab('dashboard')} className={`text-[11px] font-semibold flex flex-col items-center ${currentTab === 'dashboard' ? 'text-[#112A20]' : 'text-slate-400'}`}>
+                        <span>📊 Resumen</span>
+                    </button>
+                    <button onClick={() => setCurrentTab('accounts')} className={`text-[11px] font-semibold flex flex-col items-center ${currentTab === 'accounts' ? 'text-[#112A20]' : 'text-slate-400'}`}>
+                        <span>💳 Cuentas</span>
+                    </button>
+                    <button onClick={() => setCurrentTab('transactions')} className={`text-[11px] font-semibold flex flex-col items-center ${currentTab === 'transactions' ? 'text-[#112A20]' : 'text-slate-400'}`}>
+                        <span>📝 Movimientos</span>
+                    </button>
+                    {user?.email === 'viprof429@gmail.com' && (
+                        <button onClick={() => setCurrentTab('admin')} className={`text-[11px] font-semibold flex flex-col items-center ${currentTab === 'admin' ? 'text-amber-600' : 'text-slate-400'}`}>
+                            <span>⚙️ Superusuario</span>
+                        </button>
+                    )}
+                </div>
             </div>
         );
     }
 
-    // Aplicación Principal con Pestañas
+    // Aplicación Principal
     function App() {
         const [token, setToken] = useState(null);
         const [user, setUser] = useState(null);
@@ -197,35 +242,7 @@
             return <Auth onLogin={(t, u) => { setToken(t); setUser(u); }} />;
         }
 
-        const isSuperAdmin = user?.email === 'viprof429@gmail.com';
-
-        return (
-            <div className="flex flex-col h-full bg-[#112A20] text-slate-800 relative w-full">
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    {currentTab === 'dashboard' && <FinancialDashboard user={user} onLogout={() => setToken(null)} />}
-                    {currentTab === 'admin' && (
-                        <div className="flex-1 p-4 flex flex-col justify-center pb-24 overflow-y-auto">
-                            <SuperAdminPanel />
-                            <div className="text-center mt-4">
-                                <button onClick={() => setCurrentTab('dashboard')} className="text-xs text-white underline font-medium">← Volver al panel financiero</button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Barra de Navegación Inferior */}
-                <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-3 px-6 flex justify-around items-center shrink-0 shadow-2xl z-50">
-                    <button onClick={() => setCurrentTab('dashboard')} className={`text-xs font-semibold flex flex-col items-center ${currentTab === 'dashboard' ? 'text-[#112A20]' : 'text-slate-400'}`}>
-                        <span>🏠 Cuentas y Movimientos</span>
-                    </button>
-                    {isSuperAdmin && (
-                        <button onClick={() => setCurrentTab('admin')} className={`text-xs font-semibold flex flex-col items-center ${currentTab === 'admin' ? 'text-amber-600' : 'text-slate-400'}`}>
-                            <span>⚙️ Superusuario</span>
-                        </button>
-                    )}
-                </div>
-            </div>
-        );
+        return <FullApp user={user} onLogout={() => setToken(null)} currentTab={currentTab} setCurrentTab={setCurrentTab} />;
     }
 
     ReactDOM.render(<App />, document.getElementById('root'));
