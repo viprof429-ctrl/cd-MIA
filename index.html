@@ -21,7 +21,7 @@
         const { useState, useEffect } = React;
 
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwiaWF0IjoxNzkzMTE0MjY5LCJleHAiOjIxMDg2OTAyNjl9.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
 
         const supabaseApi = {
           async signUp(email, password) {
@@ -90,7 +90,7 @@
           }
         };
 
-        // IDENTIDAD INSTITUCIONAL OFICIAL (Vectorial garantizada para todos los dispositivos)
+        // IDENTIDAD INSTITUCIONAL FIJA Y GLOBAL (Vectorial garantizada para todos los usuarios)
         const LogoOficialMIA = ({ className = "w-44 h-44" }) => (
           <div className={`flex items-center justify-center overflow-hidden rounded-2xl shadow-xl bg-[#112A20] border border-[#D4AF37]/30 ${className}`}>
             <svg viewBox="0 0 400 450" className="w-full h-full drop-shadow-2xl" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1400,7 +1400,7 @@
                         
                         <div className="border-t pt-3">
                             <h4 className="text-xs font-bold text-[#112A20] mb-1">Módulos Comerciales a Futuro (SaaS):</h4>
-                            <p className="text-[11px] text-slate-500">Próximamente podrás activar o desactivar módulos de suscripción y licencias para clientes corporativos.</p>
+                            <p className="text-[11px] text-slate-500">Gestión centralizada de licencias, identidad institucional fija y activación de módulos para clientes corporativos.</p>
                         </div>
                     </div>
                 )}
@@ -1532,4 +1532,4 @@
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
-</html>
+</html> 
