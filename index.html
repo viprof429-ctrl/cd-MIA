@@ -21,7 +21,7 @@
         const { useState, useEffect } = React;
 
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwiaWF0IjoxNzkzMTE0MjY5LCJleHAiOjIxMDg2OTAyNjl9.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
+        const SUPABASE_ANON_KEY = "yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
 
         const supabaseApi = {
           async signUp(email, password) {
@@ -90,7 +90,6 @@
           }
         };
 
-        // IDENTIDAD INSTITUCIONAL FIJA Y GLOBAL (Vectorial garantizada para todos los usuarios)
         const LogoOficialMIA = ({ className = "w-44 h-44" }) => (
           <div className={`flex items-center justify-center overflow-hidden rounded-2xl shadow-xl bg-[#112A20] border border-[#D4AF37]/30 ${className}`}>
             <svg viewBox="0 0 400 450" className="w-full h-full drop-shadow-2xl" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1516,7 +1515,7 @@
                 </button>
                 <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center">
                   <span className={`text-lg transition ${tab === 'reportes' ? 'opacity-100 scale-110' : 'opacity-40'}`}>📊</span>
-                  <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Reportes</span>
+                  <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}><span className="text-xs">Reportes</span></span>
                 </button>
                 {esSuperAdmin && (
                     <button onClick={() => setTab('admin')} className="flex-1 flex flex-col items-center justify-center">
@@ -1532,4 +1531,4 @@
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
-</html> 
+</html>
