@@ -322,7 +322,6 @@
           const [valorDisplay, setValorDisplay] = useState('');
           const [fechaMovimiento, setFechaMovimiento] = useState(fechaHoy());
 
-          // ESTADOS PARA EDITAR O ELIMINAR MOVIMIENTO
           const [modalEditarMovimiento, setModalEditarMovimiento] = useState(false);
           const [movimientoAEditar, setMovimientoAEditar] = useState(null);
           const [editConcepto, setEditConcepto] = useState('');
@@ -416,7 +415,6 @@
             notificar('¡Registrado!', `${tipoMovimiento} guardado con éxito.`);
           };
 
-          // FUNCIONES PARA EDITAR Y ELIMINAR MOVIMIENTOS
           const abrirModalEditarMovimiento = (m) => {
             setMovimientoAEditar(m);
             setEditConcepto(m.concepto);
@@ -1464,7 +1462,6 @@
                 )}
               </div>
 
-              {/* MODAL PARA EDITAR MOVIMIENTO */}
               {modalEditarMovimiento && (
                 <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
                   <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-3">
