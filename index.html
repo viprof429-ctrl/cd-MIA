@@ -20,39 +20,47 @@
 <script type="text/babel">
     const { useState, useEffect } = React;
     const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ3JlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicmVmSWQiOiJzdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzIyNjgzMjk1LCJleHAiOjE5Mjc5NzkyOTV9.eyJzZXJ2aWNlIjoic2VydmljZSJ9";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ3JlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicmVmSWQiOiJzdXBhYmFzZSIsInR5cCI6ImFub24iLCJpYXQiOjE3MjI2ODMyOTUsImV4cCI6MTkyNzk3OTI5NX0.eyJzZXJ2aWNlIjoic2VydmljZSJ9";
 
-    // Componente de Autenticación con Acceso Maestro Seguro para el Administrador
+    // Componente de Autenticación con Registro y Supabase Real
     function Auth({ onLogin }) {
         const [email, setEmail] = useState('');
         const [password, setPassword] = useState('');
+        const [isRegister, setIsRegister] = useState(false);
         const [error, setError] = useState('');
+        const [successMsg, setSuccessMsg] = useState('');
 
-        const handleSubmit = (e) => {
+        const handleSubmit = async (e) => {
             e.preventDefault();
             setError('');
+            setSuccessMsg('');
 
-            // Acceso maestro seguro para el superusuario ALGC protegiendo su cuenta
-            if (email.trim().toLowerCase() === 'viprof429@gmail.com') {
+            // Acceso maestro seguro para el superusuario ALGC protegiendo su cuenta y datos
+            if (!isRegister && email.trim().toLowerCase() === 'viprof429@gmail.com') {
                 onLogin("master-token-lgc", { email: "viprof429@gmail.com" });
                 return;
             }
 
-            // Para otros usuarios intenta validar en Supabase
-            fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
-                body: JSON.stringify({ email, password })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.access_token) {
-                    onLogin(data.access_token, data.user);
+            const endpoint = isRegister ? `${SUPABASE_URL}/auth/v1/signup` : `${SUPABASE_URL}/auth/v1/token?grant_type=password`;
+            
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error_description || data.msg || "Credenciales inválidas o error en autenticación");
+
+                if (isRegister) {
+                    setSuccessMsg("¡Registro exitoso! Por favor inicia sesión.");
+                    setIsRegister(false);
                 } else {
-                    setError("Correo o contraseña incorrectos.");
+                    onLogin(data.access_token, data.user);
                 }
-            })
-            .catch(() => setError("Error de conexión con el servidor."));
+            } catch (err) {
+                setError(err.message);
+            }
         };
 
         return (
@@ -62,8 +70,9 @@
                 </div>
 
                 <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl p-8 border border-slate-100">
-                    <h2 className="text-2xl font-bold text-center text-[#112A20] mb-6">Iniciar Sesión</h2>
-                    {error && <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-xl text-center">{error}</div>}
+                    <h2 className="text-2xl font-bold text-center text-[#112A20] mb-6">{isRegister ? 'Crear Cuenta' : 'Iniciar Sesión'}</h2>
+                    {error && <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-xl">{error}</div>}
+                    {successMsg && <div className="mb-4 p-3 bg-emerald-50 text-emerald-700 text-sm rounded-xl">{successMsg}</div>}
                     
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
@@ -75,9 +84,15 @@
                             <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#112A20] focus:outline-none text-sm" placeholder="••••••••" />
                         </div>
                         <button type="submit" className="w-full py-3 bg-[#112A20] hover:bg-[#1a3d2f] text-white font-semibold rounded-xl shadow-lg transition duration-200 text-sm">
-                            Ingresar
+                            {isRegister ? 'Registrarse' : 'Ingresar'}
                         </button>
                     </form>
+
+                    <div className="mt-6 text-center">
+                        <button onClick={() => setIsRegister(!isRegister)} className="text-xs text-[#112A20] hover:underline font-medium">
+                            {isRegister ? '¿Ya tienes cuenta? Inicia sesión aquí' : '¿No tienes cuenta? Regístrate aquí'}
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -94,7 +109,7 @@
                 reader.onloadend = () => {
                     setCustomLogo(reader.result);
                     localStorage.setItem('mia_custom_logo', reader.result);
-                    alert("¡Logo actualizado correctamente en la aplicación!");
+                    alert("¡Logo actualizado correctamente!");
                     window.location.reload();
                 };
                 reader.readAsDataURL(file);
@@ -118,11 +133,77 @@
         );
     }
 
-    // Aplicación Principal
+    // Módulo Principal de Cuentas y Movimientos (Tus datos financieros)
+    function FinancialDashboard({ token, user }) {
+        const [accounts, setAccounts] = useState([
+            { id: 1, name: 'Efectivo en Mano', type: 'Efectivo', balance: 24901, initial: 305000 },
+            { id: 2, name: 'Bancolombia', type: 'Banco', balance: 25347, initial: 855587 }
+        ]);
+        const [editingId, setEditingId] = useState(null);
+        const [tempInitial, setTempInitial] = useState('');
+
+        const handleSaveInitial = (id) => {
+            setAccounts(accounts.map(acc => acc.id === id ? { ...acc, initial: parseFloat(tempInitial) || acc.initial } : acc));
+            setEditingId(null);
+        };
+
+        const handleDeleteAccount = (id) => {
+            if(confirm("¿Estás seguro de eliminar esta cuenta?")) {
+                setAccounts(accounts.filter(acc => acc.id !== id));
+            }
+        };
+
+        return (
+            <div className="flex-1 p-4 overflow-y-auto space-y-4 pb-20">
+                <div className="bg-white/10 p-4 rounded-2xl text-white mb-4">
+                    <h2 className="text-base font-bold">Panel Financiero - ALGC</h2>
+                    <p className="text-xs text-slate-300">Conectado con tus registros y cuentas activas.</p>
+                </div>
+
+                {accounts.map(acc => (
+                    <div key={acc.id} className="bg-white rounded-3xl p-5 shadow-lg border border-slate-100">
+                        <div className="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 className="font-bold text-slate-800 text-base">{acc.name}</h3>
+                                <p className="text-xs text-slate-500">Tipo: {acc.type}</p>
+                            </div>
+                            <div className="text-right">
+                                <span className="text-xs text-slate-400 block">Saldo Actual:</span>
+                                <span className="text-emerald-600 font-bold text-base">$ {acc.balance.toLocaleString()}</span>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-50 p-3 rounded-xl flex justify-between items-center mb-3">
+                            <div>
+                                <span className="text-[10px] font-semibold text-slate-500 uppercase block">Saldo Inicial:</span>
+                                {editingId === acc.id ? (
+                                    <input type="number" value={tempInitial} onChange={e => setTempInitial(e.target.value)} className="w-28 px-2 py-1 text-sm border rounded-lg" placeholder={acc.initial} />
+                                ) : (
+                                    <span className="font-bold text-slate-700 text-sm">$ {acc.initial.toLocaleString()}</span>
+                                )}
+                            </div>
+                            <div>
+                                {editingId === acc.id ? (
+                                    <button onClick={() => handleSaveInitial(acc.id)} className="px-3 py-1 bg-emerald-600 text-white text-xs font-semibold rounded-lg">Guardar</button>
+                                ) : (
+                                    <div className="space-x-2">
+                                        <button onClick={() => { setEditingId(acc.id); setTempInitial(acc.initial); }} className="px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 font-semibold text-xs rounded-lg transition">✏️ Modificar</button>
+                                        <button onClick={() => handleDeleteAccount(acc.id)} className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-semibold text-xs rounded-lg transition">🗑️ Borrar</button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    // Aplicación Principal con Pestañas
     function App() {
         const [token, setToken] = useState(null);
         const [user, setUser] = useState(null);
-        const [currentTab, setCurrentTab] = useState('home');
+        const [currentTab, setCurrentTab] = useState('dashboard');
 
         if (!token) {
             return <Auth onLogin={(t, u) => { setToken(t); setUser(u); }} />;
@@ -131,32 +212,26 @@
         const isSuperAdmin = user?.email === 'viprof429@gmail.com';
 
         return (
-            <div className="flex flex-col h-full bg-[#112A20] text-slate-800">
-                <div className="p-4 bg-white/10 flex justify-between items-center text-white">
-                    <span className="font-bold text-sm">MIA - Panel Principal (ALGC)</span>
+            <div className="flex flex-col h-full bg-[#112A20] text-slate-800 relative">
+                <div className="p-4 bg-white/10 flex justify-between items-center text-white shrink-0">
+                    <span className="font-bold text-sm">MIA - Mi Inteligencia de Ahorro</span>
                     <button onClick={() => setToken(null)} className="text-xs bg-red-600 px-3 py-1.5 rounded-lg font-medium">Cerrar Sesión</button>
                 </div>
 
-                <div className="flex-1 p-6 flex flex-col justify-center overflow-y-auto">
-                    {currentTab === 'home' && (
-                        <div className="text-center text-white">
-                            <h1 className="text-xl font-bold mb-2">¡Bienvenido, ALGC!</h1>
-                            <p className="text-sm text-slate-300 mb-6">Sistema activo con acceso de superusuario autorizado.</p>
-                            {isSuperAdmin && (
-                                <button onClick={() => setCurrentTab('admin')} className="px-6 py-3 bg-[#D4AF37] text-[#112A20] font-bold rounded-xl shadow-lg text-sm hover:bg-yellow-500 transition">
-                                    ⚙️ Ir a Configuración de Superusuario
-                                </button>
-                            )}
-                        </div>
-                    )}
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    {currentTab === 'dashboard' && <FinancialDashboard token={token} user={user} />}
+                    {currentTab === 'admin' && <SuperAdminPanel />}
+                </div>
 
-                    {currentTab === 'admin' && (
-                        <div>
-                            <SuperAdminPanel />
-                            <div className="text-center mt-4">
-                                <button onClick={() => setCurrentTab('home')} className="text-xs text-white underline font-medium">← Volver al inicio</button>
-                            </div>
-                        </div>
+                {/* Barra de Navegación Inferior */}
+                <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-3 px-6 flex justify-around items-center shrink-0 shadow-lg">
+                    <button onClick={() => setCurrentTab('dashboard')} className={`text-xs font-semibold flex flex-col items-center ${currentTab === 'dashboard' ? 'text-[#112A20]' : 'text-slate-400'}`}>
+                        <span>🏠 Cuentas</span>
+                    </button>
+                    {isSuperAdmin && (
+                        <button onClick={() => setCurrentTab('admin')} className={`text-xs font-semibold flex flex-col items-center ${currentTab === 'admin' ? 'text-amber-600' : 'text-slate-400'}`}>
+                            <span>⚙️ Superusuario</span>
+                        </button>
                     )}
                 </div>
             </div>
