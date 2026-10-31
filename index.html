@@ -90,7 +90,6 @@
           }
         };
 
-        // COMPONENTE CON TU LOGOTIPO OFICIAL (Soporta logo personalizado guardado o SVG oficial)
         const LogoOficialMIA = ({ className = "w-44 h-44" }) => {
             const customLogo = localStorage.getItem('mia_custom_logo');
             if (customLogo) {
@@ -323,6 +322,16 @@
           const [valorDisplay, setValorDisplay] = useState('');
           const [fechaMovimiento, setFechaMovimiento] = useState(fechaHoy());
 
+          // ESTADOS PARA EDITAR O ELIMINAR MOVIMIENTO
+          const [modalEditarMovimiento, setModalEditarMovimiento] = useState(false);
+          const [movimientoAEditar, setMovimientoAEditar] = useState(null);
+          const [editConcepto, setEditConcepto] = useState('');
+          const [editValorDisplay, setEditValorDisplay] = useState('');
+          const [editFecha, setEditFecha] = useState('');
+          const [editTipo, setEditTipo] = useState('Gasto');
+          const [editCuentaId, setEditCuentaId] = useState('');
+          const [editCategoria, setEditCategoria] = useState('');
+
           const [tipoCxUnified, setTipoCxUnified] = useState('CxC');
           const [fechaGeneralReg, setFechaGeneralReg] = useState(fechaHoy());
 
@@ -405,6 +414,46 @@
             setConcepto('');
             setValorDisplay('');
             notificar('¡Registrado!', `${tipoMovimiento} guardado con éxito.`);
+          };
+
+          // FUNCIONES PARA EDITAR Y ELIMINAR MOVIMIENTOS
+          const abrirModalEditarMovimiento = (m) => {
+            setMovimientoAEditar(m);
+            setEditConcepto(m.concepto);
+            setEditValorDisplay(formatearInputEnVivo(m.valor));
+            setEditFecha(m.fecha);
+            setEditTipo(m.tipo);
+            setEditCuentaId(m.cuentaId);
+            setEditCategoria(m.categoria);
+            setModalEditarMovimiento(true);
+          };
+
+          const guardarEdicionMovimiento = () => {
+            if (!movimientoAEditar) return;
+            const num = obtenerNumeroLimpio(editValorDisplay);
+            if (!editConcepto.trim() || isNaN(num) || num <= 0) {
+              notificar('Datos inválidos', 'Ingresa un concepto y un valor válido.');
+              return;
+            }
+            setMovimientos(prev => prev.map(m => m.id === movimientoAEditar.id ? {
+              ...m,
+              concepto: editConcepto.trim(),
+              valor: num,
+              fecha: editFecha || fechaHoy(),
+              tipo: editTipo,
+              cuentaId: editCuentaId,
+              categoria: editCategoria
+            } : m));
+            setModalEditarMovimiento(false);
+            setMovimientoAEditar(null);
+            notificar('Movimiento Actualizado', 'Los cambios se guardaron correctamente.');
+          };
+
+          const eliminarMovimiento = (id) => {
+            if (window.confirm('¿Estás seguro de eliminar este movimiento?')) {
+              setMovimientos(prev => prev.filter(m => m.id !== id));
+              notificar('Eliminado', 'El movimiento ha sido borrado.');
+            }
           };
 
           const guardarCxC = () => {
@@ -936,13 +985,17 @@
                         const esIngreso = m.tipo === 'Ingreso';
                         return (
                           <div key={m.id} className="bg-white rounded-xl p-3.5 my-1.5 flex justify-between items-center shadow-sm border border-slate-100">
-                            <div>
+                            <div className="flex-1 pr-2">
                               <p className="text-sm font-semibold text-[#1F2937]">{m.concepto}</p>
                               <p className="text-[11px] text-[#718078] mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
                             </div>
-                            <span className={`text-sm font-bold ${esIngreso ? 'text-[#2D6A4F] ' : 'text-[#C94A4A]'}`}>
-                              {esIngreso ? '+ ' : '- '}{formatoCOP(m.valor)}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-sm font-bold ${esIngreso ? 'text-[#2D6A4F] ' : 'text-[#C94A4A]'}`}>
+                                {esIngreso ? '+ ' : '- '}{formatoCOP(m.valor)}
+                              </span>
+                              <button onClick={() => abrirModalEditarMovimiento(m)} className="p-1.5 bg-[#E8EFE9] text-[#205B43] rounded-lg text-xs font-bold hover:bg-slate-200 transition" title="Editar">✏️</button>
+                              <button onClick={() => eliminarMovimiento(m.id)} className="p-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition" title="Eliminar">🗑️</button>
+                            </div>
                           </div>
                         );
                       })
@@ -1008,15 +1061,22 @@
                                   {movsCuenta.length === 0 ? (
                                     <p className="text-[11px] text-slate-500 italic">No hay movimientos registrados en esta cuenta.</p>
                                   ) : (
-                                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
                                       {movsCuenta.map(m => {
                                         const esIngreso = m.tipo === 'Ingreso';
                                         return (
-                                          <div key={m.id} className="flex justify-between text-[11px] bg-white p-2 rounded border border-slate-100">
-                                            <span>{m.fecha} - {m.concepto}</span>
-                                            <span className={esIngreso ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>
-                                              {esIngreso ? '+' : '-'}{formatoCOP(m.valor)}
-                                            </span>
+                                          <div key={m.id} className="flex justify-between items-center text-[11px] bg-white p-2 rounded border border-slate-100">
+                                            <div>
+                                              <span className="font-semibold text-slate-800">{m.fecha} - {m.concepto}</span>
+                                              <span className="block text-[10px] text-slate-400">{m.categoria}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                              <span className={esIngreso ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>
+                                                {esIngreso ? '+' : '-'}{formatoCOP(m.valor)}
+                                              </span>
+                                              <button onClick={() => abrirModalEditarMovimiento(m)} className="p-1 bg-[#E8EFE9] text-[#205B43] rounded text-[10px] font-bold">✏️</button>
+                                              <button onClick={() => eliminarMovimiento(m.id)} className="p-1 bg-red-50 text-red-600 rounded text-[10px] font-bold">🗑️</button>
+                                            </div>
                                           </div>
                                         );
                                       })}
@@ -1403,6 +1463,57 @@
                     </div>
                 )}
               </div>
+
+              {/* MODAL PARA EDITAR MOVIMIENTO */}
+              {modalEditarMovimiento && (
+                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
+                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-3">
+                    <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-1">Editar Movimiento</h3>
+                    
+                    <div>
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Tipo:</label>
+                      <select value={editTipo} onChange={(e) => { setEditTipo(e.target.value); setEditCategoria(e.target.value === 'Gasto' ? categoriasGasto[0] : categoriasIngreso[0]); }} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs font-bold outline-none">
+                        <option value="Gasto">Gasto</option>
+                        <option value="Ingreso">Ingreso</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Cuenta:</label>
+                      <select value={editCuentaId} onChange={(e) => setEditCuentaId(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none">
+                        {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Fecha:</label>
+                      <input type="text" value={editFecha} onChange={(e) => setEditFecha(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none" />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Rubro / Categoría:</label>
+                      <select value={editCategoria} onChange={(e) => setEditCategoria(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none font-medium">
+                        {(editTipo === 'Gasto' ? categoriasGasto : categoriasIngreso).map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Concepto:</label>
+                      <input type="text" value={editConcepto} onChange={(e) => setEditConcepto(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none" />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Valor en pesos (COP):</label>
+                      <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none" />
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <button onClick={() => setModalEditarMovimiento(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-slate-500 transition">Cancelar</button>
+                      <button onClick={guardarEdicionMovimiento} className="flex-1 bg-[#205B43] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-[#112A20] transition">Guardar Cambios</button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {modalEditarSaldo && (
                 <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
