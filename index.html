@@ -96,6 +96,7 @@
                 method: 'GET',
                 headers: { 'apikey': SUPABASE_ANON_KEY }
               });
+              if (!res.ok) return null;
               const rows = await res.json();
               if (rows && rows.length > 0) return rows[0].valor;
             } catch (err) {
@@ -242,9 +243,7 @@
           const [modoRegistro, setModoRegistro] = useState(false);
 
           const [tab, setTab] = useState('inicio');
-          const [logoGlobal, setLogoGlobal] = useState(() => {
-            return localStorage.getItem('mia_logo_cache') || null;
-          });
+          const [logoGlobal, setLogoGlobal] = useState(null);
 
           const [cuentas, setCuentas] = useState(() => {
             const local = localStorage.getItem('mia_backup_cuentas');
@@ -268,11 +267,11 @@
           const [conceptosDeuda, setConceptosDeuda] = useState([...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión']);
           const [datosCargados, setDatosCargados] = useState(false);
 
+          // CONSULTA OBLIGATORIA DEL LOGO GLOBAL AL ABRIR LA APP (ANTES DEL LOGIN)
           useEffect(() => {
             supabaseApi.cargarLogoGlobal().then(logo => {
               if (logo) {
                 setLogoGlobal(logo);
-                localStorage.setItem('mia_logo_cache', logo);
               }
             });
           }, []);
@@ -355,10 +354,9 @@
             lector.onloadend = async () => {
               const base64String = lector.result;
               setLogoGlobal(base64String);
-              localStorage.setItem('mia_logo_cache', base64String);
               if (sesion && sesion.access_token) {
                 await supabaseApi.guardarLogoGlobal(sesion.access_token, base64String);
-                notificar('Logo Actualizado', 'El logotipo institucional global ha sido guardado en la nube y se sincronizará automáticamente para todos los usuarios.');
+                notificar('Logo Actualizado', 'El logotipo institucional global ha sido guardado en la nube y se reflejará instantáneamente en todos los dispositivos y usuarios.');
               }
             };
             lector.readAsDataURL(archivo);
