@@ -241,7 +241,6 @@
               const data = await res.json();
               if (!res.ok) throw new Error(data.msg || data.error_description || 'Error en el registro');
               
-              // Auto-registrar en la tabla mia_datos_usuario con el correo incluido
               if (data.id || data.user?.id) {
                 const uid = data.id || data.user.id;
                 await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
@@ -363,6 +362,7 @@
           },
           async obtenerUsuariosRegistrados(token) {
             try {
+              // Consultamos la tabla completa para obtener todos los registros de usuarios en la nube
               const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?select=user_id,correo,data,updated_at`, {
                 method: 'GET',
                 headers: {
