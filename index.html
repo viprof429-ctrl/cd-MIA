@@ -489,9 +489,8 @@
 
           const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
           const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
-          const [filtroCorreo, setFiltroCorreo] = useState('Todos');
-          const [filtroIdioma, setFiltroIdioma] = useState('Todos');
-          const [filtroMoneda, setFiltroMoneda] = useState('Todas');
+          const [tipoBusqueda, setTipoBusqueda] = useState('correo');
+          const [valorBusqueda, setValorBusqueda] = useState('Todos');
           const [reporteGenerado, setReporteGenerado] = useState(false);
 
           const [cuentas, setCuentas] = useState(CUENTAS_BASE);
@@ -1099,24 +1098,27 @@
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
 
-          // FILTRADO DINÁMICO EXACTO POR CORREO, IDIOMA Y MONEDA
+          // OBTENER LISTAS ÚNICAS PARA LOS MENÚS DESPLEGABLES
+          const correosUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.correo || u.correo || u.user_id).filter(Boolean))];
+          const idiomasUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.idioma || 'Español').filter(Boolean))];
+          const monedasUnicas = [...new Set(listaUsuariosCloud.map(u => u.data?.moneda || 'COP').filter(Boolean))];
+
+          // FILTRADO DINÁMICO EXACTO SEGÚN LA OPCIÓN SELECCIONADA
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
             const fechaUsr = usr.updated_at ? usr.updated_at.split('T')[0] : '';
+            if (filtroFechaDesde && fechaUsr && fechaUsr < filtroFechaDesde) return false;
+            if (filtroFechaHasta && fechaUsr && fechaUsr > filtroFechaHasta) return false;
+
             const correoUsr = usr.data?.correo || usr.correo || usr.user_id || '';
             const idiomaUsr = usr.data?.idioma || 'Español';
             const monedaUsr = usr.data?.moneda || 'COP';
 
-            if (filtroFechaDesde && fechaUsr && fechaUsr < filtroFechaDesde) return false;
-            if (filtroFechaHasta && fechaUsr && fechaUsr > filtroFechaHasta) return false;
-            if (filtroCorreo !== 'Todos' && correoUsr !== filtroCorreo) return false;
-            if (filtroIdioma !== 'Todos' && idiomaUsr !== filtroIdioma) return false;
-            if (filtroMoneda !== 'Todas' && !monedaUsr.includes(filtroMoneda)) return false;
+            if (tipoBusqueda === 'correo' && filtroCorreo !== 'Todos' && correoUsr !== filtroCorreo) return false;
+            if (tipoBusqueda === 'idioma' && filtroIdioma !== 'Todos' && idiomaUsr !== filtroIdioma) return false;
+            if (tipoBusqueda === 'moneda' && filtroMoneda !== 'Todas' && !monedaUsr.includes(filtroMoneda)) return false;
 
             return true;
           });
-
-          // LISTAS ÚNICAS PARA LOS DESPLEGABLES DE FILTRO
-          const correosUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.correo || u.correo || u.user_id).filter(Boolean))];
 
           const exportarReporteUsuariosCSV = () => {
             let csvContent = "\uFEFFCorreo Electrónico,Idioma,Moneda,Última Actualización\n";
@@ -1748,7 +1750,7 @@
                                 <p className="text-emerald-700 font-semibold">🟢 {itemSel.fechaInicial || 'Inicio'} — Saldo Inicial: +{formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
                                 {(itemSel.historialPagos || []).map((p, idx) => (
                                   <p key={idx} className="text-red-600 font-semibold">
-                                    🔴 {p.fecha} — Abono ({p.cuentaName}): -{formatoCOP(p.monto, simboloMoneda)}
+                                    🔴 {p.fecha} — Abono (${p.cuentaName}): -{formatoCOP(p.monto, simboloMoneda)}
                                   </p>
                                 ))}
                               </div>
@@ -1866,7 +1868,7 @@
                                 <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios</h4>
                             </div>
                             
-                            {/* FILTROS DESPLEGABLES: CORREO, IDIOMA, MONEDA */}
+                            {/* FILTROS DESPLEGABLES: TIPO DE BÚSQUEDA Y OPCIÓN ESPECÍFICA */}
                             <div className="space-y-2 pt-1 border-t border-slate-200">
                                 <div className="flex gap-2">
                                     <div className="flex-1">
@@ -1880,33 +1882,42 @@
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-600 block mb-0.5">✉️ Correo:</label>
-                                    <select value={filtroCorreo} onChange={(e) => setFiltroCorreo(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none font-medium">
-                                        <option value="Todos">Todos los correos</option>
-                                        {correosUnicos.map(c => <option key={c} value={c}>{c}</option>)}
+                                    <label className="text-[10px] font-bold text-slate-600 block mb-0.5">🔍 Buscar por:</label>
+                                    <select 
+                                        value={tipoBusqueda} 
+                                        onChange={(e) => {
+                                            setTipoBusqueda(e.target.value);
+                                            setFiltroCorreo('Todos');
+                                            setFiltroIdioma('Todos');
+                                            setFiltroMoneda('Todas');
+                                        }} 
+                                        className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none font-medium mb-2"
+                                    >
+                                        <option value="correo">Correo</option>
+                                        <option value="idioma">Idioma</option>
+                                        <option value="moneda">Moneda</option>
                                     </select>
-                                </div>
 
-                                <div className="flex gap-2">
-                                    <div className="flex-1">
-                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">🌐 Idioma:</label>
-                                        <select value={filtroIdioma} onChange={(e) => setFiltroIdioma(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none font-medium">
-                                            <option value="Todos">Todos</option>
-                                            <option value="Español">Español</option>
-                                            <option value="Inglés">Inglés</option>
-                                            <option value="Portugués">Portugués</option>
+                                    {tipoBusqueda === 'correo' && (
+                                        <select value={filtroCorreo} onChange={(e) => setFiltroCorreo(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-slate-200 text-xs outline-none font-medium">
+                                            <option value="Todos">Todos los correos</option>
+                                            {correosUnicos.map(c => <option key={c} value={c}>{c}</option>)}
                                         </select>
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">💱 Moneda:</label>
-                                        <select value={filtroMoneda} onChange={(e) => setFiltroMoneda(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none font-medium">
-                                            <option value="Todas">Todas</option>
-                                            <option value="COP">COP</option>
-                                            <option value="USD">USD</option>
-                                            <option value="EUR">EUR</option>
-                                            <option value="MXN">MXN</option>
+                                    )}
+
+                                    {tipoBusqueda === 'idioma' && (
+                                        <select value={filtroIdioma} onChange={(e) => setFiltroIdioma(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-slate-200 text-xs outline-none font-medium">
+                                            <option value="Todos">Todos los idiomas</option>
+                                            {idiomasUnicos.map(i => <option key={i} value={i}>{i}</option>)}
                                         </select>
-                                    </div>
+                                    )}
+
+                                    {tipoBusqueda === 'moneda' && (
+                                        <select value={filtroMoneda} onChange={(e) => setFiltroMoneda(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-slate-200 text-xs outline-none font-medium">
+                                            <option value="Todas">Todas las monedas</option>
+                                            {monedasUnicas.map(m => <option key={m} value={m}>{m}</option>)}
+                                        </select>
+                                    )}
                                 </div>
 
                                 <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#205B43] text-white font-bold py-2 rounded-xl text-xs hover:bg-[#112A20] transition flex items-center justify-center gap-1.5 mt-2">
@@ -1931,12 +1942,9 @@
                                                 const idiomaMostrado = usr.data?.idioma || 'Español';
                                                 const monedaMostrada = usr.data?.moneda || 'COP';
 
-                                                // DETERMINAR EL TÍTULO DINÁMICO SEGÚN LA SELECCIÓN DEL FILTRO
                                                 let tituloDinamico = `✉️ Correo: ${correoMostrado}`;
-                                                if (filtroCorreo === 'Todos') {
-                                                    if (filtroIdioma !== 'Todos') tituloDinamico = `🌐 Idioma (${filtroIdioma}): ${correoMostrado}`;
-                                                    else if (filtroMoneda !== 'Todas') tituloDinamico = `💱 Moneda (${filtroMoneda}): ${correoMostrado}`;
-                                                }
+                                                if (tipoBusqueda === 'idioma') tituloDinamico = `🌐 Idioma (${idiomaMostrado}): ${correoMostrado}`;
+                                                else if (tipoBusqueda === 'moneda') tituloDinamico = `💱 Moneda (${monedaMostrada}): ${correoMostrado}`;
 
                                                 return (
                                                     <div key={idx} className="bg-white p-2.5 rounded-xl border border-slate-200 text-xs shadow-sm space-y-0.5">
