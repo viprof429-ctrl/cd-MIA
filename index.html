@@ -23,6 +23,214 @@
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
 
+        // DICCIONARIO DE TRADUCCIONES MULTIDIOMA
+        const T = {
+          Español: {
+            patrimonio: "PATRIMONIO TOTAL DISPONIBLE",
+            ajustarSaldos: "⚙️ Ajustar saldos",
+            subPatrimonio: "Suma consolidada de saldos iniciales + ingresos - gastos",
+            fondosActivos: "Tus Fondos y Deudas Activas",
+            verCuentas: "Ver cuentas ›",
+            sinCuentas: "No hay cuentas ni deudas con saldo activo en este momento.",
+            totalCxCPend: "Total CxC Pend",
+            totalCxPPend: "Total CxP Pend",
+            registrarMov: "Registrar Movimiento General",
+            gasto: "Gasto",
+            ingreso: "Ingreso",
+            medioPago: "¿Qué medio de pago vas a utilizar?",
+            fecha: "Fecha (AAAA-MM-DD):",
+            rubro: "Rubro o Categoría:",
+            conceptoPlaceholder: "Concepto (ej. Almuerzo, Mercado, Nómina)",
+            valorPlaceholder: (moneda) => `Valor en ${moneda} (ej. 45.000)`,
+            guardarMovBtn: "+ Guardar Movimiento",
+            movRecientes: "Movimientos Recientes",
+            sinMovs: "Aún no has registrado movimientos. ¡Agrega tu primero arriba!",
+            cuentasTitulo: "Cuentas y Saldos Iniciales",
+            crearCuentaBtn: "+ Crear Cuenta",
+            cuentasSub: "Define el dinero con el que arrancas en cada cuenta. Consulta sus reportes y exporta su historial abajo.",
+            saldoActual: "Saldo Actual:",
+            saldoInicialLabel: "SALDO INICIAL:",
+            modificarBtn: "✏️ Modificar",
+            verReporteCuentaBtn: "📊 Ver Reporte y Exportar Movimientos",
+            ocultarReporteCuentaBtn: "🔼 Ocultar Reporte de Cuenta",
+            reiniciarCelularBtn: "🗑️ Reiniciar datos de este celular",
+            deudasTitulo: "Gestión de Terceros (CxC / CxP)",
+            fechaRegistro: "📅 Fecha del Registro:",
+            tipoOp: "Tipo:",
+            cxcOption: "📥 Cuentas por Cobrar (CxC)",
+            cxpOption: "📤 Cuentas por Pagar (CxP)",
+            terceroClientePlaceholder: "Tercero (Cliente / Deudor)",
+            terceroProveedorPlaceholder: "Tercero (Proveedor / Acreedor)",
+            conceptoDeuda: "Concepto / Rubro:",
+            nuevoBtn: "+ Nuevo",
+            cancelar: "Cancelar",
+            vencimiento: "Fecha Vencimiento:",
+            cuentaAfectadaCobrar: "Cuenta afectada al cobrar:",
+            cuentaAfectadaPagar: "Cuenta afectada al pagar:",
+            obsPlaceholder: "Observación / Nota",
+            guardarCxCBtn: "Guardar Cuenta por Cobrar",
+            guardarCxPBtn: "Guardar Cuenta por Pagar",
+            registrarAbonoPago: "⚡ Registrar Abono o Pago",
+            fechaAbono: "Fecha del Abono:",
+            seleccionarTerceroCliente: "Seleccionar Tercero Pendiente (Cliente):",
+            seleccionarTerceroProveedor: "Seleccionar Tercero Pendiente (Acreedor/Proveedor):",
+            montoAbonarPlaceholder: "Monto a abonar",
+            recibirPagoBtn: "Recibir Pago en Cuenta",
+            pagarDeudaBtn: "Pagar Deuda desde Cuenta",
+            reportesTitulo: "Reportes y Estado de Deudas",
+            reporteDetallado: "📑 Reporte Detallado por Tercero (CxC / CxP)",
+            balanceDeudas: "📊 Balance General de Deudas",
+            reporteFechas: "Reporte Financiero por Fechas",
+            gastosPeriodo: "GASTOS DEL PERÍODO",
+            distribucionRubro: "Distribución por Rubro",
+            adminPanel: "⚙️ Panel de Superusuario (ALGC)",
+            cargaLogo: "Carga de Logotipo Institucional Global:",
+            salir: "Salir",
+            superusuario: "⚙️ Superusuario",
+            inicioNav: "Inicio",
+            cuentasNav: "Cuentas",
+            deudasNav: "CxC / CxP",
+            reportesNav: "Reportes",
+            adminNav: "Admin"
+          },
+          Inglés: {
+            patrimonio: "TOTAL AVAILABLE NET WORTH",
+            ajustarSaldos: "⚙️ Adjust balances",
+            subPatrimonio: "Consolidated sum of initial balances + income - expenses",
+            fondosActivos: "Your Active Funds & Debts",
+            verCuentas: "View accounts ›",
+            sinCuentas: "No accounts or active debts at the moment.",
+            totalCxCPend: "Total A/R Pend",
+            totalCxPPend: "Total A/P Pend",
+            registrarMov: "Register General Movement",
+            gasto: "Expense",
+            ingreso: "Income",
+            medioPago: "Which payment method will you use?",
+            fecha: "Date (YYYY-MM-DD):",
+            rubro: "Category:",
+            conceptoPlaceholder: "Concept (e.g., Lunch, Groceries, Salary)",
+            valorPlaceholder: (moneda) => `Amount in ${moneda} (e.g., 45,000)`,
+            guardarMovBtn: "+ Save Movement",
+            movRecientes: "Recent Movements",
+            sinMovs: "No movements recorded yet. Add your first one above!",
+            cuentasTitulo: "Accounts & Initial Balances",
+            crearCuentaBtn: "+ Create Account",
+            cuentasSub: "Define your starting money for each account. Check reports and export history below.",
+            saldoActual: "Current Balance:",
+            saldoInicialLabel: "INITIAL BALANCE:",
+            modificarBtn: "✏️ Edit",
+            verReporteCuentaBtn: "📊 View Account Report & Export",
+            ocultarReporteCuentaBtn: "🔼 Hide Account Report",
+            reiniciarCelularBtn: "🗑️ Reset data on this device",
+            deudasTitulo: "Third-Party Management (A/R & A/P)",
+            fechaRegistro: "📅 Registration Date:",
+            tipoOp: "Type:",
+            cxcOption: "📥 Accounts Receivable (A/R)",
+            cxpOption: "📤 Accounts Payable (A/P)",
+            terceroClientePlaceholder: "Third Party (Client / Debtor)",
+            terceroProveedorPlaceholder: "Third Party (Supplier / Creditor)",
+            conceptoDeuda: "Concept / Category:",
+            nuevoBtn: "+ New",
+            cancelar: "Cancel",
+            vencimiento: "Due Date:",
+            cuentaAfectadaCobrar: "Affected account upon receiving:",
+            cuentaAfectadaPagar: "Affected account upon paying:",
+            obsPlaceholder: "Observation / Note",
+            guardarCxCBtn: "Save Account Receivable",
+            guardarCxPBtn: "Save Account Payable",
+            registrarAbonoPago: "⚡ Register Payment / Deposit",
+            fechaAbono: "Payment Date:",
+            seleccionarTerceroCliente: "Select Pending Client:",
+            seleccionarTerceroProveedor: "Select Pending Creditor:",
+            montoAbonarPlaceholder: "Amount to pay",
+            recibirPagoBtn: "Receive Payment to Account",
+            pagarDeudaBtn: "Pay Debt from Account",
+            reportesTitulo: "Reports & Debt Status",
+            reporteDetallado: "📑 Detailed Third-Party Report",
+            balanceDeudas: "📊 General Debt Balance",
+            reporteFechas: "Financial Report by Date",
+            gastosPeriodo: "EXPENSES FOR THE PERIOD",
+            distribucionRubro: "Distribution by Category",
+            adminPanel: "⚙️ Superuser Panel (ALGC)",
+            cargaLogo: "Global Institutional Logo Upload:",
+            salir: "Logout",
+            superusuario: "⚙️ Superuser",
+            inicioNav: "Home",
+            cuentasNav: "Accounts",
+            deudasNav: "A/R & A/P",
+            reportesNav: "Reports",
+            adminNav: "Admin"
+          },
+          Portugués: {
+            patrimonio: "PATRIMÔNIO TOTAL DISPONÍVEL",
+            ajustarSaldos: "⚙️ Ajustar saldos",
+            subPatrimonio: "Soma consolidada de saldos iniciais + receitas - despesas",
+            fondosActivos: "Seus Fundos e Dívidas Ativas",
+            verCuentas: "Ver contas ›",
+            sinCuentas: "Não há contas ou dívidas ativas no momento.",
+            totalCxCPend: "Total a Receber",
+            totalCxPPend: "Total a Pagar",
+            registrarMov: "Registrar Movimento Geral",
+            gasto: "Despesa",
+            ingreso: "Receita",
+            medioPago: "Qual meio de pagamento você vai usar?",
+            fecha: "Data (AAAA-MM-DD):",
+            rubro: "Categoria:",
+            conceptoPlaceholder: "Conceito (ex. Almoço, Mercado, Salário)",
+            valorPlaceholder: (moneda) => `Valor em ${moneda} (ex. 45.000)`,
+            guardarMovBtn: "+ Salvar Movimento",
+            movRecientes: "Movimentos Recentes",
+            sinMovs: "Nenhum movimento registrado ainda. Adicione o primeiro acima!",
+            cuentasTitulo: "Contas e Saldos Iniciais",
+            crearCuentaBtn: "+ Criar Conta",
+            cuentasSub: "Defina o dinheiro inicial de cada conta. Veja relatórios e exporte o histórico abaixo.",
+            saldoActual: "Saldo Atual:",
+            saldoInicialLabel: "SALDO INICIAL:",
+            modificarBtn: "✏️ Editar",
+            verReporteCuentaBtn: "📊 Ver Relatório e Exportar Movimentos",
+            ocultarReporteCuentaBtn: "🔼 Ocultar Relatório",
+            reiniciarCelularBtn: "🗑️ Redefinir dados deste dispositivo",
+            deudasTitulo: "Gestão de Terceiros (A Receber / A Pagar)",
+            fechaRegistro: "📅 Data do Registro:",
+            tipoOp: "Tipo:",
+            cxcOption: "📥 Contas a Receber",
+            cxpOption: "📤 Contas a Pagar",
+            terceroClientePlaceholder: "Terceiro (Cliente / Devedor)",
+            terceroProveedorPlaceholder: "Terceiro (Fornecedor / Credor)",
+            conceptoDeuda: "Conceito / Categoria:",
+            nuevoBtn: "+ Novo",
+            cancelar: "Cancelar",
+            vencimiento: "Data de Vencimento:",
+            cuentaAfectadaCobrar: "Conta afetada ao receber:",
+            cuentaAfectadaPagar: "Conta afetada ao pagar:",
+            obsPlaceholder: "Observação / Nota",
+            guardarCxCBtn: "Salvar Conta a Receber",
+            guardarCxPBtn: "Salvar Conta a Pagar",
+            registrarAbonoPago: "⚡ Registrar Baixa / Pagamento",
+            fechaAbono: "Data do Pagamento:",
+            seleccionarTerceroCliente: "Selecionar Cliente Pendente:",
+            seleccionarTerceroProveedor: "Selecionar Credor Pendente:",
+            montoAbonarPlaceholder: "Valor a pagar",
+            recibirPagoBtn: "Receber Pagamento na Conta",
+            pagarDeudaBtn: "Pagar Dívida da Conta",
+            reportesTitulo: "Relatórios e Status de Dívidas",
+            reporteDetallado: "📑 Relatório Detalhado por Terceiro",
+            balanceDeudas: "📊 Balanço Geral de Dívidas",
+            reporteFechas: "Relatório Financeiro por Período",
+            gastosPeriodo: "DESPESAS DO PERÍODO",
+            distribucionRubro: "Distribuição por Categoria",
+            adminPanel: "⚙️ Painel do Superusuário (ALGC)",
+            cargaLogo: "Upload de Logotipo Institucional Global:",
+            salir: "Sair",
+            superusuario: "⚙️ Superusuário",
+            inicioNav: "Início",
+            cuentasNav: "Contas",
+            deudasNav: "Receber/Pagar",
+            reportesNav: "Relatórios",
+            adminNav: "Admin"
+          }
+        };
+
         const supabaseApi = {
           async signUp(email, password, extraData) {
             try {
@@ -68,7 +276,7 @@
               if (rows && rows.length > 0) {
                 return rows[0].data;
               }
-              return null; // Si no existe en la nube, retorna nulo para iniciar en blanco
+              return null;
             } catch (err) {
               console.error("Error cargando de la nube:", err);
               return null;
@@ -273,6 +481,8 @@
           const [conceptosDeuda, setConceptosDeuda] = useState([...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión']);
           const [datosCargados, setDatosCargados] = useState(false);
 
+          const t = T[idiomaSeleccionado] || T['Español'];
+
           useEffect(() => {
             supabaseApi.cargarLogoGlobal().then(logo => {
               if (logo) setLogoGlobal(logo);
@@ -284,7 +494,6 @@
               const userId = sesion.user_id;
               supabaseApi.cargarDatosNube(sesion.access_token, userId).then((cloudData) => {
                 if (cloudData) {
-                  // Si el usuario ya tiene datos en la nube, los cargamos
                   setCuentas(cloudData.cuentas || CUENTAS_BASE);
                   setMovimientos(cloudData.movimientos || []);
                   setCuentasPorCobrar(cloudData.cuentasPorCobrar || []);
@@ -292,7 +501,6 @@
                   if (cloudData.moneda) setMonedaSeleccionada(cloudData.moneda);
                   if (cloudData.idioma) setIdiomaSeleccionado(cloudData.idioma);
                 } else {
-                  // Usuario nuevo: Inicializar base de datos completamente en blanco
                   setCuentas(CUENTAS_BASE);
                   setMovimientos([]);
                   setCuentasPorCobrar([]);
@@ -329,7 +537,7 @@
                 user_id: userIdValido, 
                 access_token: tokenValido 
               };
-              localStorage.clear(); // Limpiar caché anterior al cambiar de usuario
+              localStorage.clear();
               setSesion(userSession);
               setDatosCargados(false);
               localStorage.setItem('mia_sesion', JSON.stringify(userSession));
@@ -352,7 +560,7 @@
           };
 
           const cerrarSesion = () => {
-            localStorage.clear(); // Limpiar toda la memoria local del dispositivo al salir
+            localStorage.clear();
             setSesion(null);
             setDatosCargados(false);
             setCuentas(CUENTAS_BASE);
@@ -398,7 +606,7 @@
             lector.readAsDataURL(archivo);
           };
 
-          const simboloMoneda = monedaSeleccionada.includes('USD') ? '$' : monedaSeleccionada.includes('EUR') ? '€' : '$';
+          const simboloMoneda = monedaSeleccionada.includes('USD') ? '$' : monedaSeleccionada.includes('EUR') ? '€' : monedaSeleccionada.includes('MXN') ? '$' : '$';
 
           const [tipoMovimiento, setTipoMovimiento] = useState('Gasto');
           const [cuentaSeleccionada, setCuentaSeleccionada] = useState(cuentas[0]?.id || '1');
@@ -951,11 +1159,11 @@
                 <div className="flex items-center gap-2">
                     {esSuperAdmin && (
                         <button onClick={() => setTab('admin')} className="bg-[#D4AF37]/20 text-[#B8860B] px-3 py-1.5 rounded-xl text-xs font-bold border border-[#D4AF37]/50 hover:bg-[#D4AF37]/30 transition">
-                            ⚙️ Superusuario
+                            {t.superusuario}
                         </button>
                     )}
                     <button onClick={cerrarSesion} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 hover:bg-red-100 transition">
-                      Salir
+                      {t.salir}
                     </button>
                 </div>
               </div>
@@ -965,21 +1173,21 @@
                   <div>
                     <div className="bg-[#112A20] rounded-2xl p-5 mb-4 shadow-md text-white">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-[11px] font-bold text-[#B7E4C7] tracking-wider">PATRIMONIO TOTAL DISPONIBLE ({monedaSeleccionada})</span>
-                        <button onClick={() => setTab('cuentas')} className="text-[#B7E4C7] text-xs font-bold hover:underline">⚙️ Ajustar saldos</button>
+                        <span className="text-[11px] font-bold text-[#B7E4C7] tracking-wider">{t.patrimonio} ({monedaSeleccionada})</span>
+                        <button onClick={() => setTab('cuentas')} className="text-[#B7E4C7] text-xs font-bold hover:underline">{t.ajustarSaldos}</button>
                       </div>
                       <h2 className="text-3xl font-extrabold my-2">{formatoCOP(patrimonioTotal, simboloMoneda)}</h2>
-                      <p className="text-[11px] text-[#D8F3DC]">Idioma: {idiomaSeleccionado} · Moneda: {monedaSeleccionada}</p>
+                      <p className="text-[11px] text-[#D8F3DC]">{t.subPatrimonio}</p>
                     </div>
 
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-[17px] font-bold text-[#112A20]">Tus Fondos y Deudas Activas</h3>
-                      <button onClick={() => setTab('cuentas')} className="text-xs text-[#2D6A4F] font-bold hover:underline">Ver cuentas ›</button>
+                      <h3 className="text-[17px] font-bold text-[#112A20]">{t.fondosActivos}</h3>
+                      <button onClick={() => setTab('cuentas')} className="text-xs text-[#2D6A4F] font-bold hover:underline">{t.verCuentas}</button>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 mb-4">
                       {cuentasConSaldo.length === 0 && totalCxCPendiente === 0 && totalCxPPendiente === 0 ? (
-                        <p className="col-span-2 text-center text-xs text-[#718078] italic py-2">No hay cuentas ni deudas con saldo activo en este momento.</p>
+                        <p className="col-span-2 text-center text-xs text-[#718078] italic py-2">{t.sinCuentas}</p>
                       ) : (
                         <>
                           {cuentasConSaldo.map((c) => (
@@ -995,7 +1203,7 @@
                             <div className="bg-white p-3 rounded-2xl shadow-sm border border-emerald-100 flex flex-col justify-between">
                               <div className="flex items-center gap-1.5">
                                 <span className="text-xl">📥</span>
-                                <p className="text-xs font-semibold text-slate-700 truncate">Total CxC Pend</p>
+                                <p className="text-xs font-semibold text-slate-700 truncate">{t.totalCxCPend}</p>
                               </div>
                               <p className="text-[14px] font-bold text-[#2D6A4F] mt-2">{formatoCOP(totalCxCPendiente, simboloMoneda)}</p>
                             </div>
@@ -1004,7 +1212,7 @@
                             <div className="bg-white p-3 rounded-2xl shadow-sm border border-red-100 flex flex-col justify-between">
                               <div className="flex items-center gap-1.5">
                                 <span className="text-xl">📤</span>
-                                <p className="text-xs font-semibold text-slate-700 truncate">Total CxP Pend</p>
+                                <p className="text-xs font-semibold text-slate-700 truncate">{t.totalCxPPend}</p>
                               </div>
                               <p className="text-[14px] font-bold text-[#C94A4A] mt-2">{formatoCOP(totalCxPPendiente, simboloMoneda)}</p>
                             </div>
@@ -1013,25 +1221,25 @@
                       )}
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">Registrar Movimiento General</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">{t.registrarMov}</h3>
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
                       <div className="flex gap-2">
                         <button
                           onClick={() => { setTipoMovimiento('Gasto'); setCategoriaSeleccionada(categoriasGasto[0]); }}
                           className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Gasto' ? 'bg-[#C94A4A] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}
                         >
-                          Gasto
+                          {t.gasto}
                         </button>
                         <button
                           onClick={() => { setTipoMovimiento('Ingreso'); setCategoriaSeleccionada(categoriasIngreso[0]); }}
                           className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Ingreso' ? 'bg-[#2D6A4F] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}
                         >
-                          Ingreso
+                          {t.ingreso}
                         </button>
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-[#52725F] block mb-1">¿Qué medio de pago vas a utilizar?</label>
+                        <label className="text-xs font-semibold text-[#52725F] block mb-1">{t.medioPago}</label>
                         <select
                           value={cuentaSeleccionada}
                           onChange={(e) => setCuentaSeleccionada(e.target.value)}
@@ -1044,7 +1252,7 @@
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-[#52725F] block mb-1">Fecha (AAAA-MM-DD):</label>
+                        <label className="text-xs font-semibold text-[#52725F] block mb-1">{t.fecha}</label>
                         <input
                           type="text"
                           value={fechaMovimiento}
@@ -1054,7 +1262,7 @@
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-[#52725F] block mb-1">Rubro o Categoría:</label>
+                        <label className="text-xs font-semibold text-[#52725F] block mb-1">{t.rubro}</label>
                         <select
                           value={categoriaSeleccionada}
                           onChange={(e) => setCategoriaSeleccionada(e.target.value)}
@@ -1068,7 +1276,7 @@
 
                       <input
                         type="text"
-                        placeholder="Concepto (ej. Almuerzo, Mercado, Nómina)"
+                        placeholder={t.conceptoPlaceholder}
                         value={concepto}
                         onChange={(e) => setConcepto(e.target.value)}
                         className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none placeholder-[#8F9F95]"
@@ -1076,7 +1284,7 @@
 
                       <input
                         type="text"
-                        placeholder={`Valor en ${monedaSeleccionada} (ej. 45.000)`}
+                        placeholder={t.valorPlaceholder(monedaSeleccionada)}
                         value={valorDisplay}
                         onChange={(e) => setValorDisplay(formatearInputEnVivo(e.target.value))}
                         className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none placeholder-[#8F9F95]"
@@ -1086,13 +1294,13 @@
                         onClick={guardarMovimiento}
                         className="w-full bg-[#205B43] text-white font-bold py-3.5 rounded-xl shadow-md mt-2 hover:bg-[#112A20] transition"
                       >
-                        + Guardar Movimiento
+                        {t.guardarMovBtn}
                       </button>
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">Movimientos Recientes</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">{t.movRecientes}</h3>
                     {movimientos.length === 0 ? (
-                      <p className="text-center text-[#718078] my-6 italic text-sm">Aún no has registrado movimientos. ¡Agrega tu primero arriba!</p>
+                      <p className="text-center text-[#718078] my-6 italic text-sm">{t.sinMovs}</p>
                     ) : (
                       movimientos.slice(0, 5).map((m) => {
                         const cuentaAsociada = cuentas.find((c) => c.id === m.cuentaId);
@@ -1120,13 +1328,13 @@
                 {tab === 'cuentas' && (
                   <div>
                     <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-[17px] font-bold text-[#112A20]">Cuentas y Saldos Iniciales</h3>
+                      <h3 className="text-[17px] font-bold text-[#112A20]">{t.cuentasTitulo}</h3>
                       <button onClick={() => setModalNuevaCuenta(true)} className="bg-[#2D6A4F] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow hover:bg-[#205B43] transition">
-                        + Crear Cuenta
+                        {t.crearCuentaBtn}
                       </button>
                     </div>
 
-                    <p className="text-[13px] text-[#52725F] mb-4">Define el dinero con el que arrancas en cada cuenta. Consulta sus reportes y exporta su historial abajo.</p>
+                    <p className="text-[13px] text-[#52725F] mb-4">{t.cuentasSub}</p>
 
                     {cuentas.map((c) => {
                       const saldoActual = obtenerSaldoCuenta(c.id);
@@ -1139,7 +1347,7 @@
                               <p className="text-xs text-[#718078]">Tipo: {c.tipo}</p>
                             </div>
                             <div className="text-right">
-                              <span className="text-[11px] text-[#718078]">Saldo Actual:</span>
+                              <span className="text-[11px] text-[#718078]">{t.saldoActual}</span>
                               <p className="text-base font-bold text-[#205B43]">{formatoCOP(saldoActual, simboloMoneda)}</p>
                             </div>
                           </div>
@@ -1148,14 +1356,14 @@
 
                           <div className="flex justify-between items-center">
                             <div>
-                              <span className="text-[10px] font-bold text-[#718078] tracking-wider">SALDO INICIAL:</span>
+                              <span className="text-[10px] font-bold text-[#718078] tracking-wider">{t.saldoInicialLabel}</span>
                               <p className="text-[14px] font-bold text-[#1F2937] mt-0.5">{formatoCOP(c.saldoInicial, simboloMoneda)}</p>
                             </div>
                             <button
                               onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setModalEditarSaldo(true); }}
                               className="bg-[#E8EFE9] px-3 py-2 rounded-xl text-xs font-bold text-[#205B43] hover:bg-slate-200 transition"
                             >
-                              ✏️ Modificar
+                              {t.modificarBtn}
                             </button>
                           </div>
 
@@ -1164,7 +1372,7 @@
                               onClick={() => setCuentaReporteId(cuentaReporteId === c.id ? '' : c.id)}
                               className="w-full py-2 bg-[#F8FAF8] rounded-xl text-xs font-bold text-[#2D6A4F] border border-[#DCE5DB] hover:bg-[#E8EFE9] transition"
                             >
-                              {cuentaReporteId === c.id ? '🔼 Ocultar Reporte de Cuenta' : '📊 Ver Reporte y Exportar Movimientos'}
+                              {cuentaReporteId === c.id ? `🔼 ${t.ocultarReporteCuentaBtn}` : `📊 ${t.verReporteCuentaBtn}`}
                             </button>
 
                             {cuentaReporteId === c.id && (() => {
@@ -1213,30 +1421,30 @@
                     })}
 
                     <button onClick={reiniciarTodo} className="w-full mt-4 p-3 bg-[#FDE8E8] rounded-xl text-[#9B1C1C] font-bold text-xs border border-[#F8B4B4] hover:bg-red-100 transition">
-                      🗑️ Reiniciar datos de este celular
+                      {t.reiniciarCelularBtn}
                     </button>
                   </div>
                 )}
 
                 {tab === 'deudas' && (
                   <div>
-                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">Gestión de Terceros (CxC / CxP)</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.deudasTitulo}</h3>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
                       <div>
-                        <label className="text-xs font-bold text-[#112A20] block mb-1">📅 Fecha del Registro:</label>
+                        <label className="text-xs font-bold text-[#112A20] block mb-1">{t.fechaRegistro}</label>
                         <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold" />
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-[#112A20] block mb-1">Tipo:</label>
+                        <label className="text-xs font-bold text-[#112A20] block mb-1">{t.tipoOp}</label>
                         <select 
                           value={tipoCxUnified} 
                           onChange={(e) => setTipoCxUnified(e.target.value)} 
                           className="w-full bg-[#E8EFE9] text-[#205B43] font-extrabold rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none"
                         >
-                          <option value="CxC">📥 Cuentas por Cobrar (CxC)</option>
-                          <option value="CxP">📤 Cuentas por Pagar (CxP)</option>
+                          <option value="CxC">{t.cxcOption}</option>
+                          <option value="CxP">{t.cxpOption}</option>
                         </select>
                       </div>
 
@@ -1245,23 +1453,23 @@
                       {tipoCxUnified === 'CxC' ? (
                         <div>
                           <h4 className="text-sm font-bold text-[#2D6A4F] mb-2">Nuevo Registro - Cuenta por Cobrar</h4>
-                          <input type="text" placeholder="Tercero (Cliente / Deudor)" value={terceroCxC} onChange={(e) => setTerceroCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
+                          <input type="text" placeholder={t.terceroClientePlaceholder} value={terceroCxC} onChange={(e) => setTerceroCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           
                           <div className="mb-2">
-                            <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Concepto / Rubro:</label>
+                            <label className="text-[11px] font-semibold text-[#52725F] block mb-1">{t.conceptoDeuda}</label>
                             {!usarNuevoConceptoCxC ? (
                               <div className="flex gap-2">
                                 <select value={conceptoCxC} onChange={(e) => setConceptoCxC(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-medium">
                                   {conceptosDeuda.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                                 <button onClick={() => setUsarNuevoConceptoCxC(true)} className="bg-[#E8EFE9] text-[#205B43] px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap hover:bg-slate-200 transition">
-                                  + Nuevo
+                                  {t.nuevoBtn}
                                 </button>
                               </div>
                             ) : (
                               <div className="flex gap-2">
                                 <input type="text" placeholder="Escribe el nuevo concepto..." value={nuevoConceptoCxC} onChange={(e) => setNuevoConceptoCxC(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                                <button onClick={() => setUsarNuevoConceptoCxC(false)} className="bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-[11px] font-bold">Cancelar</button>
+                                <button onClick={() => setUsarNuevoConceptoCxC(false)} className="bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-[11px] font-bold">{t.cancelar}</button>
                               </div>
                             )}
                           </div>
@@ -1269,37 +1477,37 @@
                           <input type="text" placeholder={`Saldo Inicial (${monedaSeleccionada})`} value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           
                           <div className="mb-2">
-                            <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
+                            <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">{t.vencimiento}</span>
                             <input type="date" value={vencimientoCxC} onChange={(e) => setVencimientoCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                           </div>
 
-                          <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Cuenta afectada al cobrar:</label>
+                          <label className="text-[11px] font-semibold text-[#52725F] block mb-1">{t.cuentaAfectadaCobrar}</label>
                           <select value={cuentaCxC} onChange={(e) => setCuentaCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
                             {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
                           </select>
-                          <input type="text" placeholder="Observación / Nota" value={obsCxC} onChange={(e) => setObsCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-3" />
-                          <button onClick={guardarCxC} className="w-full bg-[#2D6A4F] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-[#112A20] transition">Guardar Cuenta por Cobrar</button>
+                          <input type="text" placeholder={t.obsPlaceholder} value={obsCxC} onChange={(e) => setObsCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-3" />
+                          <button onClick={guardarCxC} className="w-full bg-[#2D6A4F] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-[#112A20] transition">{t.guardarCxCBtn}</button>
                         </div>
                       ) : (
                         <div>
                           <h4 className="text-sm font-bold text-[#C94A4A] mb-2">Nuevo Registro - Cuenta por Pagar</h4>
-                          <input type="text" placeholder="Tercero (Proveedor / Acreedor)" value={terceroCxP} onChange={(e) => setTerceroCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
+                          <input type="text" placeholder={t.terceroProveedorPlaceholder} value={terceroCxP} onChange={(e) => setTerceroCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           
                           <div className="mb-2">
-                            <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Concepto / Rubro:</label>
+                            <label className="text-[11px] font-semibold text-[#52725F] block mb-1">{t.conceptoDeuda}</label>
                             {!usarNuevoConceptoCxP ? (
                               <div className="flex gap-2">
                                 <select value={conceptoCxP} onChange={(e) => setConceptoCxP(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-medium">
                                   {conceptosDeuda.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                                 <button onClick={() => setUsarNuevoConceptoCxP(true)} className="bg-[#E8EFE9] text-[#205B43] px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap hover:bg-slate-200 transition">
-                                  + Nuevo
+                                  {t.nuevoBtn}
                                 </button>
                               </div>
                             ) : (
                               <div className="flex gap-2">
                                 <input type="text" placeholder="Escribe el nuevo concepto..." value={nuevoConceptoCxP} onChange={(e) => setNuevoConceptoCxP(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                                <button onClick={() => setUsarNuevoConceptoCxP(false)} className="bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-[11px] font-bold">Cancelar</button>
+                                <button onClick={() => setUsarNuevoConceptoCxP(false)} className="bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-[11px] font-bold">{t.cancelar}</button>
                               </div>
                             )}
                           </div>
@@ -1307,30 +1515,30 @@
                           <input type="text" placeholder={`Saldo Inicial (${monedaSeleccionada})`} value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           
                           <div className="mb-2">
-                            <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
+                            <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">{t.vencimiento}</span>
                             <input type="date" value={vencimientoCxP} onChange={(e) => setVencimientoCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                           </div>
 
-                          <label className="text-[11px] font-semibold text-[#52725F] block mb-1">Cuenta afectada al pagar:</label>
+                          <label className="text-[11px] font-semibold text-[#52725F] block mb-1">{t.cuentaAfectadaPagar}</label>
                           <select value={cuentaCxP} onChange={(e) => setCuentaCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
                             {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
                           </select>
-                          <input type="text" placeholder="Observación / Nota" value={obsCxP} onChange={(e) => setObsCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-3" />
-                          <button onClick={guardarCxP} className="w-full bg-[#C94A4A] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-red-700 transition">Guardar Cuenta por Pagar</button>
+                          <input type="text" placeholder={t.obsPlaceholder} value={obsCxP} onChange={(e) => setObsCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-3" />
+                          <button onClick={guardarCxP} className="w-full bg-[#C94A4A] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-red-700 transition">{t.guardarCxPBtn}</button>
                         </div>
                       )}
                     </div>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-                      <h4 className="text-sm font-bold text-[#112A20]">⚡ Registrar Abono o Pago</h4>
+                      <h4 className="text-sm font-bold text-[#112A20]">{t.registrarAbonoPago}</h4>
                       
                       <div>
-                        <label className="text-[11px] font-bold text-[#52725F] block mb-1">Fecha del Abono:</label>
+                        <label className="text-[11px] font-bold text-[#52725F] block mb-1">{t.fechaAbono}</label>
                         <input type="date" value={fechaAbonoUnified} onChange={(e) => setFechaAbonoUnified(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold" />
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-bold text-[#52725F] block mb-1">Tipo de Operación:</label>
+                        <label className="text-[11px] font-bold text-[#52725F] block mb-1">{t.tipoOp}</label>
                         <select 
                           value={tipoAbonoUnified} 
                           onChange={(e) => {
@@ -1340,46 +1548,46 @@
                           }} 
                           className="w-full bg-[#F8FAF8] text-[#1F2937] font-bold rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none"
                         >
-                          <option value="CxC">📥 Cuenta por Cobrar (CxC)</option>
-                          <option value="CxP">📤 Cuenta por Pagar (CxP)</option>
+                          <option value="CxC">{t.cxcOption}</option>
+                          <option value="CxP">{t.cxpOption}</option>
                         </select>
                       </div>
 
                       {tipoAbonoUnified === 'CxC' ? (
                         <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
-                          <label className="text-[11px] font-bold text-[#2D6A4F] block">Seleccionar Tercero Pendiente (Cliente):</label>
+                          <label className="text-[11px] font-bold text-[#2D6A4F] block">{t.seleccionarTerceroCliente}</label>
                           <select value={pagoIdCxC} onChange={(e) => setPagoIdCxC(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
-                            <option value="">-- Seleccionar Cuenta por Cobrar --</option>
+                            <option value="">-- Seleccionar --</option>
                             {cuentasPorCobrar.filter(c => c.estado !== 'Pagado').map(c => (
-                              <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente, simboloMoneda)})</option>
+                              <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} ({formatoCOP(c.saldoPendiente, simboloMoneda)})</option>
                             ))}
                           </select>
 
                           <div className="flex gap-2">
-                            <input type="text" placeholder="Monto a abonar" value={montoPagoCxCDisplay} onChange={(e) => setMontoPagoCxCDisplay(formatearInputEnVivo(e.target.value))} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                            <input type="text" placeholder={t.montoAbonarPlaceholder} value={montoPagoCxCDisplay} onChange={(e) => setMontoPagoCxCDisplay(formatearInputEnVivo(e.target.value))} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                             <select value={cuentaPagoCxC} onChange={(e) => setCuentaPagoCxC(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                               {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
                             </select>
                           </div>
-                          <button onClick={procesarCobroUnificado} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-lg text-xs hover:bg-[#112A20] transition">Recibir Pago en Cuenta</button>
+                          <button onClick={procesarCobroUnificado} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-lg text-xs hover:bg-[#112A20] transition">{t.recibirPagoBtn}</button>
                         </div>
                       ) : (
                         <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
-                          <label className="text-[11px] font-bold text-[#C94A4A] block">Seleccionar Tercero Pendiente (Acreedor/Proveedor):</label>
+                          <label className="text-[11px] font-bold text-[#C94A4A] block">{t.seleccionarTerceroProveedor}</label>
                           <select value={pagoIdCxP} onChange={(e) => setPagoIdCxP(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
-                            <option value="">-- Seleccionar Cuenta por Pagar --</option>
+                            <option value="">-- Seleccionar --</option>
                             {cuentasPorPagar.filter(c => c.estado !== 'Pagado').map(c => (
-                              <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente, simboloMoneda)})</option>
+                              <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} ({formatoCOP(c.saldoPendiente, simboloMoneda)})</option>
                             ))}
                           </select>
 
                           <div className="flex gap-2">
-                            <input type="text" placeholder="Monto a abonar" value={montoPagoCxPDisplay} onChange={(e) => setMontoPagoCxPDisplay(formatearInputEnVivo(e.target.value))} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
+                            <input type="text" placeholder={t.montoAbonarPlaceholder} value={montoPagoCxPDisplay} onChange={(e) => setMontoPagoCxPDisplay(formatearInputEnVivo(e.target.value))} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
                             <select value={cuentaPagoCxP} onChange={(e) => setCuentaPagoCxP(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                               {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
                             </select>
                           </div>
-                          <button onClick={procesarPagoUnificado} className="w-full bg-[#C94A4A] text-white font-bold py-2 rounded-lg text-xs hover:bg-red-700 transition">Pagar Deuda desde Cuenta</button>
+                          <button onClick={procesarPagoUnificado} className="w-full bg-[#C94A4A] text-white font-bold py-2 rounded-lg text-xs hover:bg-red-700 transition">{t.pagarDeudaBtn}</button>
                         </div>
                       )}
                     </div>
@@ -1388,10 +1596,10 @@
 
                 {tab === 'reportes' && (
                   <div>
-                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">Reportes y Estado de Deudas</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.reportesTitulo}</h3>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
-                      <h4 className="text-sm font-bold text-[#112A20] mb-2">📑 Reporte Detallado por Tercero (CxC / CxP)</h4>
+                      <h4 className="text-sm font-bold text-[#112A20] mb-2">{t.reporteDetallado}</h4>
                       <div className="flex gap-2 mb-2">
                         <select value={tipoReporteTercero} onChange={(e) => { setTipoReporteTercero(e.target.value); setTerceroSeleccionadoId(''); }} className="flex-1 bg-[#F8FAF8] rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold">
                           <option value="CxC">Cuentas por Cobrar</option>
@@ -1444,7 +1652,7 @@
                     </div>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
-                      <h4 className="text-sm font-bold text-[#112A20] mb-3">📊 Balance General de Deudas</h4>
+                      <h4 className="text-sm font-bold text-[#112A20] mb-3">{t.balanceDeudas}</h4>
                       
                       <div className="flex justify-between items-center mb-1 text-xs">
                         <span className="font-semibold text-[#2D6A4F]">📥 CxC: {formatoCOP(totalCxCPendiente, simboloMoneda)} ({pctCxC}%)</span>
@@ -1462,7 +1670,7 @@
                       </div>
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3 mt-6">Reporte Financiero por Fechas</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3 mt-6">{t.reporteFechas}</h3>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3">
                       <label className="text-xs font-semibold text-[#52725F] block mb-2">Período de consulta (AAAA-MM-DD):</label>
@@ -1485,7 +1693,7 @@
                     </div>
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3">
-                      <span className="text-[11px] font-bold text-[#718078]">GASTOS DEL PERÍODO</span>
+                      <span className="text-[11px] font-bold text-[#718078]">{t.gastosPeriodo}</span>
                       <h2 className="text-2xl font-extrabold text-[#C94A4A] my-1">{formatoCOP(totalGastosReporte, simboloMoneda)}</h2>
                       <div className="border-t border-[#EEF2EE] pt-2 mt-2 space-y-1">
                         <p className="text-xs text-[#52725F] font-semibold">Ingresos en el rango: {formatoCOP(totalIngresosReporte, simboloMoneda)}</p>
@@ -1493,7 +1701,7 @@
                       </div>
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">Distribución por Rubro ({listaRubros.length})</h3>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">{t.distribucionRubro} ({listaRubros.length})</h3>
 
                     {totalGastosReporte === 0 ? (
                       <p className="text-center text-[#718078] my-6 italic text-sm">No existen gastos registrados entre {fechaDesde} y {fechaHasta}.</p>
@@ -1534,10 +1742,10 @@
 
                 {tab === 'admin' && esSuperAdmin && (
                     <div className="bg-white rounded-3xl p-5 shadow-lg border border-[#D4AF37]/30 space-y-4">
-                        <h3 className="text-lg font-extrabold text-[#112A20] border-b pb-2">⚙️ Panel de Superusuario (ALGC)</h3>
+                        <h3 className="text-lg font-extrabold text-[#112A20] border-b pb-2">{t.adminPanel}</h3>
                         
                         <div className="space-y-3">
-                            <h4 className="text-xs font-bold text-[#112A20]">Carga de Logotipo Institucional Global:</h4>
+                            <h4 className="text-xs font-bold text-[#112A20]">{t.cargaLogo}</h4>
                             <p className="text-[11px] text-slate-500">Sube una imagen (PNG o JPG). Se sincronizará automáticamente en la nube para reflejarse en todos los dispositivos y usuarios.</p>
                             
                             <div className="flex items-center gap-3 bg-[#F8FAF8] p-3 rounded-2xl border border-[#DCE5DB]">
@@ -1567,122 +1775,27 @@
                 )}
               </div>
 
-              {modalEditarMovimiento && (
-                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
-                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-3">
-                    <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-1">Editar Movimiento</h3>
-                    
-                    <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Tipo:</label>
-                      <select value={editTipo} onChange={(e) => { setEditTipo(e.target.value); setEditCategoria(e.target.value === 'Gasto' ? categoriasGasto[0] : categoriasIngreso[0]); }} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs font-bold outline-none">
-                        <option value="Gasto">Gasto</option>
-                        <option value="Ingreso">Ingreso</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Cuenta:</label>
-                      <select value={editCuentaId} onChange={(e) => setEditCuentaId(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none">
-                        {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Fecha:</label>
-                      <input type="text" value={editFecha} onChange={(e) => setEditFecha(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none" />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Rubro / Categoría:</label>
-                      <select value={editCategoria} onChange={(e) => setEditCategoria(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none font-medium">
-                        {(editTipo === 'Gasto' ? categoriasGasto : categoriasIngreso).map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Concepto:</label>
-                      <input type="text" value={editConcepto} onChange={(e) => setEditConcepto(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none" />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Valor:</label>
-                      <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none" />
-                    </div>
-
-                    <div className="flex gap-2 pt-2">
-                      <button onClick={() => setModalEditarMovimiento(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-slate-500 transition">Cancelar</button>
-                      <button onClick={guardarEdicionMovimiento} className="flex-1 bg-[#205B43] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-[#112A20] transition">Guardar Cambios</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {modalEditarSaldo && (
-                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
-                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
-                    <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-2">Modificar Saldo Inicial</h3>
-                    <p className="text-xs text-[#52725F] mb-3 text-center">Cuenta: <span className="font-bold">{cuentaAEditar?.nombre}</span></p>
-
-                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Nuevo saldo de arranque:</label>
-                    <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
-
-                    <div className="flex gap-2">
-                      <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
-                      <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#112A20] transition">Guardar Saldo</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {modalNuevaCuenta && (
-                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
-                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
-                    <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-3">Nueva Cuenta o Banco</h3>
-
-                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Nombre de la cuenta:</label>
-                    <input type="text" placeholder="Ej. Daviplata, BBVA" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
-
-                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Tipo:</label>
-                    <div className="flex gap-2 mb-3">
-                      {['Banco', 'Billetera', 'Efectivo'].map((t) => (
-                        <button key={t} onClick={() => setNuevoTipo(t)} className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${nuevoTipo === t ? 'bg-[#205B43] text-white shadow' : 'bg-[#E8EFE9] text-[#205B43]'}`}>
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-
-                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Saldo inicial:</label>
-                    <input type="text" placeholder="Monto inicial" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
-
-                    <div className="flex gap-2">
-                      <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
-                      <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#112A20] transition">Crear Cuenta</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div className="absolute bottom-0 left-0 right-0 h-16 bg-white flex border-t border-[#E2E8F0] shadow-lg z-40">
                 <button onClick={() => setTab('inicio')} className="flex-1 flex flex-col items-center justify-center">
                   <span className={`text-lg transition ${tab === 'inicio' ? 'opacity-100 scale-110' : 'opacity-40'}`}>🏠</span>
-                  <span className={`text-[10px] ${tab === 'inicio' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Inicio</span>
+                  <span className={`text-[10px] ${tab === 'inicio' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>{t.inicioNav}</span>
                 </button>
                 <button onClick={() => setTab('cuentas')} className="flex-1 flex flex-col items-center justify-center">
                   <span className={`text-lg transition ${tab === 'cuentas' ? 'opacity-100 scale-110' : 'opacity-40'}`}>🏦</span>
-                  <span className={`text-[10px] ${tab === 'cuentas' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Cuentas</span>
+                  <span className={`text-[10px] ${tab === 'cuentas' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>{t.cuentasNav}</span>
                 </button>
                 <button onClick={() => setTab('deudas')} className="flex-1 flex flex-col items-center justify-center">
                   <span className={`text-lg transition ${tab === 'deudas' ? 'opacity-100 scale-110' : 'opacity-40'}`}>📑</span>
-                  <span className={`text-[10px] ${tab === 'deudas' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>CxC / CxP</span>
+                  <span className={`text-[10px] ${tab === 'deudas' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>{t.deudasNav}</span>
                 </button>
                 <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center">
                   <span className={`text-lg transition ${tab === 'reportes' ? 'opacity-100 scale-110' : 'opacity-40'}`}>📊</span>
-                  <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Reportes</span>
+                  <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>{t.reportesNav}</span>
                 </button>
                 {esSuperAdmin && (
                     <button onClick={() => setTab('admin')} className="flex-1 flex flex-col items-center justify-center">
                       <span className={`text-lg transition ${tab === 'admin' ? 'opacity-100 scale-110' : 'opacity-40'}`}>⚙️</span>
-                      <span className={`text-[10px] ${tab === 'admin' ? 'text-amber-600 font-extrabold' : 'text-[#718078] font-semibold'}`}>Admin</span>
+                      <span className={`text-[10px] ${tab === 'admin' ? 'text-amber-600 font-extrabold' : 'text-[#718078] font-semibold'}`}>{t.adminNav}</span>
                     </button>
                 )}
               </div>
