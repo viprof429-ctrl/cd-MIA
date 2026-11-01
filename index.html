@@ -366,7 +366,8 @@
                 method: 'GET',
                 headers: {
                   'apikey': SUPABASE_ANON_KEY,
-                  'Authorization': `Bearer ${token}`
+                  'Authorization': `Bearer ${token}`,
+                  'Range': '0-999'
                 }
               });
               if (!res.ok) return [];
@@ -1028,7 +1029,7 @@
                   <p><strong>Concepto:</strong> ${terceroItem.concepto}</p>
                   <p><strong>Fecha Inicial:</strong> ${terceroItem.fechaInicial || 'N/A'}</p>
                   <p><strong>Fecha Vencimiento:</strong> ${terceroItem.vencimiento}</p>
-                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(terceroItem.valorTotal, simboloMoneda)}</p>
+                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
                   <p><strong>Saldo Pendiente Actual:</strong> ${formatoCOP(terceroItem.saldoPendiente, simboloMoneda)}</p>
                   <p><strong>Estado:</strong> ${terceroItem.estado}</p>
                   <p><strong>Observaciones:</strong> ${terceroItem.observacion || 'Ninguna'}</p>
@@ -1081,7 +1082,7 @@
           };
 
           const reiniciarTodo = () => {
-            const confirmar = window.confirm('¿Deseas borrar todos tus movimientos y empezar en limpio?');
+            const confirmar = window.confirm('¿Deseas borrar todos tus movimientos y empezar em limpio?');
             if (confirmar) {
               setCuentas(CUENTAS_BASE);
               setMovimientos([]);
@@ -1119,14 +1120,14 @@
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
 
-          // EXTRACCIÓN ROBUSTA Y DIRECTA DE LOS CORREOS DESDE LA TABLA DE SUPABASE
-          const correosUnicos = [...new Set(listaUsuariosCloud.map(u => u.correo || u.data?.correo || u.user_id).filter(Boolean))];
+          // EXTRACCIÓN ROBUSTA Y DIRECTA DE LOS CORREOS (SOPORTANDO COLUMNA CORREO O JSON DATA)
+          const correosUnicos = [...new Set(listaUsuariosCloud.map(u => u.correo || u.data?.correo).filter(Boolean))];
           const idiomasUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.idioma || 'Español').filter(Boolean))];
           const monedasUnicas = [...new Set(listaUsuariosCloud.map(u => u.data?.moneda || 'COP').filter(Boolean))];
 
-          // FILTRADO DINÁMICO
+          // FILTRADO DINÁMICO EXACTO
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
-            const correoUsr = usr.correo || usr.data?.correo || usr.user_id || '';
+            const correoUsr = usr.correo || usr.data?.correo || '';
             const idiomaUsr = usr.data?.idioma || 'Español';
             const monedaUsr = usr.data?.moneda || 'COP';
 
@@ -1140,7 +1141,7 @@
           const exportarReporteUsuariosCSV = () => {
             let csvContent = "\uFEFFCorreo Electrónico,Idioma,Moneda,Última Actualización\n";
             usuariosFiltrados.forEach(u => {
-              csvContent += `${u.correo || u.data?.correo || u.user_id},${u.data?.idioma || 'Español'},${u.data?.moneda || 'COP'},${u.updated_at}\n`;
+              csvContent += `${u.correo || u.data?.correo || 'N/A'},${u.data?.idioma || 'Español'},${u.data?.moneda || 'COP'},${u.updated_at}\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -1182,7 +1183,7 @@
                     <tbody>
                       ${usuariosFiltrados.map(u => `
                         <tr>
-                          <td>${u.correo || u.data?.correo || u.user_id}</td>
+                          <td>${u.correo || u.data?.correo || 'N/A'}</td>
                           <td>${u.data?.idioma || 'Español'}</td>
                           <td>${u.data?.moneda || 'COP'}</td>
                           <td>${new Date(u.updated_at).toLocaleString()}</td>
