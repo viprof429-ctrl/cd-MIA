@@ -214,7 +214,7 @@
             pagarDeudaBtn: "Pagar Dívida da Conta",
             reportesTitulo: "Relatórios e Status de Dívidas",
             reporteDetallado: "📑 Relatório Detalhado por Terceiro",
-            balanceDeudas: "📊 Balanço Geral de Dívidas",
+            balanceDeudas: "📊 Balance Geral de Dívidas",
             reporteFechas: "Relatório Financeiro por Período",
             gastosPeriodo: "DESPESAS DO PERÍODO",
             distribucionRubro: "Distribuição por Categoria",
@@ -1028,7 +1028,7 @@
                   <p><strong>Concepto:</strong> ${terceroItem.concepto}</p>
                   <p><strong>Fecha Inicial:</strong> ${terceroItem.fechaInicial || 'N/A'}</p>
                   <p><strong>Fecha Vencimiento:</strong> ${terceroItem.vencimiento}</p>
-                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
+                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(terceroItem.valorTotal, simboloMoneda)}</p>
                   <p><strong>Saldo Pendiente Actual:</strong> ${formatoCOP(terceroItem.saldoPendiente, simboloMoneda)}</p>
                   <p><strong>Estado:</strong> ${terceroItem.estado}</p>
                   <p><strong>Observaciones:</strong> ${terceroItem.observacion || 'Ninguna'}</p>
@@ -1124,7 +1124,7 @@
           const idiomasUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.idioma || 'Español').filter(Boolean))];
           const monedasUnicas = [...new Set(listaUsuariosCloud.map(u => u.data?.moneda || 'COP').filter(Boolean))];
 
-          // FILTRADO DINÁMICO EXACTO SEGÚN LA OPCIÓN SELECCIONADA
+          // FILTRADO DINÁMICO EXACTO (SIN FILTROS DE FECHA POR DEFECTO PARA QUE MUESTRE TODOS LOS USUARIOS)
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
             const fechaUsr = usr.updated_at ? usr.updated_at.split('T')[0] : '';
             if (filtroFechaDesde && fechaUsr && fechaUsr < filtroFechaDesde) return false;
@@ -1889,15 +1889,15 @@
                                 <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios</h4>
                             </div>
                             
-                            {/* FILTROS DESPLEGABLES: CORREO, IDIOMA, MONEDA */}
+                            {/* FILTROS DESPLEGABLES: CORREO, IDIOMA, MONEDA (SIN RESTRICCIÓN DE FECHAS POR DEFECTO) */}
                             <div className="space-y-2 pt-1 border-t border-slate-200">
                                 <div className="flex gap-2">
                                     <div className="flex-1">
-                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Desde:</label>
+                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Desde (Opcional):</label>
                                         <input type="date" value={filtroFechaDesde} onChange={(e) => setFiltroFechaDesde(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none" />
                                     </div>
                                     <div className="flex-1">
-                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Hasta:</label>
+                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Hasta (Opcional):</label>
                                         <input type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none" />
                                     </div>
                                 </div>
@@ -2131,7 +2131,7 @@
                   <span className={`text-[10px] ${tab === 'deudas' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>{t.deudasNav}</span>
                 </button>
                 <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center">
-                  <span className={`text-lg transition ${tab === 'reportes' ? 'opacity-100 scale-110' : 'opacity-40'}`}>📊</span>
+                  <span className={`text-lg transition ${tab === 'reportes' ? 'opacity-100 scale-110' : 'opacity-40'}` }>📊</span>
                   <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>{t.reportesNav}</span>
                 </button>
                 {esSuperAdmin && (
