@@ -242,7 +242,9 @@
           const [modoRegistro, setModoRegistro] = useState(false);
 
           const [tab, setTab] = useState('inicio');
-          const [logoGlobal, setLogoGlobal] = useState(null);
+          const [logoGlobal, setLogoGlobal] = useState(() => {
+            return localStorage.getItem('mia_logo_cache') || null;
+          });
 
           const [cuentas, setCuentas] = useState(() => {
             const local = localStorage.getItem('mia_backup_cuentas');
@@ -268,7 +270,10 @@
 
           useEffect(() => {
             supabaseApi.cargarLogoGlobal().then(logo => {
-              if (logo) setLogoGlobal(logo);
+              if (logo) {
+                setLogoGlobal(logo);
+                localStorage.setItem('mia_logo_cache', logo);
+              }
             });
           }, []);
 
@@ -350,9 +355,10 @@
             lector.onloadend = async () => {
               const base64String = lector.result;
               setLogoGlobal(base64String);
+              localStorage.setItem('mia_logo_cache', base64String);
               if (sesion && sesion.access_token) {
                 await supabaseApi.guardarLogoGlobal(sesion.access_token, base64String);
-                notificar('Logo Actualizado', 'El logotipo institucional global ha sido guardado en la nube para todos los usuarios.');
+                notificar('Logo Actualizado', 'El logotipo institucional global ha sido guardado en la nube y se sincronizará automáticamente para todos los usuarios.');
               }
             };
             lector.readAsDataURL(archivo);
