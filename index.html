@@ -21,7 +21,7 @@
         const { useState, useEffect } = React;
 
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
 
         const T = {
           Español: {
@@ -344,7 +344,7 @@
           },
           async obtenerUsuariosRegistrados(token) {
             try {
-              const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?select=user_id,correo,data,updated_at`, {
+              const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?select=user_id,data,updated_at`, {
                 method: 'GET',
                 headers: {
                   'apikey': SUPABASE_ANON_KEY,
@@ -1098,12 +1098,8 @@
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
 
-          // BÚSQUEDA INTELIGENTE UNIFICADA (CORREO, IDIOMA O MONEDA)
+          // BÚSQUEDA INTELIGENTE FLEXIBLE (SIN RESTRICCIÓN DE FECHAS POR DEFECTO PARA MOSTRAR TODOS LOS USUARIOS)
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
-            const fechaUsr = usr.updated_at ? usr.updated_at.split('T')[0] : '';
-            if (filtroFechaDesde && fechaUsr && fechaUsr < filtroFechaDesde) return false;
-            if (filtroFechaHasta && fechaUsr && fechaUsr > filtroFechaHasta) return false;
-
             if (terminoBusqueda.trim() !== '') {
               const termino = terminoBusqueda.toLowerCase();
               const correo = (usr.data?.correo || usr.correo || usr.user_id || '').toLowerCase();
@@ -1865,7 +1861,7 @@
                                 <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios</h4>
                             </div>
                             
-                            {/* BÚSQUEDA UNIFICADA (CORREO, IDIOMA, MONEDA) */}
+                            {/* BÚSQUEDA UNIFICADA CLARA */}
                             <div className="space-y-2 pt-1 border-t border-slate-200">
                                 <div className="flex gap-2">
                                     <div className="flex-1">
