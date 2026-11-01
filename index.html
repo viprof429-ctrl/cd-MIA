@@ -21,7 +21,7 @@
         const { useState, useEffect } = React;
 
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
 
         const T = {
           Español: {
@@ -489,9 +489,7 @@
 
           const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
           const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
-          const [filtroIdioma, setFiltroIdioma] = useState('Todos');
-          const [filtroMoneda, setFiltroMoneda] = useState('Todas');
-          const [filtroCorreo, setFiltroCorreo] = useState('');
+          const [terminoBusqueda, setTerminoBusqueda] = useState('');
           const [reporteGenerado, setReporteGenerado] = useState(false);
 
           const [cuentas, setCuentas] = useState(CUENTAS_BASE);
@@ -1100,14 +1098,22 @@
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
 
+          // BÚSQUEDA INTELIGENTE UNIFICADA (CORREO, IDIOMA O MONEDA)
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
             const fechaUsr = usr.updated_at ? usr.updated_at.split('T')[0] : '';
-            const correoUsr = usr.data?.correo || usr.correo || usr.user_id || '';
             if (filtroFechaDesde && fechaUsr && fechaUsr < filtroFechaDesde) return false;
             if (filtroFechaHasta && fechaUsr && fechaUsr > filtroFechaHasta) return false;
-            if (filtroIdioma !== 'Todos' && (usr.data?.idioma || 'Español') !== filtroIdioma) return false;
-            if (filtroMoneda !== 'Todas' && !(usr.data?.moneda || 'COP').includes(filtroMoneda)) return false;
-            if (filtroCorreo && !correoUsr.toLowerCase().includes(filtroCorreo.toLowerCase())) return false;
+
+            if (terminoBusqueda.trim() !== '') {
+              const termino = terminoBusqueda.toLowerCase();
+              const correo = (usr.data?.correo || usr.correo || usr.user_id || '').toLowerCase();
+              const idioma = (usr.data?.idioma || 'Español').toLowerCase();
+              const moneda = (usr.data?.moneda || 'COP').toLowerCase();
+              
+              if (!correo.includes(termino) && !idioma.includes(termino) && !moneda.includes(termino)) {
+                return false;
+              }
+            }
             return true;
           });
 
@@ -1859,7 +1865,7 @@
                                 <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios</h4>
                             </div>
                             
-                            {/* FILTROS AVANZADOS CON LUPITA DE BÚSQUEDA */}
+                            {/* BÚSQUEDA UNIFICADA (CORREO, IDIOMA, MONEDA) */}
                             <div className="space-y-2 pt-1 border-t border-slate-200">
                                 <div className="flex gap-2">
                                     <div className="flex-1">
@@ -1872,31 +1878,9 @@
                                     </div>
                                 </div>
 
-                                <div className="flex gap-2">
-                                    <div className="flex-1">
-                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">🌐 Idioma:</label>
-                                        <select value={filtroIdioma} onChange={(e) => setFiltroIdioma(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none font-medium">
-                                            <option value="Todos">Todos</option>
-                                            <option value="Español">Español</option>
-                                            <option value="Inglés">Inglés</option>
-                                            <option value="Portugués">Portugués</option>
-                                        </select>
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">💱 Moneda:</label>
-                                        <select value={filtroMoneda} onChange={(e) => setFiltroMoneda(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none font-medium">
-                                            <option value="Todas">Todas</option>
-                                            <option value="COP">COP</option>
-                                            <option value="USD">USD</option>
-                                            <option value="EUR">EUR</option>
-                                            <option value="MXN">MXN</option>
-                                        </select>
-                                    </div>
-                                </div>
-
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-600 block mb-0.5">✉️ Buscar por Correo:</label>
-                                    <input type="text" placeholder="Filtrar por correo..." value={filtroCorreo} onChange={(e) => setFiltroCorreo(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none" />
+                                    <label className="text-[10px] font-bold text-slate-600 block mb-0.5">🔍 Buscar por: correo, idioma, moneda</label>
+                                    <input type="text" placeholder="Escribe para buscar (ej. gmail, español, USD)..." value={terminoBusqueda} onChange={(e) => setTerminoBusqueda(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-slate-200 text-xs outline-none" />
                                 </div>
 
                                 <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#205B43] text-white font-bold py-2 rounded-xl text-xs hover:bg-[#112A20] transition flex items-center justify-center gap-1.5 mt-2">
