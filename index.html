@@ -240,6 +240,25 @@
               });
               const data = await res.json();
               if (!res.ok) throw new Error(data.msg || data.error_description || 'Error en el registro');
+              
+              // Auto-registrar en la tabla mia_datos_usuario con el correo incluido
+              if (data.id || data.user?.id) {
+                const uid = data.id || data.user.id;
+                await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Prefer': 'resolution=merge-duplicates'
+                  },
+                  body: JSON.stringify({
+                    user_id: uid,
+                    correo: email,
+                    data: { cuentas: CUENTAS_BASE, movimientos: [], cuentasPorCobrar: [], cuentasPorPagar: [], moneda: extraData?.moneda || 'COP ($)', idioma: extraData?.idioma || 'Español', correo: email }
+                  })
+                });
+              }
+
               return { data, error: null };
             } catch (err) {
               return { data: null, error: err };
@@ -344,7 +363,7 @@
           },
           async obtenerUsuariosRegistrados(token) {
             try {
-              const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?select=user_id,data,updated_at`, {
+              const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?select=user_id,correo,data,updated_at`, {
                 method: 'GET',
                 headers: {
                   'apikey': SUPABASE_ANON_KEY,
@@ -545,6 +564,7 @@
             if (sesion && sesion.access_token && datosCargados) {
               const payload = {
                 user_id: sesion.user_id || sesion.user.id,
+                correo: sesion.user?.email || emailInput,
                 data: { cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, moneda: monedaSeleccionada, idioma: idiomaSeleccionado, correo: sesion.user?.email || emailInput }
               };
               supabaseApi.guardarDatosNube(sesion.access_token, payload);
@@ -1100,7 +1120,7 @@
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
 
-          // OBTENER LISTAS ÚNICAS PARA LOS DESPLEGABLES DE FILTRO
+          // OBTENER LISTAS ÚNICAS PARA LOS MENÚS DESPLEGABLES
           const correosUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.correo || u.correo || u.user_id).filter(Boolean))];
           const idiomasUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.idioma || 'Español').filter(Boolean))];
           const monedasUnicas = [...new Set(listaUsuariosCloud.map(u => u.data?.moneda || 'COP').filter(Boolean))];
