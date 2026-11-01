@@ -1102,9 +1102,9 @@
 
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
             const fechaUsr = usr.updated_at ? usr.updated_at.split('T')[0] : '';
-            const correoUsr = usr.data?.correo || usr.correo || '';
-            if (filtroFechaDesde && fechaUsr < filtroFechaDesde) return false;
-            if (filtroFechaHasta && fechaUsr > filtroFechaHasta) return false;
+            const correoUsr = usr.data?.correo || usr.correo || usr.user_id || '';
+            if (filtroFechaDesde && fechaUsr && fechaUsr < filtroFechaDesde) return false;
+            if (filtroFechaHasta && fechaUsr && fechaUsr > filtroFechaHasta) return false;
             if (filtroIdioma !== 'Todos' && (usr.data?.idioma || 'Español') !== filtroIdioma) return false;
             if (filtroMoneda !== 'Todas' && !(usr.data?.moneda || 'COP').includes(filtroMoneda)) return false;
             if (filtroCorreo && !correoUsr.toLowerCase().includes(filtroCorreo.toLowerCase())) return false;
@@ -1114,7 +1114,7 @@
           const exportarReporteUsuariosCSV = () => {
             let csvContent = "\uFEFFCorreo Electrónico,Idioma,Moneda,Última Actualización\n";
             usuariosFiltrados.forEach(u => {
-              csvContent += `${u.data?.correo || u.correo || 'N/A'},${u.data?.idioma || 'Español'},${u.data?.moneda || 'COP'},${u.updated_at}\n`;
+              csvContent += `${u.data?.correo || u.correo || u.user_id},${u.data?.idioma || 'Español'},${u.data?.moneda || 'COP'},${u.updated_at}\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -1156,7 +1156,7 @@
                     <tbody>
                       ${usuariosFiltrados.map(u => `
                         <tr>
-                          <td>${u.data?.correo || u.correo || 'N/A'}</td>
+                          <td>${u.data?.correo || u.correo || u.user_id}</td>
                           <td>${u.data?.idioma || 'Español'}</td>
                           <td>${u.data?.moneda || 'COP'}</td>
                           <td>${new Date(u.updated_at).toLocaleString()}</td>
@@ -1918,7 +1918,7 @@
                                         ) : (
                                             usuariosFiltrados.map((usr, idx) => (
                                                 <div key={idx} className="bg-white p-2.5 rounded-xl border border-slate-200 text-xs shadow-sm space-y-0.5">
-                                                    <p className="font-bold text-[#112A20] truncate">✉️ Correo: {usr.data?.correo || usr.correo || 'N/A'}</p>
+                                                    <p className="font-bold text-[#112A20] truncate">✉️ Correo: {usr.data?.correo || usr.correo || usr.user_id}</p>
                                                     <p className="text-slate-600 text-[11px]">🌐 Idioma: <span className="font-semibold">{usr.data?.idioma || 'Español'}</span> · 💱 Moneda: <span className="font-semibold">{usr.data?.moneda || 'COP'}</span></p>
                                                     <p className="text-[10px] text-slate-400">Última Actualización: {new Date(usr.updated_at).toLocaleString()}</p>
                                                 </div>
