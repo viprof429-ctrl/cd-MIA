@@ -490,7 +490,9 @@
           const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
           const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
           const [tipoBusqueda, setTipoBusqueda] = useState('correo');
-          const [valorBusqueda, setValorBusqueda] = useState('Todos');
+          const [filtroCorreo, setFiltroCorreo] = useState('Todos');
+          const [filtroIdioma, setFiltroIdioma] = useState('Todos');
+          const [filtroMoneda, setFiltroMoneda] = useState('Todas');
           const [reporteGenerado, setReporteGenerado] = useState(false);
 
           const [cuentas, setCuentas] = useState(CUENTAS_BASE);
@@ -1098,7 +1100,7 @@
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
 
-          // OBTENER LISTAS ÚNICAS PARA LOS MENÚS DESPLEGABLES
+          // OBTENER LISTAS ÚNICAS PARA LOS DESPLEGABLES DE FILTRO
           const correosUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.correo || u.correo || u.user_id).filter(Boolean))];
           const idiomasUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.idioma || 'Español').filter(Boolean))];
           const monedasUnicas = [...new Set(listaUsuariosCloud.map(u => u.data?.moneda || 'COP').filter(Boolean))];
@@ -1750,7 +1752,7 @@
                                 <p className="text-emerald-700 font-semibold">🟢 {itemSel.fechaInicial || 'Inicio'} — Saldo Inicial: +{formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
                                 {(itemSel.historialPagos || []).map((p, idx) => (
                                   <p key={idx} className="text-red-600 font-semibold">
-                                    🔴 {p.fecha} — Abono (${p.cuentaName}): -{formatoCOP(p.monto, simboloMoneda)}
+                                    🔴 {p.fecha} — Abono ({p.cuentaName}): -{formatoCOP(p.monto, simboloMoneda)}
                                   </p>
                                 ))}
                               </div>
@@ -1868,7 +1870,7 @@
                                 <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios</h4>
                             </div>
                             
-                            {/* FILTROS DESPLEGABLES: TIPO DE BÚSQUEDA Y OPCIÓN ESPECÍFICA */}
+                            {/* FILTROS DESPLEGABLES: CORREO, IDIOMA, MONEDA */}
                             <div className="space-y-2 pt-1 border-t border-slate-200">
                                 <div className="flex gap-2">
                                     <div className="flex-1">
@@ -2040,7 +2042,7 @@
 
                     <div>
                       <label className="text-xs font-semibold text-[#52725F] block mb-1">Valor:</label>
-                      <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none" />
+                      <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none" />
                     </div>
 
                     <div className="flex gap-2 pt-2">
