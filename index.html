@@ -54,9 +54,9 @@
               return { data: null, error: err };
             }
           },
-          async cargarDatosNube(token) {
+          async cargarDatosNube(token, userId) {
             try {
-              const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?select=data`, {
+              const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}&select=data`, {
                 method: 'GET',
                 headers: {
                   'apikey': SUPABASE_ANON_KEY,
@@ -68,7 +68,7 @@
               if (rows && rows.length > 0) {
                 return rows[0].data;
               }
-              return null;
+              return null; // Si no existe en la nube, retorna nulo para iniciar en blanco
             } catch (err) {
               console.error("Error cargando de la nube:", err);
               return null;
@@ -257,29 +257,16 @@
           const [passInput, setPassInput] = useState('');
           const [modoRegistro, setModoRegistro] = useState(false);
 
-          // Nuevos estados para Registro: Idioma y Moneda
           const [idiomaSeleccionado, setIdiomaSeleccionado] = useState('Español');
           const [monedaSeleccionada, setMonedaSeleccionada] = useState('COP ($)');
 
           const [tab, setTab] = useState('inicio');
           const [logoGlobal, setLogoGlobal] = useState(null);
 
-          const [cuentas, setCuentas] = useState(() => {
-            const local = localStorage.getItem('mia_backup_cuentas');
-            return local ? JSON.parse(local) : CUENTAS_BASE;
-          });
-          const [movimientos, setMovimientos] = useState(() => {
-            const local = localStorage.getItem('mia_backup_movimientos');
-            return local ? JSON.parse(local) : [];
-          });
-          const [cuentasPorCobrar, setCuentasPorCobrar] = useState(() => {
-            const local = localStorage.getItem('mia_backup_cxc');
-            return local ? JSON.parse(local) : [];
-          });
-          const [cuentasPorPagar, setCuentasPorPagar] = useState(() => {
-            const local = localStorage.getItem('mia_backup_cxp');
-            return local ? JSON.parse(local) : [];
-          });
+          const [cuentas, setCuentas] = useState(CUENTAS_BASE);
+          const [movimientos, setMovimientos] = useState([]);
+          const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
+          const [cuentasPorPagar, setCuentasPorPagar] = useState([]);
 
           const [categoriasGasto, setCategoriasGasto] = useState(CATEGORIAS_GASTO_BASE);
           const [categoriasIngreso, setCategoriasIngreso] = useState(CATEGORIAS_INGRESO_BASE);
@@ -294,14 +281,22 @@
 
           useEffect(() => {
             if (sesion && sesion.access_token && !datosCargados) {
-              supabaseApi.cargarDatosNube(sesion.access_token).then((cloudData) => {
+              const userId = sesion.user_id;
+              supabaseApi.cargarDatosNube(sesion.access_token, userId).then((cloudData) => {
                 if (cloudData) {
-                  if (cloudData.cuentas) setCuentas(cloudData.cuentas);
-                  if (cloudData.movimientos) setMovimientos(cloudData.movimientos);
-                  if (cloudData.cuentasPorCobrar) setCuentasPorCobrar(cloudData.cuentasPorCobrar);
-                  if (cloudData.cuentasPorPagar) setCuentasPorPagar(cloudData.cuentasPorPagar);
+                  // Si el usuario ya tiene datos en la nube, los cargamos
+                  setCuentas(cloudData.cuentas || CUENTAS_BASE);
+                  setMovimientos(cloudData.movimientos || []);
+                  setCuentasPorCobrar(cloudData.cuentasPorCobrar || []);
+                  setCuentasPorPagar(cloudData.cuentasPorPagar || []);
                   if (cloudData.moneda) setMonedaSeleccionada(cloudData.moneda);
                   if (cloudData.idioma) setIdiomaSeleccionado(cloudData.idioma);
+                } else {
+                  // Usuario nuevo: Inicializar base de datos completamente en blanco
+                  setCuentas(CUENTAS_BASE);
+                  setMovimientos([]);
+                  setCuentasPorCobrar([]);
+                  setCuentasPorPagar([]);
                 }
                 setDatosCargados(true);
               });
@@ -309,13 +304,6 @@
           }, [sesion]);
 
           useEffect(() => {
-            localStorage.setItem('mia_backup_cuentas', JSON.stringify(cuentas));
-            localStorage.setItem('mia_backup_movimientos', JSON.stringify(movimientos));
-            localStorage.setItem('mia_backup_cxc', JSON.stringify(cuentasPorCobrar));
-            localStorage.setItem('mia_backup_cxp', JSON.stringify(cuentasPorPagar));
-            localStorage.setItem('mia_moneda', monedaSeleccionada);
-            localStorage.setItem('mia_idioma', idiomaSeleccionado);
-
             if (sesion && sesion.access_token && datosCargados) {
               const payload = {
                 user_id: sesion.user_id || sesion.user.id,
@@ -341,6 +329,7 @@
                 user_id: userIdValido, 
                 access_token: tokenValido 
               };
+              localStorage.clear(); // Limpiar caché anterior al cambiar de usuario
               setSesion(userSession);
               setDatosCargados(false);
               localStorage.setItem('mia_sesion', JSON.stringify(userSession));
@@ -363,9 +352,13 @@
           };
 
           const cerrarSesion = () => {
-            localStorage.removeItem('mia_sesion');
+            localStorage.clear(); // Limpiar toda la memoria local del dispositivo al salir
             setSesion(null);
             setDatosCargados(false);
+            setCuentas(CUENTAS_BASE);
+            setMovimientos([]);
+            setCuentasPorCobrar([]);
+            setCuentasPorPagar([]);
           };
 
           const manejarSubidaLogoGlobal = (e) => {
@@ -397,12 +390,8 @@
 
                 setLogoGlobal(dataUrlOptimizado);
                 if (sesion && sesion.access_token) {
-                  const exito = await supabaseApi.guardarLogoGlobal(sesion.access_token, dataUrlOptimizado);
-                  if (exito) {
-                    notificar('¡Logotipo Global Actualizado!', 'Guardado en la nube y sincronizado para todos los usuarios.');
-                  } else {
-                    notificar('Error', 'No se pudo guardar en la tabla mia_configuracion de Supabase.');
-                  }
+                  await supabaseApi.guardarLogoGlobal(sesion.access_token, dataUrlOptimizado);
+                  notificar('¡Logotipo Global Actualizado!', 'Guardado en la nube y sincronizado para todos los usuarios.');
                 }
               };
             };
@@ -1616,7 +1605,7 @@
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Valor en pesos:</label>
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Valor:</label>
                       <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none" />
                     </div>
 
