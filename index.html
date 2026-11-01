@@ -21,7 +21,7 @@
         const { useState, useEffect } = React;
 
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
-        const SUPABASE_ANON_KEY = "yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
 
         const supabaseApi = {
           async signUp(email, password) {
@@ -46,7 +46,9 @@
                 body: JSON.stringify({ email, password })
               });
               const data = await res.json();
-              if (!res.ok) throw new Error(data.error_description || data.msg || data.message || 'Credenciales inválidas');
+              if (!res.ok) {
+                throw new Error(data.error_description || data.msg || data.message || 'Credenciales inválidas');
+              }
               return { data, error: null };
             } catch (err) {
               return { data: null, error: err };
@@ -259,8 +261,8 @@
             if (error) {
               notificar('Error de Acceso', error.message);
             } else {
-              const tokenValido = data.access_token || data.session?.access_token;
-              const userIdValido = data.user?.id || data.session?.user?.id;
+              const tokenValido = data.access_token || data.session?.access_token || data.token;
+              const userIdValido = data.user?.id || data.session?.user?.id || data.id;
               const userSession = { 
                 user: { email: emailInput }, 
                 user_id: userIdValido, 
@@ -1515,7 +1517,7 @@
                 </button>
                 <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center">
                   <span className={`text-lg transition ${tab === 'reportes' ? 'opacity-100 scale-110' : 'opacity-40'}`}>📊</span>
-                  <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}><span className="text-xs">Reportes</span></span>
+                  <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>Reportes</span>
                 </button>
                 {esSuperAdmin && (
                     <button onClick={() => setTab('admin')} className="flex-1 flex flex-col items-center justify-center">
