@@ -487,12 +487,13 @@
           const [logoGlobal, setLogoGlobal] = useState(null);
           const [listaUsuariosCloud, setListaUsuariosCloud] = useState([]);
 
-          // ESTADOS PARA FILTROS DEL REPORTE PROFESIONAL DE USUARIOS
+          // ESTADOS PARA FILTROS DEL REPORTE PROFESIONAL Y ESTADO DE BÚSQUEDA (LUPITA)
           const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
           const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
           const [filtroIdioma, setFiltroIdioma] = useState('Todos');
           const [filtroMoneda, setFiltroMoneda] = useState('Todas');
           const [filtroCorreo, setFiltroCorreo] = useState('');
+          const [reporteGenerado, setReporteGenerado] = useState(false);
 
           const [cuentas, setCuentas] = useState(CUENTAS_BASE);
           const [movimientos, setMovimientos] = useState([]);
@@ -1095,7 +1096,7 @@
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
 
-          // FILTRADO PROFESIONAL PARA EL REPORTE DE USUARIOS (SUPERADMIN)
+          // FILTRADO PROFESIONAL AL PRESIONAR LA LUPITA DE BÚSQUEDA
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
             const fechaUsr = usr.updated_at ? usr.updated_at.split('T')[0] : '';
             if (filtroFechaDesde && fechaUsr < filtroFechaDesde) return false;
@@ -1118,6 +1119,54 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+          };
+
+          const exportarReporteUsuariosPDF = () => {
+            const contenidoHtml = `
+              <html>
+                <head>
+                  <title>Reporte de Usuarios - MIA</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+                    th { background-color: #205B43; color: white; }
+                    .btn-volver { display: block; width: 100%; padding: 12px; background: #205B43; color: white; text-align: center; text-decoration: none; font-weight: bold; border-radius: 8px; margin-top: 20px; }
+                  </style>
+                </head>
+                <body>
+                  <h2>MIA - Reporte Ejecutivo de Usuarios Registrados</h2>
+                  <p><strong>Total de usuarios encontrados:</strong> ${usuariosFiltrados.length}</p>
+                  <hr/>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>ID / Correo</th>
+                        <th>Idioma</th>
+                        <th>Moneda</th>
+                        <th>Última Actualización</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${usuariosFiltrados.map(u => `
+                        <tr>
+                          <td>${u.user_id}</td>
+                          <td>${u.data?.idioma || 'Español'}</td>
+                          <td>${u.data?.moneda || 'COP'}</td>
+                          <td>${new Date(u.updated_at).toLocaleString()}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                  <br/><hr/>
+                  <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
+                  <a href="javascript:window.close();" class="btn-volver">Cerrar y Volver a la App</a>
+                </body>
+              </html>
+            `;
+            const blob = new Blob([contenidoHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
           };
 
           if (!sesion) {
@@ -1684,7 +1733,7 @@
                               <p className="text-[11px] font-bold text-[#112A20] mb-1">📜 Historial de Movimientos:</p>
                               <div className="text-[11px] space-y-1 bg-white p-2 rounded-lg border border-slate-100">
                                 <p className="text-emerald-700 font-semibold">🟢 {itemSel.fechaInicial || 'Inicio'} — Saldo Inicial: +{formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
-                                {(itemSel.historialPagos || []).map((p, idx) => (
+                                ${(itemSel.historialPagos || []).map((p, idx) => (
                                   <p key={idx} className="text-red-600 font-semibold">
                                     🔴 {p.fecha} — Abono ({p.cuentaName}): -{formatoCOP(p.monto, simboloMoneda)}
                                   </p>
@@ -1801,13 +1850,10 @@
                         {/* SECCIÓN REPORTE PROFESIONAL DE USUARIOS */}
                         <div className="space-y-3 bg-[#F8FAF8] p-4 rounded-2xl border border-[#DCE5DB]">
                             <div className="flex justify-between items-center">
-                                <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios ({usuariosFiltrados.length})</h4>
-                                <button onClick={exportarReporteUsuariosCSV} className="bg-[#205B43] text-white px-2.5 py-1 rounded-lg text-[10px] font-bold hover:bg-[#112A20] transition">
-                                    📥 Exportar CSV
-                                </button>
+                                <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios</h4>
                             </div>
                             
-                            {/* FILTROS AVANZADOS */}
+                            {/* FILTROS AVANZADOS CON LUPITA DE BÚSQUEDA */}
                             <div className="space-y-2 pt-1 border-t border-slate-200">
                                 <div className="flex gap-2">
                                     <div className="flex-1">
@@ -1846,22 +1892,44 @@
                                     <label className="text-[10px] font-bold text-slate-600 block mb-0.5">✉️ Buscar por ID / Correo:</label>
                                     <input type="text" placeholder="Filtrar por texto..." value={filtroCorreo} onChange={(e) => setFiltroCorreo(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none" />
                                 </div>
+
+                                <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#205B43] text-white font-bold py-2 rounded-xl text-xs hover:bg-[#112A20] transition flex items-center justify-center gap-1.5 mt-2">
+                                    🔍 Buscar y Mostrar Reporte
+                                </button>
                             </div>
 
-                            {/* LISTADO DE RESULTADOS */}
-                            <div className="max-h-48 overflow-y-auto space-y-2 pt-2">
-                                {usuariosFiltrados.length === 0 ? (
-                                    <p className="text-[11px] text-slate-500 text-center py-3">No hay usuarios que coincidan con los filtros.</p>
-                                ) : (
-                                    usuariosFiltrados.map((usr, idx) => (
-                                        <div key={idx} className="bg-white p-2.5 rounded-xl border border-slate-200 text-xs shadow-sm space-y-0.5">
-                                            <p className="font-bold text-[#112A20] truncate">🔑 ID: {usr.user_id}</p>
-                                            <p className="text-slate-600 text-[11px]">🌐 Idioma: <span className="font-semibold">{usr.data?.idioma || 'Español'}</span> · 💱 Moneda: <span className="font-semibold">{usr.data?.moneda || 'COP'}</span></p>
-                                            <p className="text-[10px] text-slate-400">Actualización: {new Date(usr.updated_at).toLocaleString()}</p>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
+                            {/* SECCIÓN MOSTRAR REPORTE EN PANTALLA */}
+                            {reporteGenerado && (
+                                <div className="space-y-3 pt-3 border-t border-slate-300">
+                                    <div className="bg-[#112A20] text-white p-3 rounded-xl">
+                                        <p className="text-[10px] text-[#B7E4C7] font-bold uppercase tracking-wider">Total de Usuarios Registrados</p>
+                                        <h3 className="text-2xl font-extrabold mt-0.5">{usuariosFiltrados.length}</h3>
+                                    </div>
+
+                                    <div className="max-h-48 overflow-y-auto space-y-2">
+                                        {usuariosFiltrados.length === 0 ? (
+                                            <p className="text-[11px] text-slate-500 text-center py-3">No hay usuarios que coincidan con los filtros aplicados.</p>
+                                        ) : (
+                                            usuariosFiltrados.map((usr, idx) => (
+                                                <div key={idx} className="bg-white p-2.5 rounded-xl border border-slate-200 text-xs shadow-sm space-y-0.5">
+                                                    <p className="font-bold text-[#112A20] truncate">🔑 ID: {usr.user_id}</p>
+                                                    <p className="text-slate-600 text-[11px]">🌐 Idioma: <span className="font-semibold">{usr.data?.idioma || 'Español'}</span> · 💱 Moneda: <span className="font-semibold">{usr.data?.moneda || 'COP'}</span></p>
+                                                    <p className="text-[10px] text-slate-400">Actualización: {new Date(usr.updated_at).toLocaleString()}</p>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+
+                                    <div className="flex gap-2 pt-2">
+                                        <button onClick={exportarReporteUsuariosCSV} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#112A20] transition">
+                                            📊 Exportar Excel (CSV)
+                                        </button>
+                                        <button onClick={exportarReporteUsuariosPDF} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#2D6A4F] transition">
+                                            📄 Exportar PDF
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* SECCIÓN LOGO GLOBAL */}
