@@ -544,6 +544,7 @@
             if (sesion && sesion.access_token && datosCargados) {
               const payload = {
                 user_id: sesion.user_id || sesion.user.id,
+                correo: sesion.user?.email || emailInput,
                 data: { cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, moneda: monedaSeleccionada, idioma: idiomaSeleccionado }
               };
               supabaseApi.guardarDatosNube(sesion.access_token, payload);
@@ -578,7 +579,7 @@
               notificar('Datos incompletos', 'Ingresa un correo y contraseña válidos.');
               return;
             }
-            const extraData = { idioma: idiomaSeleccionado, moneda: monedaSeleccionada };
+            const extraData = { idioma: idiomaSeleccionado, moneda: monedaSeleccionada, correo: emailInput };
             const { error } = await supabaseApi.signUp(emailInput, passInput, extraData);
             if (error) {
               notificar('Error de Registro', error.message);
@@ -1101,18 +1102,19 @@
 
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
             const fechaUsr = usr.updated_at ? usr.updated_at.split('T')[0] : '';
+            const correoUsr = usr.data?.correo || usr.user_id;
             if (filtroFechaDesde && fechaUsr < filtroFechaDesde) return false;
             if (filtroFechaHasta && fechaUsr > filtroFechaHasta) return false;
             if (filtroIdioma !== 'Todos' && (usr.data?.idioma || 'Español') !== filtroIdioma) return false;
             if (filtroMoneda !== 'Todas' && !(usr.data?.moneda || 'COP').includes(filtroMoneda)) return false;
-            if (filtroCorreo && !usr.user_id.toLowerCase().includes(filtroCorreo.toLowerCase())) return false;
+            if (filtroCorreo && !correoUsr.toLowerCase().includes(filtroCorreo.toLowerCase())) return false;
             return true;
           });
 
           const exportarReporteUsuariosCSV = () => {
-            let csvContent = "\uFEFFID de Usuario / Correo,Idioma,Moneda,Ultima Actualizacion\n";
+            let csvContent = "\uFEFFCorreo Electrónico,Idioma,Moneda,Última Actualización\n";
             usuariosFiltrados.forEach(u => {
-              csvContent += `${u.user_id},${u.data?.idioma || 'Español'},${u.data?.moneda || 'COP'},${u.updated_at}\n`;
+              csvContent += `${u.data?.correo || u.user_id},${u.data?.idioma || 'Español'},${u.data?.moneda || 'COP'},${u.updated_at}\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -1145,7 +1147,7 @@
                   <table>
                     <thead>
                       <tr>
-                        <th>ID / Correo</th>
+                        <th>Correo Electrónico</th>
                         <th>Idioma</th>
                         <th>Moneda</th>
                         <th>Última Actualización</th>
@@ -1154,7 +1156,7 @@
                     <tbody>
                       ${usuariosFiltrados.map(u => `
                         <tr>
-                          <td>${u.user_id}</td>
+                          <td>${u.data?.correo || u.user_id}</td>
                           <td>${u.data?.idioma || 'Español'}</td>
                           <td>${u.data?.moneda || 'COP'}</td>
                           <td>${new Date(u.updated_at).toLocaleString()}</td>
@@ -1893,8 +1895,8 @@
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-600 block mb-0.5">✉️ Buscar por ID / Correo:</label>
-                                    <input type="text" placeholder="Filtrar por texto..." value={filtroCorreo} onChange={(e) => setFiltroCorreo(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none" />
+                                    <label className="text-[10px] font-bold text-slate-600 block mb-0.5">✉️ Buscar por Correo:</label>
+                                    <input type="text" placeholder="Filtrar por correo..." value={filtroCorreo} onChange={(e) => setFiltroCorreo(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none" />
                                 </div>
 
                                 <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#205B43] text-white font-bold py-2 rounded-xl text-xs hover:bg-[#112A20] transition flex items-center justify-center gap-1.5 mt-2">
@@ -1902,7 +1904,7 @@
                                 </button>
                             </div>
 
-                            {/* SECCIÓN MOSTRAR REPORTE EN PANTALLA CON TOTAL ABAJO DEL ENCABEZADO */}
+                            {/* SECCIÓN MOSTRAR REPORTE EN PANTALLA CON TOTAL Y CORREO */}
                             {reporteGenerado && (
                                 <div className="space-y-3 pt-3 border-t border-slate-300">
                                     <div className="bg-[#112A20] text-white p-3 rounded-xl shadow-sm">
@@ -1916,7 +1918,7 @@
                                         ) : (
                                             usuariosFiltrados.map((usr, idx) => (
                                                 <div key={idx} className="bg-white p-2.5 rounded-xl border border-slate-200 text-xs shadow-sm space-y-0.5">
-                                                    <p className="font-bold text-[#112A20] truncate">✉️ Usuario / ID: {usr.user_id}</p>
+                                                    <p className="font-bold text-[#112A20] truncate">✉️ Correo: {usr.data?.correo || usr.user_id}</p>
                                                     <p className="text-slate-600 text-[11px]">🌐 Idioma: <span className="font-semibold">{usr.data?.idioma || 'Español'}</span> · 💱 Moneda: <span className="font-semibold">{usr.data?.moneda || 'COP'}</span></p>
                                                     <p className="text-[10px] text-slate-400">Última Actualización: {new Date(usr.updated_at).toLocaleString()}</p>
                                                 </div>
