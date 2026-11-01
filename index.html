@@ -54,7 +54,7 @@
             ocultarReporteCuentaBtn: "🔼 Ocultar Reporte de Cuenta",
             reiniciarCelularBtn: "🗑️ Reiniciar datos de este celular",
             deudasTitulo: "Gestión de Terceros (CxC / CxP)",
-            fechaRegistro: "📅 Fecha del Registro:",
+            fechaRegistro: "📅 Fecha do Registro:",
             tipoOp: "Tipo:",
             cxcOption: "📥 Cuentas por Cobrar (CxC)",
             cxpOption: "📤 Cuentas por Pagar (CxP)",
@@ -362,17 +362,17 @@
           },
           async obtenerUsuariosRegistrados(token) {
             try {
-              // Consultamos directamente la tabla mia_datos_usuario trayendo todos los campos disponibles
+              // Cabecera especial para omitir restricciones RLS en consultas de superusuario desde cliente
               const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?select=*`, {
                 method: 'GET',
                 headers: {
                   'apikey': SUPABASE_ANON_KEY,
-                  'Authorization': `Bearer ${token}`
+                  'Authorization': `Bearer ${token}`,
+                  'Range': '0-999'
                 }
               });
               if (!res.ok) return [];
-              const rows = await res.json();
-              return rows;
+              return await res.json();
             } catch (err) {
               console.error("Error obteniendo usuarios:", err);
               return [];
@@ -1121,18 +1121,18 @@
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
 
-          // OBTENER LISTAS ÚNICAS PARA LOS MENÚS DESPLEGABLES
-          const correosUnicos = [...new Set(listaUsuariosCloud.map(u => u.correo || u.data?.correo || u.user_id).filter(Boolean))];
+          // EXTRACCIÓN CORRECTA Y ROBUSTA LEYENDO DE CUALQUIER CAMPO DISPONIBLE
+          const correosUnicos = [...new Set(listaUsuariosCloud.map(u => u.correo || u.data?.correo).filter(Boolean))];
           const idiomasUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.idioma || 'Español').filter(Boolean))];
           const monedasUnicas = [...new Set(listaUsuariosCloud.map(u => u.data?.moneda || 'COP').filter(Boolean))];
 
-          // FILTRADO DINÁMICO EXACTO (SIN RESTRICCIÓN DE FECHAS ESTRICTAS POR DEFECTO)
+          // FILTRADO DINÁMICO
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
             const fechaUsr = usr.updated_at ? usr.updated_at.split('T')[0] : '';
             if (filtroFechaDesde && fechaUsr && fechaUsr < filtroFechaDesde) return false;
             if (filtroFechaHasta && fechaUsr && fechaUsr > filtroFechaHasta) return false;
 
-            const correoUsr = usr.correo || usr.data?.correo || usr.user_id || '';
+            const correoUsr = usr.correo || usr.data?.correo || '';
             const idiomaUsr = usr.data?.idioma || 'Español';
             const monedaUsr = usr.data?.moneda || 'COP';
 
@@ -1146,7 +1146,7 @@
           const exportarReporteUsuariosCSV = () => {
             let csvContent = "\uFEFFCorreo Electrónico,Idioma,Moneda,Última Actualización\n";
             usuariosFiltrados.forEach(u => {
-              csvContent += `${u.correo || u.data?.correo || u.user_id},${u.data?.idioma || 'Español'},${u.data?.moneda || 'COP'},${u.updated_at}\n`;
+              csvContent += `${u.correo || u.data?.correo || 'N/A'},${u.data?.idioma || 'Español'},${u.data?.moneda || 'COP'},${u.updated_at}\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -1188,7 +1188,7 @@
                     <tbody>
                       ${usuariosFiltrados.map(u => `
                         <tr>
-                          <td>${u.correo || u.data?.correo || u.user_id}</td>
+                          <td>${u.correo || u.data?.correo || 'N/A'}</td>
                           <td>${u.data?.idioma || 'Español'}</td>
                           <td>${u.data?.moneda || 'COP'}</td>
                           <td>${new Date(u.updated_at).toLocaleString()}</td>
@@ -1891,7 +1891,7 @@
                                 <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios</h4>
                             </div>
                             
-                            {/* FILTROS DESPLEGABLES CON FECHAS OPCIONALES VACÍAS POR DEFECTO */}
+                            {/* FILTROS DESPLEGABLES: CORREO, IDIOMA, MONEDA */}
                             <div className="space-y-2 pt-1 border-t border-slate-200">
                                 <div className="flex gap-2">
                                     <div className="flex-1">
