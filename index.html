@@ -54,7 +54,7 @@
             ocultarReporteCuentaBtn: "🔼 Ocultar Reporte de Cuenta",
             reiniciarCelularBtn: "🗑️ Reiniciar datos de este celular",
             deudasTitulo: "Gestión de Terceros (CxC / CxP)",
-            fechaRegistro: "📅 Fecha do Registro:",
+            fechaRegistro: "📅 Fecha del Registro:",
             tipoOp: "Tipo:",
             cxcOption: "📥 Cuentas por Cobrar (CxC)",
             cxpOption: "📤 Cuentas por Pagar (CxP)",
@@ -362,13 +362,11 @@
           },
           async obtenerUsuariosRegistrados(token) {
             try {
-              // Cabecera especial para omitir restricciones RLS en consultas de superusuario desde cliente
               const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?select=*`, {
                 method: 'GET',
                 headers: {
                   'apikey': SUPABASE_ANON_KEY,
-                  'Authorization': `Bearer ${token}`,
-                  'Range': '0-999'
+                  'Authorization': `Bearer ${token}`
                 }
               });
               if (!res.ok) return [];
@@ -437,7 +435,7 @@
         );
 
         const CUENTAS_BASE = [
-          { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, icono: '💵' },
+          { id: '1', nombre: 'Efectivo em Mão', tipo: 'Efectivo', saldoInicial: 0, icono: '💵' },
           { id: '2', nombre: 'Bancolombia', tipo: 'Banco', saldoInicial: 0, icono: '🏦' },
           { id: '3', nombre: 'Nequi', tipo: 'Billetera', saldoInicial: 0, icono: '📱' },
         ];
@@ -1121,12 +1119,12 @@
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
 
-          // EXTRACCIÓN CORRECTA Y ROBUSTA LEYENDO DE CUALQUIER CAMPO DISPONIBLE
+          // EXTRACCIÓN ROBUSTA DE CORREOS DESDE LA COLUMNA RAIZ O DESDE EL JSON DATA
           const correosUnicos = [...new Set(listaUsuariosCloud.map(u => u.correo || u.data?.correo).filter(Boolean))];
           const idiomasUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.idioma || 'Español').filter(Boolean))];
           const monedasUnicas = [...new Set(listaUsuariosCloud.map(u => u.data?.moneda || 'COP').filter(Boolean))];
 
-          // FILTRADO DINÁMICO
+          // FILTRADO DINÁMICO EXACTO
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
             const fechaUsr = usr.updated_at ? usr.updated_at.split('T')[0] : '';
             if (filtroFechaDesde && fechaUsr && fechaUsr < filtroFechaDesde) return false;
