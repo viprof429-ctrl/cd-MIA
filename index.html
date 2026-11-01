@@ -24,12 +24,12 @@
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
 
         const supabaseApi = {
-          async signUp(email, password) {
+          async signUp(email, password, extraData) {
             try {
               const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, password, data: extraData })
               });
               const data = await res.json();
               if (!res.ok) throw new Error(data.msg || data.error_description || 'Error en el registro');
@@ -106,7 +106,6 @@
           },
           async guardarLogoGlobal(token, logoBase64) {
             try {
-              // 1. Intentar actualizar si ya existe
               const resPatch = await fetch(`${SUPABASE_URL}/rest/v1/mia_configuracion?clave=eq.logo_global`, {
                 method: 'PATCH',
                 headers: {
@@ -117,11 +116,9 @@
                 },
                 body: JSON.stringify({ valor: logoBase64 })
               });
-              
               const updatedRows = await resPatch.json();
               if (updatedRows && updatedRows.length > 0) return true;
 
-              // 2. Si no existe, hacer Insert
               const resPost = await fetch(`${SUPABASE_URL}/rest/v1/mia_configuracion`, {
                 method: 'POST',
                 headers: {
@@ -140,7 +137,7 @@
           }
         };
 
-        const LogoOficialMIA = ({ className = "w-44 h-44", logoCustom }) => {
+        const LogoOficialMIA = ({ className = "w-36 h-36", logoCustom }) => {
           if (logoCustom) {
             return (
               <div className={`flex items-center justify-center overflow-hidden rounded-2xl shadow-xl bg-[#112A20] border border-[#D4AF37]/30 ${className}`}>
@@ -210,12 +207,12 @@
           'Salario / Nómina', 'Ventas / Negocio', 'Otros Ingresos'
         ];
 
-        const formatoCOP = (valor) => {
-          if (isNaN(valor) || valor === null || valor === undefined) return '$ 0';
+        const formatoCOP = (valor, monedaSimbolo = '$') => {
+          if (isNaN(valor) || valor === null || valor === undefined) return `${monedaSimbolo} 0`;
           const signo = valor < 0 ? '-' : '';
           const valorAbs = Math.abs(Math.round(valor));
           const partes = valorAbs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-          return `${signo}$ ${partes}`;
+          return `${signo}${monedaSimbolo} ${partes}`;
         };
 
         const formatearInputEnVivo = (inputStr) => {
@@ -260,6 +257,10 @@
           const [passInput, setPassInput] = useState('');
           const [modoRegistro, setModoRegistro] = useState(false);
 
+          // Nuevos estados para Registro: Idioma y Moneda
+          const [idiomaSeleccionado, setIdiomaSeleccionado] = useState('Español');
+          const [monedaSeleccionada, setMonedaSeleccionada] = useState('COP ($)');
+
           const [tab, setTab] = useState('inicio');
           const [logoGlobal, setLogoGlobal] = useState(null);
 
@@ -285,12 +286,9 @@
           const [conceptosDeuda, setConceptosDeuda] = useState([...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión']);
           const [datosCargados, setDatosCargados] = useState(false);
 
-          // CARGAR EL LOGO GLOBAL DESDE LA NUBE AL ABRIR LA APP EN CUALQUIER DISPOSITIVO
           useEffect(() => {
             supabaseApi.cargarLogoGlobal().then(logo => {
-              if (logo) {
-                setLogoGlobal(logo);
-              }
+              if (logo) setLogoGlobal(logo);
             });
           }, []);
 
@@ -302,6 +300,8 @@
                   if (cloudData.movimientos) setMovimientos(cloudData.movimientos);
                   if (cloudData.cuentasPorCobrar) setCuentasPorCobrar(cloudData.cuentasPorCobrar);
                   if (cloudData.cuentasPorPagar) setCuentasPorPagar(cloudData.cuentasPorPagar);
+                  if (cloudData.moneda) setMonedaSeleccionada(cloudData.moneda);
+                  if (cloudData.idioma) setIdiomaSeleccionado(cloudData.idioma);
                 }
                 setDatosCargados(true);
               });
@@ -313,15 +313,17 @@
             localStorage.setItem('mia_backup_movimientos', JSON.stringify(movimientos));
             localStorage.setItem('mia_backup_cxc', JSON.stringify(cuentasPorCobrar));
             localStorage.setItem('mia_backup_cxp', JSON.stringify(cuentasPorPagar));
+            localStorage.setItem('mia_moneda', monedaSeleccionada);
+            localStorage.setItem('mia_idioma', idiomaSeleccionado);
 
             if (sesion && sesion.access_token && datosCargados) {
               const payload = {
                 user_id: sesion.user_id || sesion.user.id,
-                data: { cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar }
+                data: { cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, moneda: monedaSeleccionada, idioma: idiomaSeleccionado }
               };
               supabaseApi.guardarDatosNube(sesion.access_token, payload);
             }
-          }, [cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, datosCargados, sesion]);
+          }, [cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, monedaSeleccionada, idiomaSeleccionado, datosCargados, sesion]);
 
           const manejarLogin = async () => {
             if (!emailInput || !passInput) {
@@ -350,7 +352,8 @@
               notificar('Datos incompletos', 'Ingresa un correo y contraseña válidos.');
               return;
             }
-            const { error } = await supabaseApi.signUp(emailInput, passInput);
+            const extraData = { idioma: idiomaSeleccionado, moneda: monedaSeleccionada };
+            const { error } = await supabaseApi.signUp(emailInput, passInput, extraData);
             if (error) {
               notificar('Error de Registro', error.message);
             } else {
@@ -371,7 +374,6 @@
             const lector = new FileReader();
             lector.onloadend = async () => {
               const base64String = lector.result;
-              // Comprimir o redimensionar si es muy grande para asegurarnos de que entre en la base de datos
               const img = new Image();
               img.src = base64String;
               img.onload = async () => {
@@ -382,15 +384,9 @@
                 let height = img.height;
 
                 if (width > height) {
-                  if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
-                  }
+                  if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                 } else {
-                  if (height > MAX_HEIGHT) {
-                    width *= MAX_HEIGHT / height;
-                    height = MAX_HEIGHT;
-                  }
+                  if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
                 }
 
                 canvas.width = width;
@@ -403,15 +399,17 @@
                 if (sesion && sesion.access_token) {
                   const exito = await supabaseApi.guardarLogoGlobal(sesion.access_token, dataUrlOptimizado);
                   if (exito) {
-                    notificar('¡Logotipo Global Actualizado!', 'Guardado en la nube con éxito. Se actualizará automáticamente en cualquier celular o PC que abra la app.');
+                    notificar('¡Logotipo Global Actualizado!', 'Guardado en la nube y sincronizado para todos los usuarios.');
                   } else {
-                    notificar('Error en la Nube', 'No se pudo guardar en Supabase. Revisa que la tabla "mia_configuracion" exista y tenga permisos.');
+                    notificar('Error', 'No se pudo guardar en la tabla mia_configuracion de Supabase.');
                   }
                 }
               };
             };
             lector.readAsDataURL(archivo);
           };
+
+          const simboloMoneda = monedaSeleccionada.includes('USD') ? '$' : monedaSeleccionada.includes('EUR') ? '€' : '$';
 
           const [tipoMovimiento, setTipoMovimiento] = useState('Gasto');
           const [cuentaSeleccionada, setCuentaSeleccionada] = useState(cuentas[0]?.id || '1');
@@ -495,7 +493,7 @@
           const guardarMovimiento = () => {
             const num = obtenerNumeroLimpio(valorDisplay);
             if (!concepto.trim() || isNaN(num) || num <= 0) {
-              notificar('Datos incompletos', 'Escribe un concepto y un valor numérico válido en COP.');
+              notificar('Datos incompletos', 'Escribe un concepto y un valor numérico válido.');
               return;
             }
             const nuevo = {
@@ -619,7 +617,7 @@
 
             setPagoIdCxC('');
             setMontoPagoCxCDisplay('');
-            notificar('¡Pago Recibido!', `Se registraron ${formatoCOP(abono)} con éxito.`);
+            notificar('¡Pago Recibido!', `Se registraron ${formatoCOP(abono, simboloMoneda)} con éxito.`);
           };
 
           const guardarCxP = () => {
@@ -689,7 +687,7 @@
 
             setPagoIdCxP('');
             setMontoPagoCxPDisplay('');
-            notificar('¡Pago Realizado!', `Se descontaron ${formatoCOP(abono)} con éxito.`);
+            notificar('¡Pago Realizado!', `Se descontaron ${formatoCOP(abono, simboloMoneda)} con éxito.`);
           };
 
           const exportarPDFCuenta = (cuentaObj, movimientosCuenta, saldoActualCuenta) => {
@@ -709,8 +707,8 @@
                   <h2>MIA - Reporte de Movimientos de Cuenta</h2>
                   <hr/>
                   <p><strong>Cuenta:</strong> ${cuentaObj.nombre} (${cuentaObj.tipo})</p>
-                  <p><strong>Saldo Inicial:</strong> ${formatoCOP(cuentaObj.saldoInicial)}</p>
-                  <p><strong>Saldo Actual:</strong> ${formatoCOP(saldoActualCuenta)}</p>
+                  <p><strong>Saldo Inicial:</strong> ${formatoCOP(cuentaObj.saldoInicial, simboloMoneda)}</p>
+                  <p><strong>Saldo Actual:</strong> ${formatoCOP(saldoActualCuenta, simboloMoneda)}</p>
                   <hr/>
                   <h3>Movimientos:</h3>
                   <ul>
@@ -718,7 +716,7 @@
                       const esIngreso = m.tipo === 'Ingreso';
                       const claseCSS = esIngreso ? 'ingreso' : 'gasto';
                       const signo = esIngreso ? '+' : '-';
-                      return `<li>${m.fecha} - ${m.concepto} (${m.categoria}) [<span class="${claseCSS}">${m.tipo}</span>]: <span class="${claseCSS}">${signo}${formatoCOP(m.valor)}</span></li>`;
+                      return `<li>${m.fecha} - ${m.concepto} (${m.categoria}) [<span class="${claseCSS}">${m.tipo}</span>]: <span class="${claseCSS}">${signo}${formatoCOP(m.valor, simboloMoneda)}</span></li>`;
                     }).join('')}
                   </ul>
                   <br/><hr/>
@@ -780,15 +778,15 @@
                   <p><strong>Concepto:</strong> ${terceroItem.concepto}</p>
                   <p><strong>Fecha Inicial:</strong> ${terceroItem.fechaInicial || 'N/A'}</p>
                   <p><strong>Fecha Vencimiento:</strong> ${terceroItem.vencimiento}</p>
-                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(terceroItem.valorTotal)}</p>
-                  <p><strong>Saldo Pendiente Actual:</strong> ${formatoCOP(terceroItem.saldoPendiente)}</p>
+                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(terceroItem.valorTotal, simboloMoneda)}</p>
+                  <p><strong>Saldo Pendiente Actual:</strong> ${formatoCOP(terceroItem.saldoPendiente, simboloMoneda)}</p>
                   <p><strong>Estado:</strong> ${terceroItem.estado}</p>
                   <p><strong>Observaciones:</strong> ${terceroItem.observacion || 'Ninguna'}</p>
                   <hr/>
                   <h3>Historial de Movimientos:</h3>
                   <ul>
-                    <li class="ingreso">${terceroItem.fechaInicial || ''} - Saldo Inicial: +${formatoCOP(terceroItem.valorTotal)}</li>
-                    ${(terceroItem.historialPagos || []).map(p => `<li class="gasto">${p.fecha} - Abono (${p.cuentaName}): -${formatoCOP(p.monto)}</li>`).join('')}
+                    <li class="ingreso">${terceroItem.fechaInicial || ''} - Saldo Inicial: +${formatoCOP(terceroItem.valorTotal, simboloMoneda)}</li>
+                    ${(terceroItem.historialPagos || []).map(p => `<li class="gasto">${p.fecha} - Abono (${p.cuentaName}): -${formatoCOP(p.monto, simboloMoneda)}</li>`).join('')}
                   </ul>
                   <br/><hr/>
                   <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
@@ -903,12 +901,43 @@
                     />
                   </div>
 
+                  {modoRegistro && (
+                    <div className="space-y-3 pt-1 border-t border-slate-100">
+                      <div>
+                        <label className="text-xs font-semibold text-[#52725F] block mb-1">🌐 Idioma de la plataforma:</label>
+                        <select 
+                          value={idiomaSeleccionado} 
+                          onChange={(e) => setIdiomaSeleccionado(e.target.value)} 
+                          className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none font-medium text-slate-700"
+                        >
+                          <option value="Español">🇪🇸 Español</option>
+                          <option value="Inglés">🇺🇸 English</option>
+                          <option value="Portugués">🇧🇷 Português</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-[#52725F] block mb-1">💱 Tipo de Moneda:</label>
+                        <select 
+                          value={monedaSeleccionada} 
+                          onChange={(e) => setMonedaSeleccionada(e.target.value)} 
+                          className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none font-medium text-slate-700"
+                        >
+                          <option value="COP ($)">COP ($) - Peso Colombiano</option>
+                          <option value="USD ($)">USD ($) - Dólar Estadounidense</option>
+                          <option value="EUR (€)">EUR (€) - Euro</option>
+                          <option value="MXN ($)">MXN ($) - Peso Mexicano</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
                   {modoRegistro ? (
-                    <button onClick={manejarRegistro} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition">
+                    <button onClick={manejarRegistro} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition mt-2">
                       Registrarse
                     </button>
                   ) : (
-                    <button onClick={manejarLogin} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition">
+                    <button onClick={manejarLogin} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition mt-2">
                       Ingresar
                     </button>
                   )}
@@ -947,11 +976,11 @@
                   <div>
                     <div className="bg-[#112A20] rounded-2xl p-5 mb-4 shadow-md text-white">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-[11px] font-bold text-[#B7E4C7] tracking-wider">PATRIMONIO TOTAL DISPONIBLE</span>
+                        <span className="text-[11px] font-bold text-[#B7E4C7] tracking-wider">PATRIMONIO TOTAL DISPONIBLE ({monedaSeleccionada})</span>
                         <button onClick={() => setTab('cuentas')} className="text-[#B7E4C7] text-xs font-bold hover:underline">⚙️ Ajustar saldos</button>
                       </div>
-                      <h2 className="text-3xl font-extrabold my-2">{formatoCOP(patrimonioTotal)}</h2>
-                      <p className="text-[11px] text-[#D8F3DC]">Suma consolidada de saldos iniciales + ingresos - gastos</p>
+                      <h2 className="text-3xl font-extrabold my-2">{formatoCOP(patrimonioTotal, simboloMoneda)}</h2>
+                      <p className="text-[11px] text-[#D8F3DC]">Idioma: {idiomaSeleccionado} · Moneda: {monedaSeleccionada}</p>
                     </div>
 
                     <div className="flex justify-between items-center mb-2">
@@ -970,7 +999,7 @@
                                 <span className="text-xl">{c.icono}</span>
                                 <p className="text-xs font-semibold text-slate-700 truncate">{c.nombre}</p>
                               </div>
-                              <p className="text-[14px] font-bold text-[#205B43] mt-2">{formatoCOP(obtenerSaldoCuenta(c.id))}</p>
+                              <p className="text-[14px] font-bold text-[#205B43] mt-2">{formatoCOP(obtenerSaldoCuenta(c.id), simboloMoneda)}</p>
                             </div>
                           ))}
                           {totalCxCPendiente > 0 && (
@@ -979,7 +1008,7 @@
                                 <span className="text-xl">📥</span>
                                 <p className="text-xs font-semibold text-slate-700 truncate">Total CxC Pend</p>
                               </div>
-                              <p className="text-[14px] font-bold text-[#2D6A4F] mt-2">{formatoCOP(totalCxCPendiente)}</p>
+                              <p className="text-[14px] font-bold text-[#2D6A4F] mt-2">{formatoCOP(totalCxCPendiente, simboloMoneda)}</p>
                             </div>
                           )}
                           {totalCxPPendiente > 0 && (
@@ -988,7 +1017,7 @@
                                 <span className="text-xl">📤</span>
                                 <p className="text-xs font-semibold text-slate-700 truncate">Total CxP Pend</p>
                               </div>
-                              <p className="text-[14px] font-bold text-[#C94A4A] mt-2">{formatoCOP(totalCxPPendiente)}</p>
+                              <p className="text-[14px] font-bold text-[#C94A4A] mt-2">{formatoCOP(totalCxPPendiente, simboloMoneda)}</p>
                             </div>
                           )}
                         </>
@@ -1058,7 +1087,7 @@
 
                       <input
                         type="text"
-                        placeholder="Valor en pesos (ej. 45.000)"
+                        placeholder={`Valor en ${monedaSeleccionada} (ej. 45.000)`}
                         value={valorDisplay}
                         onChange={(e) => setValorDisplay(formatearInputEnVivo(e.target.value))}
                         className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none placeholder-[#8F9F95]"
@@ -1087,7 +1116,7 @@
                             </div>
                             <div className="flex items-center gap-2">
                               <span className={`text-sm font-bold ${esIngreso ? 'text-[#2D6A4F] ' : 'text-[#C94A4A]'}`}>
-                                {esIngreso ? '+ ' : '- '}{formatoCOP(m.valor)}
+                                {esIngreso ? '+ ' : '- '}{formatoCOP(m.valor, simboloMoneda)}
                               </span>
                               <button onClick={() => abrirModalEditarMovimiento(m)} className="p-1.5 bg-[#E8EFE9] text-[#205B43] rounded-lg text-xs font-bold hover:bg-slate-200 transition" title="Editar">✏️</button>
                               <button onClick={() => eliminarMovimiento(m.id)} className="p-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition" title="Eliminar">🗑️</button>
@@ -1122,7 +1151,7 @@
                             </div>
                             <div className="text-right">
                               <span className="text-[11px] text-[#718078]">Saldo Actual:</span>
-                              <p className="text-base font-bold text-[#205B43]">{formatoCOP(saldoActual)}</p>
+                              <p className="text-base font-bold text-[#205B43]">{formatoCOP(saldoActual, simboloMoneda)}</p>
                             </div>
                           </div>
 
@@ -1131,7 +1160,7 @@
                           <div className="flex justify-between items-center">
                             <div>
                               <span className="text-[10px] font-bold text-[#718078] tracking-wider">SALDO INICIAL:</span>
-                              <p className="text-[14px] font-bold text-[#1F2937] mt-0.5">{formatoCOP(c.saldoInicial)}</p>
+                              <p className="text-[14px] font-bold text-[#1F2937] mt-0.5">{formatoCOP(c.saldoInicial, simboloMoneda)}</p>
                             </div>
                             <button
                               onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setModalEditarSaldo(true); }}
@@ -1168,7 +1197,7 @@
                                             </div>
                                             <div className="flex items-center gap-1.5">
                                               <span className={esIngreso ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>
-                                                {esIngreso ? '+' : '-'}{formatoCOP(m.valor)}
+                                                {esIngreso ? '+' : '-'}{formatoCOP(m.valor, simboloMoneda)}
                                               </span>
                                               <button onClick={() => abrirModalEditarMovimiento(m)} className="p-1 bg-[#E8EFE9] text-[#205B43] rounded text-[10px] font-bold">✏️</button>
                                               <button onClick={() => eliminarMovimiento(m.id)} className="p-1 bg-red-50 text-red-600 rounded text-[10px] font-bold">🗑️</button>
@@ -1248,7 +1277,7 @@
                             )}
                           </div>
 
-                          <input type="text" placeholder="Saldo Inicial (COP)" value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
+                          <input type="text" placeholder={`Saldo Inicial (${monedaSeleccionada})`} value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           
                           <div className="mb-2">
                             <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
@@ -1286,7 +1315,7 @@
                             )}
                           </div>
 
-                          <input type="text" placeholder="Saldo Inicial (COP)" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
+                          <input type="text" placeholder={`Saldo Inicial (${monedaSeleccionada})`} value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
                           
                           <div className="mb-2">
                             <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">Fecha Vencimiento:</span>
@@ -1333,7 +1362,7 @@
                           <select value={pagoIdCxC} onChange={(e) => setPagoIdCxC(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                             <option value="">-- Seleccionar Cuenta por Cobrar --</option>
                             {cuentasPorCobrar.filter(c => c.estado !== 'Pagado').map(c => (
-                              <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente)})</option>
+                              <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente, simboloMoneda)})</option>
                             ))}
                           </select>
 
@@ -1351,7 +1380,7 @@
                           <select value={pagoIdCxP} onChange={(e) => setPagoIdCxP(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
                             <option value="">-- Seleccionar Cuenta por Pagar --</option>
                             {cuentasPorPagar.filter(c => c.estado !== 'Pagado').map(c => (
-                              <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente)})</option>
+                              <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} (Pendiente: {formatoCOP(c.saldoPendiente, simboloMoneda)})</option>
                             ))}
                           </select>
 
@@ -1395,18 +1424,18 @@
                             <p className="text-xs font-bold text-[#1F2937]">👤 Tercero: {itemSel.tercero}</p>
                             <p className="text-xs text-[#52725F]">Concepto: {itemSel.concepto}</p>
                             <p className="text-xs text-slate-600">📅 Fecha Inicial: {itemSel.fechaInicial || 'N/A'} · Vence: {itemSel.vencimiento}</p>
-                            <p className="text-xs font-bold">Valor Total Inicial: {formatoCOP(itemSel.valorTotal)}</p>
-                            <p className="text-xs font-bold text-[#C94A4A]">Saldo Pendiente Actual: {formatoCOP(itemSel.saldoPendiente)}</p>
+                            <p className="text-xs font-bold">Valor Total Inicial: {formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
+                            <p className="text-xs font-bold text-[#C94A4A]">Saldo Pendiente Actual: {formatoCOP(itemSel.saldoPendiente, simboloMoneda)}</p>
                             <p className="text-xs text-slate-500">Estado: <span className="font-bold">{itemSel.estado}</span></p>
                             {itemSel.observacion && <p className="text-xs italic text-slate-500">Nota: {itemSel.observacion}</p>}
 
                             <div className="mt-3 pt-2 border-t border-slate-200">
                               <p className="text-[11px] font-bold text-[#112A20] mb-1">📜 Historial de Movimientos:</p>
                               <div className="text-[11px] space-y-1 bg-white p-2 rounded-lg border border-slate-100">
-                                <p className="text-emerald-700 font-semibold">🟢 {itemSel.fechaInicial || 'Inicio'} — Saldo Inicial: +{formatoCOP(itemSel.valorTotal)}</p>
+                                <p className="text-emerald-700 font-semibold">🟢 {itemSel.fechaInicial || 'Inicio'} — Saldo Inicial: +{formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
                                 {(itemSel.historialPagos || []).map((p, idx) => (
                                   <p key={idx} className="text-red-600 font-semibold">
-                                    🔴 {p.fecha} — Abono ({p.cuentaName}): -{formatoCOP(p.monto)}
+                                    🔴 {p.fecha} — Abono ({p.cuentaName}): -{formatoCOP(p.monto, simboloMoneda)}
                                   </p>
                                 ))}
                               </div>
@@ -1429,8 +1458,8 @@
                       <h4 className="text-sm font-bold text-[#112A20] mb-3">📊 Balance General de Deudas</h4>
                       
                       <div className="flex justify-between items-center mb-1 text-xs">
-                        <span className="font-semibold text-[#2D6A4F]">📥 CxC: {formatoCOP(totalCxCPendiente)} ({pctCxC}%)</span>
-                        <span className="font-semibold text-[#C94A4A]">📤 CxP: {formatoCOP(totalCxPPendiente)} ({pctCxP}%)</span>
+                        <span className="font-semibold text-[#2D6A4F]">📥 CxC: {formatoCOP(totalCxCPendiente, simboloMoneda)} ({pctCxC}%)</span>
+                        <span className="font-semibold text-[#C94A4A]">📤 CxP: {formatoCOP(totalCxPPendiente, simboloMoneda)} ({pctCxP}%)</span>
                       </div>
 
                       <div className="h-4 flex rounded-lg overflow-hidden bg-[#E2E8F0] mb-3">
@@ -1468,10 +1497,10 @@
 
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3">
                       <span className="text-[11px] font-bold text-[#718078]">GASTOS DEL PERÍODO</span>
-                      <h2 className="text-2xl font-extrabold text-[#C94A4A] my-1">{formatoCOP(totalGastosReporte)}</h2>
+                      <h2 className="text-2xl font-extrabold text-[#C94A4A] my-1">{formatoCOP(totalGastosReporte, simboloMoneda)}</h2>
                       <div className="border-t border-[#EEF2EE] pt-2 mt-2 space-y-1">
-                        <p className="text-xs text-[#52725F] font-semibold">Ingresos en el rango: {formatoCOP(totalIngresosReporte)}</p>
-                        <p className="text-xs text-[#52725F] font-semibold">Ahorro neto: {formatoCOP(totalIngresosReporte - totalGastosReporte)}</p>
+                        <p className="text-xs text-[#52725F] font-semibold">Ingresos en el rango: {formatoCOP(totalIngresosReporte, simboloMoneda)}</p>
+                        <p className="text-xs text-[#52725F] font-semibold">Ahorro neto: {formatoCOP(totalIngresosReporte - totalGastosReporte, simboloMoneda)}</p>
                       </div>
                     </div>
 
@@ -1501,7 +1530,7 @@
                                   <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: color }}></div>
                                   <span className="text-xs font-semibold text-[#1F2937]">{rubro}</span>
                                 </div>
-                                <span className="text-xs font-bold text-[#52725F]">{formatoCOP(total)} ({porcentaje}%)</span>
+                                <span className="text-xs font-bold text-[#52725F]">{formatoCOP(total, simboloMoneda)} ({porcentaje}%)</span>
                               </div>
                               <div className="h-1.5 bg-[#F1F5F1] rounded-full overflow-hidden">
                                 <div className="h-full rounded-full" style={{ width: `${porcentaje}%`, backgroundColor: color }}></div>
@@ -1520,7 +1549,7 @@
                         
                         <div className="space-y-3">
                             <h4 className="text-xs font-bold text-[#112A20]">Carga de Logotipo Institucional Global:</h4>
-                            <p className="text-[11px] text-slate-500">Sube una imagen (PNG o JPG). Se optimizará y guardará en la tabla global de Supabase para reflejarse inmediatamente en cualquier dispositivo.</p>
+                            <p className="text-[11px] text-slate-500">Sube una imagen (PNG o JPG). Se sincronizará automáticamente en la nube para reflejarse en todos los dispositivos y usuarios.</p>
                             
                             <div className="flex items-center gap-3 bg-[#F8FAF8] p-3 rounded-2xl border border-[#DCE5DB]">
                                 <div className="w-12 h-12 bg-[#112A20] rounded-xl flex items-center justify-center overflow-hidden border border-[#D4AF37]/40 shrink-0">
@@ -1587,7 +1616,7 @@
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Valor en pesos (COP):</label>
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Valor en pesos:</label>
                       <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none" />
                     </div>
 
@@ -1605,7 +1634,7 @@
                     <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-2">Modificar Saldo Inicial</h3>
                     <p className="text-xs text-[#52725F] mb-3 text-center">Cuenta: <span className="font-bold">{cuentaAEditar?.nombre}</span></p>
 
-                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Nuevo saldo de arranque en COP:</label>
+                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Nuevo saldo de arranque:</label>
                     <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
 
                     <div className="flex gap-2">
@@ -1633,11 +1662,11 @@
                       ))}
                     </div>
 
-                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Saldo inicial en COP:</label>
-                    <input type="text" placeholder="Monto en pesos" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
+                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Saldo inicial:</label>
+                    <input type="text" placeholder="Monto inicial" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
 
                     <div className="flex gap-2">
-                      <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
+                      <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
                       <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#112A20] transition">Crear Cuenta</button>
                     </div>
                   </div>
