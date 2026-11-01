@@ -214,7 +214,7 @@
             pagarDeudaBtn: "Pagar Dívida da Conta",
             reportesTitulo: "Relatórios e Status de Dívidas",
             reporteDetallado: "📑 Relatório Detalhado por Terceiro",
-            balanceDeudas: "📊 Balance Geral de Dívidas",
+            balanceDeudas: "📊 Balanço Geral de Dívidas",
             reporteFechas: "Relatório Financeiro por Período",
             gastosPeriodo: "DESPESAS DO PERÍODO",
             distribucionRubro: "Distribuição por Categoria",
@@ -362,7 +362,8 @@
           },
           async obtenerUsuariosRegistrados(token) {
             try {
-              const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?select=user_id,correo,data,updated_at`, {
+              // Consultamos directamente la tabla mia_datos_usuario trayendo todos los campos disponibles
+              const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?select=*`, {
                 method: 'GET',
                 headers: {
                   'apikey': SUPABASE_ANON_KEY,
@@ -370,7 +371,8 @@
                 }
               });
               if (!res.ok) return [];
-              return await res.json();
+              const rows = await res.json();
+              return rows;
             } catch (err) {
               console.error("Error obteniendo usuarios:", err);
               return [];
@@ -1124,7 +1126,7 @@
           const idiomasUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.idioma || 'Español').filter(Boolean))];
           const monedasUnicas = [...new Set(listaUsuariosCloud.map(u => u.data?.moneda || 'COP').filter(Boolean))];
 
-          // FILTRADO DINÁMICO EXACTO (SIN FILTROS DE FECHA POR DEFECTO PARA QUE MUESTRE TODOS LOS USUARIOS)
+          // FILTRADO DINÁMICO EXACTO (SIN RESTRICCIÓN DE FECHAS ESTRICTAS POR DEFECTO)
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
             const fechaUsr = usr.updated_at ? usr.updated_at.split('T')[0] : '';
             if (filtroFechaDesde && fechaUsr && fechaUsr < filtroFechaDesde) return false;
@@ -1889,7 +1891,7 @@
                                 <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios</h4>
                             </div>
                             
-                            {/* FILTROS DESPLEGABLES: CORREO, IDIOMA, MONEDA (SIN RESTRICCIÓN DE FECHAS POR DEFECTO) */}
+                            {/* FILTROS DESPLEGABLES CON FECHAS OPCIONALES VACÍAS POR DEFECTO */}
                             <div className="space-y-2 pt-1 border-t border-slate-200">
                                 <div className="flex gap-2">
                                     <div className="flex-1">
@@ -2131,7 +2133,7 @@
                   <span className={`text-[10px] ${tab === 'deudas' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>{t.deudasNav}</span>
                 </button>
                 <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center">
-                  <span className={`text-lg transition ${tab === 'reportes' ? 'opacity-100 scale-110' : 'opacity-40'}` }>📊</span>
+                  <span className={`text-lg transition ${tab === 'reportes' ? 'opacity-100 scale-110' : 'opacity-40'}`}>📊</span>
                   <span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-[#718078] font-semibold'}`}>{t.reportesNav}</span>
                 </button>
                 {esSuperAdmin && (
