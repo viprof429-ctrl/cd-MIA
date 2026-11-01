@@ -487,6 +487,13 @@
           const [logoGlobal, setLogoGlobal] = useState(null);
           const [listaUsuariosCloud, setListaUsuariosCloud] = useState([]);
 
+          // ESTADOS PARA FILTROS DEL REPORTE PROFESIONAL DE USUARIOS
+          const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
+          const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
+          const [filtroIdioma, setFiltroIdioma] = useState('Todos');
+          const [filtroMoneda, setFiltroMoneda] = useState('Todas');
+          const [filtroCorreo, setFiltroCorreo] = useState('');
+
           const [cuentas, setCuentas] = useState(CUENTAS_BASE);
           const [movimientos, setMovimientos] = useState([]);
           const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
@@ -525,7 +532,6 @@
                 setDatosCargados(true);
               });
 
-              // Si es superadmin, cargamos la lista de usuarios
               if (sesion.user?.email?.trim().toLowerCase() === 'viprof429@gmail.com') {
                 supabaseApi.obtenerUsuariosRegistrados(sesion.access_token).then(usuarios => {
                   setListaUsuariosCloud(usuarios);
@@ -1088,6 +1094,31 @@
           const pctCxC = totalDeudasGrafico > 0 ? Math.round((totalCxCPendiente / totalDeudasGrafico) * 100) : 50;
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
+
+          // FILTRADO PROFESIONAL PARA EL REPORTE DE USUARIOS (SUPERADMIN)
+          const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
+            const fechaUsr = usr.updated_at ? usr.updated_at.split('T')[0] : '';
+            if (filtroFechaDesde && fechaUsr < filtroFechaDesde) return false;
+            if (filtroFechaHasta && fechaUsr > filtroFechaHasta) return false;
+            if (filtroIdioma !== 'Todos' && (usr.data?.idioma || 'Español') !== filtroIdioma) return false;
+            if (filtroMoneda !== 'Todas' && !(usr.data?.moneda || 'COP').includes(filtroMoneda)) return false;
+            if (filtroCorreo && !usr.user_id.toLowerCase().includes(filtroCorreo.toLowerCase())) return false;
+            return true;
+          });
+
+          const exportarReporteUsuariosCSV = () => {
+            let csvContent = "data:text/csv;charset=utf-8,ID de Usuario,Idioma,Moneda,Ultima Actualizacion\n";
+            usuariosFiltrados.forEach(u => {
+              csvContent += `${u.user_id},${u.data?.idioma || 'Español'},${u.data?.moneda || 'COP'},${u.updated_at}\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `reporte_usuarios_mia.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
 
           if (!sesion) {
             return (
@@ -1767,26 +1798,74 @@
                     <div className="bg-white rounded-3xl p-5 shadow-lg border border-[#D4AF37]/30 space-y-4">
                         <h3 className="text-lg font-extrabold text-[#112A20] border-b pb-2">{t.adminPanel}</h3>
                         
-                        <div className="space-y-3">
-                            <h4 className="text-xs font-bold text-[#112A20]">👥 Reporte de Usuarios Registrados ({listaUsuariosCloud.length})</h4>
-                            <p className="text-[11px] text-slate-500">Lista completa de usuarios que tienen registros en la plataforma:</p>
+                        {/* SECCIÓN REPORTE PROFESIONAL DE USUARIOS */}
+                        <div className="space-y-3 bg-[#F8FAF8] p-4 rounded-2xl border border-[#DCE5DB]">
+                            <div className="flex justify-between items-center">
+                                <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios ({usuariosFiltrados.length})</h4>
+                                <button onClick={exportarReporteUsuariosCSV} className="bg-[#205B43] text-white px-2.5 py-1 rounded-lg text-[10px] font-bold hover:bg-[#112A20] transition">
+                                    📥 Exportar CSV
+                                </button>
+                            </div>
                             
-                            <div className="max-h-60 overflow-y-auto space-y-2 border border-slate-200 p-2 rounded-2xl bg-[#F8FAF8]">
-                                {listaUsuariosCloud.length === 0 ? (
-                                    <p className="text-xs text-slate-500 text-center py-4">No hay usuarios registrados o cargados aún.</p>
+                            {/* FILTROS AVANZADOS */}
+                            <div className="space-y-2 pt-1 border-t border-slate-200">
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Desde:</label>
+                                        <input type="date" value={filtroFechaDesde} onChange={(e) => setFiltroFechaDesde(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Hasta:</label>
+                                        <input type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none" />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">🌐 Idioma:</label>
+                                        <select value={filtroIdioma} onChange={(e) => setFiltroIdioma(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none font-medium">
+                                            <option value="Todos">Todos</option>
+                                            <option value="Español">Español</option>
+                                            <option value="Inglés">Inglés</option>
+                                            <option value="Portugués">Portugués</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">💱 Moneda:</label>
+                                        <select value={filtroMoneda} onChange={(e) => setFiltroMoneda(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none font-medium">
+                                            <option value="Todas">Todas</option>
+                                            <option value="COP">COP</option>
+                                            <option value="USD">USD</option>
+                                            <option value="EUR">EUR</option>
+                                            <option value="MXN">MXN</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-600 block mb-0.5">✉️ Buscar por ID / Correo:</label>
+                                    <input type="text" placeholder="Filtrar por texto..." value={filtroCorreo} onChange={(e) => setFiltroCorreo(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none" />
+                                </div>
+                            </div>
+
+                            {/* LISTADO DE RESULTADOS */}
+                            <div className="max-h-48 overflow-y-auto space-y-2 pt-2">
+                                {usuariosFiltrados.length === 0 ? (
+                                    <p className="text-[11px] text-slate-500 text-center py-3">No hay usuarios que coincidan con los filtros.</p>
                                 ) : (
-                                    listaUsuariosCloud.map((usr, idx) => (
-                                        <div key={idx} className="bg-white p-3 rounded-xl border border-slate-100 text-xs shadow-sm space-y-1">
-                                            <p className="font-bold text-[#112A20]">🔑 ID: {usr.user_id}</p>
-                                            <p className="text-slate-600">🌐 Idioma: <span className="font-semibold">{usr.data?.idioma || 'Español'}</span> · 💱 Moneda: <span className="font-semibold">{usr.data?.moneda || 'COP'}</span></p>
-                                            <p className="text-[10px] text-slate-400">Última actualización: {new Date(usr.updated_at).toLocaleString()}</p>
+                                    usuariosFiltrados.map((usr, idx) => (
+                                        <div key={idx} className="bg-white p-2.5 rounded-xl border border-slate-200 text-xs shadow-sm space-y-0.5">
+                                            <p className="font-bold text-[#112A20] truncate">🔑 ID: {usr.user_id}</p>
+                                            <p className="text-slate-600 text-[11px]">🌐 Idioma: <span className="font-semibold">{usr.data?.idioma || 'Español'}</span> · 💱 Moneda: <span className="font-semibold">{usr.data?.moneda || 'COP'}</span></p>
+                                            <p className="text-[10px] text-slate-400">Actualización: {new Date(usr.updated_at).toLocaleString()}</p>
                                         </div>
                                     ))
                                 )}
                             </div>
                         </div>
 
-                        <div className="space-y-3 pt-3 border-t">
+                        {/* SECCIÓN LOGO GLOBAL */}
+                        <div className="space-y-3 pt-2">
                             <h4 className="text-xs font-bold text-[#112A20]">{t.cargaLogo}</h4>
                             <p className="text-[11px] text-slate-500">Sube una imagen (PNG o JPG). Se sincronizará automáticamente en la nube para reflejarse en todos los dispositivos y usuarios.</p>
                             
