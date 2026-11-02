@@ -578,6 +578,45 @@
             notificar('¡Registrado!', `${tipoMovimiento} guardado con éxito.`);
           };
 
+          const abrirModalEditarMovimiento = (m) => {
+            setMovimientoAEditar(m);
+            setEditConcepto(m.concepto);
+            setEditValorDisplay(formatearInputEnVivo(m.valor));
+            setEditFecha(m.fecha);
+            setEditTipo(m.tipo);
+            setEditCuentaId(m.cuentaId);
+            setEditCategoria(m.categoria);
+            setModalEditarMovimiento(true);
+          };
+
+          const guardarEdicionMovimiento = () => {
+            if (!movimientoAEditar) return;
+            const num = obtenerNumeroLimpio(editValorDisplay);
+            if (!editConcepto.trim() || isNaN(num) || num <= 0) {
+              notificar('Datos inválidos', 'Ingresa un concepto y un valor válido.');
+              return;
+            }
+            setMovimientos(prev => prev.map(m => m.id === movimientoAEditar.id ? {
+              ...m,
+              concepto: editConcepto.trim(),
+              valor: num,
+              fecha: editFecha || fechaHoy(),
+              tipo: editTipo,
+              cuentaId: editCuentaId,
+              categoria: editCategoria
+            } : m));
+            setModalEditarMovimiento(false);
+            setMovimientoAEditar(null);
+            notificar('Movimiento Actualizado', 'Los cambios se guardaron correctamente.');
+          };
+
+          const eliminarMovimiento = (id) => {
+            if (window.confirm('¿Estás seguro de eliminar este movimiento?')) {
+              setMovimientos(prev => prev.filter(m => m.id !== id));
+              notificar('Eliminado', 'El movimiento ha sido borrado.');
+            }
+          };
+
           const actualizarSaldoInicial = () => {
             if (!cuentaAEditar) return;
             const nuevoMonto = obtenerNumeroLimpio(saldoEditadoValorDisplay);
@@ -620,6 +659,82 @@
             }
           };
 
+          const guardarCxC = () => {
+            const num = obtenerNumeroLimpio(saldoInicialCxCDisplay);
+            const conceptoFinal = usarNuevoConceptoCxC ? nuevoConceptoCxC.trim() : conceptoCxC;
+            if (!terceroCxC.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
+              notificar('Datos incompletos', 'Ingresa el tercero, concepto y un saldo válido.');
+              return;
+            }
+            const nuevaCxC = {
+              id: Date.now(),
+              tercero: terceroCxC.trim(),
+              concepto: conceptoFinal,
+              valorTotal: num,
+              saldoPendiente: num,
+              fechaInicial: fechaGeneralReg,
+              vencimiento: vencimientoCxC,
+              cuentaId: cuentaCxC,
+              observacion: obsCxC.trim(),
+              estado: 'Pendiente',
+              historialPagos: []
+            };
+            setCuentasPorCobrar(prev => [nuevaCxC, ...prev]);
+            setTerceroCxC(''); setSaldoInicialCxCDisplay(''); setObsCxC('');
+            notificar('Cuenta por Cobrar', 'Registrada correctamente.');
+          };
+
+          const guardarCxP = () => {
+            const num = obtenerNumeroLimpio(saldoInicialCxPDisplay);
+            const conceptoFinal = usarNuevoConceptoCxP ? nuevoConceptoCxP.trim() : conceptoCxP;
+            if (!terceroCxP.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
+              notificar('Datos incompletos', 'Ingresa el tercero, concepto y un saldo válido.');
+              return;
+            }
+            const nuevaCxP = {
+              id: Date.now(),
+              tercero: terceroCxP.trim(),
+              concepto: conceptoFinal,
+              valorTotal: num,
+              saldoPendiente: num,
+              fechaInicial: fechaGeneralReg,
+              vencimiento: vencimientoCxP,
+              cuentaId: cuentaCxP,
+              observacion: obsCxP.trim(),
+              estado: 'Pendiente',
+              historialPagos: []
+            };
+            setCuentasPorPagar(prev => [nuevaCxP, ...prev]);
+            setTerceroCxP(''); setSaldoInicialCxPDisplay(''); setObsCxP('');
+            notificar('Cuenta por Pagar', 'Registrada correctamente.');
+          };
+
+          const procesarCobroUnificado = () => {
+            const item = cuentasPorCobrar.find(c => c.id.toString() === pagoIdCxC);
+            const abono = obtenerNumeroLimpio(montoPagoCxCDisplay);
+            if (!item || isNaN(abono) || abono <= 0 || abono > item.saldoPendiente) {
+              notificar('Datos inválidos', 'Verifica el monto o el tercero seleccionado.');
+              return;
+            }
+            const nuevoSaldo = item.saldoPendiente - abono;
+            setCuentasPorCobrar(prev => prev.map(c => c.id === item.id ? { ...c, saldoPendiente: nuevoSaldo, estado: nuevoSaldo === 0 ? 'Pagado' : 'Parcial' } : c));
+            setPagoIdCxC(''); setMontoPagoCxCDisplay('');
+            notificar('Pago Recibido', 'Abono registrado con éxito.');
+          };
+
+          const procesarPagoUnificado = () => {
+            const item = cuentasPorPagar.find(c => c.id.toString() === pagoIdCxP);
+            const abono = obtenerNumeroLimpio(montoPagoCxPDisplay);
+            if (!item || isNaN(abono) || abono <= 0 || abono > item.saldoPendiente) {
+              notificar('Datos inválidos', 'Verifica el monto o el tercero seleccionado.');
+              return;
+            }
+            const nuevoSaldo = item.saldoPendiente - abono;
+            setCuentasPorPagar(prev => prev.map(c => c.id === item.id ? { ...c, saldoPendiente: nuevoSaldo, estado: nuevoSaldo === 0 ? 'Pagado' : 'Parcial' } : c));
+            setPagoIdCxP(''); setMontoPagoCxPDisplay('');
+            notificar('Pago Realizado', 'Abono registrado con éxito.');
+          };
+
           const movimientosReporte = movimientos.filter((m) => {
             if (!fechaDesde && !fechaHasta) return true;
             if (fechaDesde && m.fecha < fechaDesde) return false;
@@ -638,10 +753,6 @@
           const totalDeudasGrafico = totalCxCPendiente + totalCxPPendiente;
           const pctCxC = totalDeudasGrafico > 0 ? Math.round((totalCxCPendiente / totalDeudasGrafico) * 100) : 50;
           const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
-
-          const correosUnicos = [...new Set(listaUsuariosCloud.map(u => u.correo || u.data?.correo || u.user_id).filter(Boolean))];
-          const idiomasUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.idioma || 'Español').filter(Boolean))];
-          const monedasUnicas = [...new Set(listaUsuariosCloud.map(u => u.data?.moneda || 'COP').filter(Boolean))];
 
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
             const correoUsr = usr.correo || usr.data?.correo || usr.user_id || '';
@@ -796,7 +907,11 @@
                               <p className="text-sm font-semibold text-[#1F2937]">{m.concepto}</p>
                               <p className="text-[11px] text-[#718078] mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
                             </div>
-                            <span className={`text-sm font-bold ${esIngreso ? 'text-[#2D6A4F]' : 'text-[#C94A4A]'}`}>{esIngreso ? '+ ' : '- '}{formatoCOP(m.valor, simboloMoneda)}</span>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-sm font-bold ${esIngreso ? 'text-[#2D6A4F]' : 'text-[#C94A4A]'}`}>{esIngreso ? '+ ' : '- '}{formatoCOP(m.valor, simboloMoneda)}</span>
+                              <button onClick={() => abrirModalEditarMovimiento(m)} className="p-1.5 bg-[#E8EFE9] text-[#205B43] rounded-lg text-xs font-bold">✏️</button>
+                              <button onClick={() => eliminarMovimiento(m.id)} className="p-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold">🗑️</button>
+                            </div>
                           </div>
                         );
                       })
@@ -856,25 +971,13 @@
                         <div className="space-y-2">
                           <input type="text" placeholder={t.terceroClientePlaceholder} value={terceroCxC} onChange={(e) => setTerceroCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
                           <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
-                          <button onClick={() => {
-                            const num = obtenerNumeroLimpio(saldoInicialCxCDisplay);
-                            if(!terceroCxC || num <= 0) { notificar('Incompleto', 'Ingresa tercero y saldo.'); return; }
-                            setCuentasPorCobrar(prev => [{ id: Date.now(), tercero: terceroCxC, concepto: 'Préstamo', valorTotal: num, saldoPendiente: num, estado: 'Pendiente', historialPagos: [] }, ...prev]);
-                            setTerceroCxC(''); setSaldoInicialCxCDisplay('');
-                            notificar('Guardado', 'CxC registrada.');
-                          }} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-xl text-xs">{t.guardarCxCBtn}</button>
+                          <button onClick={guardarCxC} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-xl text-xs">{t.guardarCxCBtn}</button>
                         </div>
                       ) : (
                         <div className="space-y-2">
                           <input type="text" placeholder={t.terceroProveedorPlaceholder} value={terceroCxP} onChange={(e) => setTerceroCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
                           <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
-                          <button onClick={() => {
-                            const num = obtenerNumeroLimpio(saldoInicialCxPDisplay);
-                            if(!terceroCxP || num <= 0) { notificar('Incompleto', 'Ingresa tercero y saldo.'); return; }
-                            setCuentasPorPagar(prev => [{ id: Date.now(), tercero: terceroCxP, concepto: 'Deuda', valorTotal: num, saldoPendiente: num, estado: 'Pendiente', historialPagos: [] }, ...prev]);
-                            setTerceroCxP(''); setSaldoInicialCxPDisplay('');
-                            notificar('Guardado', 'CxP registrada.');
-                          }} className="w-full bg-[#C94A4A] text-white font-bold py-2 rounded-xl text-xs">{t.guardarCxPBtn}</button>
+                          <button onClick={guardarCxP} className="w-full bg-[#C94A4A] text-white font-bold py-2 rounded-xl text-xs">{t.guardarCxPBtn}</button>
                         </div>
                       )}
                     </div>
