@@ -291,7 +291,12 @@
               if (!res.ok) return null;
               const rows = await res.json();
               if (rows && rows.length > 0) {
-                return rows[0].data;
+                let rawData = rows[0].data;
+                // EXTRACCIÓN ROBUSTA: Si data venía guardada como arreglo directo de cuentas, la normalizamos
+                if (Array.isArray(rawData)) {
+                  return { cuentas: rawData, movimientos: [], cuentasPorCobrar: [], cuentasPorPagar: [] };
+                }
+                return rawData;
               }
               return null;
             } catch (err) {
@@ -554,8 +559,8 @@
             if (sesion && sesion.access_token && !datosCargados) {
               const userId = sesion.user_id;
               supabaseApi.cargarDatosNube(sesion.access_token, userId).then((cloudData) => {
-                if (cloudData) {
-                  setCuentas(cloudData.cuentas || CUENTAS_BASE);
+                if (cloudData && cloudData.cuentas) {
+                  setCuentas(cloudData.cuentas);
                   setMovimientos(cloudData.movimientos || []);
                   setCuentasPorCobrar(cloudData.cuentasPorCobrar || []);
                   setCuentasPorPagar(cloudData.cuentasPorPagar || []);
@@ -1150,7 +1155,7 @@
             const monedaUsr = usr.data?.moneda || 'COP';
 
             if (tipoBusqueda === 'correo' && filtroCorreo !== 'Todos' && correoUsr !== filtroCorreo) return false;
-            if (tipoBusqueda === 'idioma' && filtroIdioma !== 'Todos' && idiomaUsr !== filtroIdioma) return false;
+            if (tipoBusqueda === 'idioma' && filtroIdioma !== 'Todos' && idiomaUsr !== idiomaUsr) return false;
             if (tipoBusqueda === 'moneda' && filtroMoneda !== 'Todas' && !monedaUsr.includes(filtroMoneda)) return false;
 
             return true;
@@ -2012,7 +2017,7 @@
                         {/* SECCIÓN LOGO GLOBAL */}
                         <div className="space-y-3 pt-2">
                             <h4 className="text-xs font-bold text-[#112A20]">{t.cargaLogo}</h4>
-                            <p className="text-[11px] text-slate-500">Sube una imagen (PNG or JPG). Se sincronizará automáticamente en la nube para reflejarse en todos los dispositivos y usuarios.</p>
+                            <p className="text-[11px] text-slate-500">Sube una imagen (PNG o JPG). Se sincronizará automáticamente en la nube para reflejarse en todos los dispositivos y usuarios.</p>
                             
                             <div className="flex items-center gap-3 bg-[#F8FAF8] p-3 rounded-2xl border border-[#DCE5DB]">
                                 <div className="w-12 h-12 bg-[#112A20] rounded-xl flex items-center justify-center overflow-hidden border border-[#D4AF37]/40 shrink-0">
