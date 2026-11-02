@@ -706,32 +706,6 @@
             notificar('Cuenta por Pagar', 'Registrada correctamente.');
           };
 
-          const procesarCobroUnificado = () => {
-            const item = cuentasPorCobrar.find(c => c.id.toString() === pagoIdCxC);
-            const abono = obtenerNumeroLimpio(montoPagoCxCDisplay);
-            if (!item || isNaN(abono) || abono <= 0 || abono > item.saldoPendiente) {
-              notificar('Datos inválidos', 'Verifica el monto o el tercero seleccionado.');
-              return;
-            }
-            const nuevoSaldo = item.saldoPendiente - abono;
-            setCuentasPorCobrar(prev => prev.map(c => c.id === item.id ? { ...c, saldoPendiente: nuevoSaldo, estado: nuevoSaldo === 0 ? 'Pagado' : 'Parcial' } : c));
-            setPagoIdCxC(''); setMontoPagoCxCDisplay('');
-            notificar('Pago Recibido', 'Abono registrado con éxito.');
-          };
-
-          const procesarPagoUnificado = () => {
-            const item = cuentasPorPagar.find(c => c.id.toString() === pagoIdCxP);
-            const abono = obtenerNumeroLimpio(montoPagoCxPDisplay);
-            if (!item || isNaN(abono) || abono <= 0 || abono > item.saldoPendiente) {
-              notificar('Datos inválidos', 'Verifica el monto o el tercero seleccionado.');
-              return;
-            }
-            const nuevoSaldo = item.saldoPendiente - abono;
-            setCuentasPorPagar(prev => prev.map(c => c.id === item.id ? { ...c, saldoPendiente: nuevoSaldo, estado: nuevoSaldo === 0 ? 'Pagado' : 'Parcial' } : c));
-            setPagoIdCxP(''); setMontoPagoCxPDisplay('');
-            notificar('Pago Realizado', 'Abono registrado con éxito.');
-          };
-
           const movimientosReporte = movimientos.filter((m) => {
             if (!fechaDesde && !fechaHasta) return true;
             if (fechaDesde && m.fecha < fechaDesde) return false;
@@ -755,6 +729,11 @@
             const correoUsr = usr.correo || usr.data?.correo || usr.user_id || '';
             const idiomaUsr = usr.data?.idioma || 'Español';
             const monedaUsr = usr.data?.moneda || 'COP';
+            const fechaActualizacion = usr.updated_at ? usr.updated_at.split('T')[0] : '';
+
+            if (filtroFechaDesde && fechaActualizacion && fechaActualizacion < filtroFechaDesde) return false;
+            if (filtroFechaHasta && fechaActualizacion && fechaActualizacion > filtroFechaHasta) return false;
+
             if (tipoBusqueda === 'correo' && filtroCorreo !== 'Todos' && correoUsr !== filtroCorreo) return false;
             if (tipoBusqueda === 'idioma' && filtroIdioma !== 'Todos' && idiomaUsr !== idiomaUsr) return false;
             if (tipoBusqueda === 'moneda' && filtroMoneda !== 'Todas' && !monedaUsr.includes(filtroMoneda)) return false;
@@ -1081,18 +1060,31 @@
                     
                     <div className="space-y-3 bg-[#F8FAF8] p-4 rounded-2xl border">
                       <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios</h4>
+                      
+                      {/* RANGO DE FECHAS PARA EL REPORTE DE ADMIN */}
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Desde:</label>
+                          <input type="date" value={filtroFechaDesde} onChange={(e) => setFiltroFechaDesde(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border text-[11px]" />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Hasta:</label>
+                          <input type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border text-[11px]" />
+                        </div>
+                      </div>
+
                       <select value={tipoBusqueda} onChange={(e) => setTipoBusqueda(e.target.value)} className="w-full bg-white rounded-lg p-2 border text-xs">
                         <option value="correo">Buscar por Correo</option>
                         <option value="idioma">Buscar por Idioma</option>
                         <option value="moneda">Buscar por Moneda</option>
                       </select>
-                      <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#205B43] text-white font-bold py-2 rounded-xl text-xs">🔍 Mostrar Reporte</button>
+                      <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#205B43] text-white font-bold py-2 rounded-xl text-xs">🔍 Mostrar Reporte por Fechas</button>
                     </div>
 
                     {reporteGenerado && (
                       <div className="space-y-3 pt-3 border-t">
                         <div className="bg-[#112A20] text-white p-3 rounded-xl">
-                          <p className="text-[10px] text-[#B7E4C7] font-bold uppercase">Total Usuarios</p>
+                          <p className="text-[10px] text-[#B7E4C7] font-bold uppercase">Total Usuarios en el Rango</p>
                           <h3 className="text-2xl font-extrabold">{usuariosFiltrados.length}</h3>
                         </div>
                         <div className="flex gap-2">
