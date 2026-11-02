@@ -1067,7 +1067,7 @@
                   <p><strong>Concepto:</strong> ${terceroItem.concepto}</p>
                   <p><strong>Fecha Inicial:</strong> ${terceroItem.fechaInicial || 'N/A'}</p>
                   <p><strong>Fecha Vencimiento:</strong> ${terceroItem.vencimiento}</p>
-                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
+                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(terceroItem.valorTotal, simboloMoneda)}</p>
                   <p><strong>Saldo Pendiente Actual:</strong> ${formatoCOP(terceroItem.saldoPendiente, simboloMoneda)}</p>
                   <p><strong>Estado:</strong> ${terceroItem.estado}</p>
                   <p><strong>Observaciones:</strong> ${terceroItem.observacion || 'Ninguna'}</p>
@@ -2187,4 +2187,4 @@
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
-</html>
+</html> 
