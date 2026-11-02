@@ -293,17 +293,18 @@
               if (rows && rows.length > 0) {
                 let rawData = rows[0].data;
                 
-                // CORRECCIÓN AUTOMÁTICA DE ESPECIFICACIÓN: Si el JSON de Supabase viene con las cuentas planas o como arreglo
                 let cuentasExtraidas = CUENTAS_BASE;
                 if (Array.isArray(rawData)) {
                   cuentasExtraidas = rawData;
                 } else if (rawData && Array.isArray(rawData.cuentas)) {
                   cuentasExtraidas = rawData.cuentas;
-                } else if (rawData && typeof rawData === 'object') {
-                  // Si tiene propiedades que parecen cuentas directas
-                  const posiblesCuentas = Object.values(rawData).filter(v => v && typeof v === 'object' && v.nombre);
-                  if (posiblesCuentas.length > 0) cuentasExtraidas = posiblesCuentas;
                 }
+
+                // NORMALIZACIÓN DE SALDOS: Aseguramos que lea 'saldoInicial' o 'saldoinicial' indistintamente
+                cuentasExtraidas = cuentasExtraidas.map(c => ({
+                  ...c,
+                  saldoInicial: Number(c.saldoInicial !== undefined ? c.saldoInicial : (c.saldoinicial !== undefined ? c.saldoinicial : 0))
+                }));
 
                 return {
                   cuentas: cuentasExtraidas,
@@ -1068,7 +1069,7 @@
                   <p><strong>Concepto:</strong> ${terceroItem.concepto}</p>
                   <p><strong>Fecha Inicial:</strong> ${terceroItem.fechaInicial || 'N/A'}</p>
                   <p><strong>Fecha Vencimiento:</strong> ${terceroItem.vencimiento}</p>
-                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(terceroItem.valorTotal, simboloMoneda)}</p>
+                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
                   <p><strong>Saldo Pendiente Actual:</strong> ${formatoCOP(terceroItem.saldoPendiente, simboloMoneda)}</p>
                   <p><strong>Estado:</strong> ${terceroItem.estado}</p>
                   <p><strong>Observaciones:</strong> ${terceroItem.observacion || 'Ninguna'}</p>
@@ -1809,11 +1810,11 @@
                               <p className="text-[11px] font-bold text-[#112A20] mb-1">📜 Historial de Movimientos:</p>
                               <div className="text-[11px] space-y-1 bg-white p-2 rounded-lg border border-slate-100">
                                 <p className="text-emerald-700 font-semibold">🟢 {itemSel.fechaInicial || 'Inicio'} — Saldo Inicial: +{formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
-                                {(itemSel.historialPagos || []).map((p, idx) => (
-                                  <p key={idx} className="text-red-600 font-semibold">
-                                    🔴 {p.fecha} — Abono ({p.cuentaName}): -{formatoCOP(p.monto, simboloMoneda)}
+                                ${(itemSel.historialPagos || []).map((p, idx) => `
+                                  <p key=${idx} class="text-red-600 font-semibold">
+                                    🔴 ${p.fecha} — Abono (${p.cuentaName}): -${formatoCOP(p.monto, simboloMoneda)}
                                   </p>
-                                ))}
+                                `).join('')}
                               </div>
                             </div>
 
