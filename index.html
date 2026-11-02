@@ -292,20 +292,27 @@
               const rows = await res.json();
               if (rows && rows.length > 0) {
                 let rawData = rows[0].data;
-                // SOPORTE HíBRIDO: Si data es un objeto con cuentas, úsalo. Si es arreglo o viene vacío, respeta las cuentas base pero rescata lo guardado.
+                
+                // CORRECCIÓN AUTOMÁTICA DE ESPECIFICACIÓN: Si el JSON de Supabase viene con las cuentas planas o como arreglo
+                let cuentasExtraidas = CUENTAS_BASE;
                 if (Array.isArray(rawData)) {
-                  return { cuentas: rawData, movimientos: [], cuentasPorCobrar: [], cuentasPorPagar: [] };
+                  cuentasExtraidas = rawData;
+                } else if (rawData && Array.isArray(rawData.cuentas)) {
+                  cuentasExtraidas = rawData.cuentas;
+                } else if (rawData && typeof rawData === 'object') {
+                  // Si tiene propiedades que parecen cuentas directas
+                  const posiblesCuentas = Object.values(rawData).filter(v => v && typeof v === 'object' && v.nombre);
+                  if (posiblesCuentas.length > 0) cuentasExtraidas = posiblesCuentas;
                 }
-                if (rawData && typeof rawData === 'object') {
-                  return {
-                    cuentas: rawData.cuentas || CUENTAS_BASE,
-                    movimientos: rawData.movimientos || [],
-                    cuentasPorCobrar: rawData.cuentasPorCobrar || [],
-                    cuentasPorPagar: rawData.cuentasPorPagar || [],
-                    moneda: rawData.moneda,
-                    idioma: rawData.idioma
-                  };
-                }
+
+                return {
+                  cuentas: cuentasExtraidas,
+                  movimientos: rawData?.movimientos || [],
+                  cuentasPorCobrar: rawData?.cuentasPorCobrar || [],
+                  cuentasPorPagar: rawData?.cuentasPorPagar || [],
+                  moneda: rawData?.moneda,
+                  idioma: rawData?.idioma
+                };
               }
               return null;
             } catch (err) {
