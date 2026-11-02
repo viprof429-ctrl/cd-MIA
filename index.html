@@ -504,7 +504,7 @@
           const totalCxPPendiente = cuentasPorPagar.reduce((acc, item) => acc + item.saldoPendiente, 0);
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0 || c.saldoInicial !== 0);
 
-          // CÁLCULO DE EDADES DE CARTERA (Torta / Barras hacia arriba)
+          // CÁLCULO DE EDADES DE CARTERA (Gráfico de barras hacia arriba)
           const calcularEdadesCartera = (listaDeudas) => {
             const hoy = new Date();
             let d1_30 = 0, d31_60 = 0, dMas60 = 0;
@@ -524,19 +524,15 @@
               }
             });
 
-            const total = d1_30 + d31_60 + dMas60;
             const maxVal = Math.max(d1_30, d31_60, dMas60, 1);
             return {
               h1_30: Math.round((d1_30 / maxVal) * 100),
               h31_60: Math.round((d31_60 / maxVal) * 100),
               hMas60: Math.round((dMas60 / maxVal) * 100),
-              p1_30: total > 0 ? Math.round((d1_30 / total) * 100) : 0,
-              p31_60: total > 0 ? Math.round((d31_60 / total) * 100) : 0,
-              pMas60: total > 0 ? Math.round((dMas60 / total) * 100) : 0,
               v1_30: d1_30,
               v31_60: d31_60,
               vMas60: dMas60,
-              total
+              total: d1_30 + d31_60 + dMas60
             };
           };
 
@@ -850,7 +846,6 @@
             notificar('Cuenta por Pagar', 'Registrada correctamente.');
           };
 
-          // FILTRADO DE CARTERA PARA REPORTES DE TERCEROS
           const listaDeudasReporte = (repTipoCartera === 'CxC' ? cuentasPorCobrar : cuentasPorPagar).filter(item => {
             if (repTerceroBusqueda !== 'Todos' && !item.tercero.toLowerCase().includes(repTerceroBusqueda.toLowerCase())) return false;
             const fechaItem = item.fechaInicial || fechaHoy();
@@ -1243,44 +1238,7 @@
                   <div>
                     <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.deudasTitulo}</h3>
                     
-                    {/* GRÁFICO DE BARRAS VERTICALES HACIA ARRIBA */}
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-xs font-bold text-[#112A20]">📊 Edades de Vencimiento (Cartera)</h4>
-                        <select value={tipoCxUnified} onChange={(e) => setTipoCxUnified(e.target.value)} className="bg-[#E8EFE9] text-[#205B43] font-bold text-xs rounded-lg p-1 outline-none">
-                          <option value="CxC">CxC (Cobrar)</option>
-                          <option value="CxP">CxP (Pagar)</option>
-                        </select>
-                      </div>
-
-                      {(() => {
-                        const edades = tipoCxUnified === 'CxC' ? edadesCxC : edadesCxP;
-                        return (
-                          <div className="pt-2">
-                            <div className="h-32 flex items-end justify-around gap-4 px-2 border-b border-slate-200 pb-1">
-                              <div className="flex flex-col items-center h-full justify-end flex-1">
-                                <span className="text-[10px] font-bold text-[#2D6A4F] mb-1">{formatoCOP(edades.v1_30, simboloMoneda)}</span>
-                                <div style={{ height: `${Math.max(edades.h1_30, 8)}%` }} className="w-full bg-[#2D6A4F] rounded-t-lg transition-all duration-300"></div>
-                              </div>
-                              <div className="flex flex-col items-center h-full justify-end flex-1">
-                                <span className="text-[10px] font-bold text-[#B8860B] mb-1">{formatoCOP(edades.v31_60, simboloMoneda)}</span>
-                                <div style={{ height: `${Math.max(edades.h31_60, 8)}%` }} className="w-full bg-[#D4AF37] rounded-t-lg transition-all duration-300"></div>
-                              </div>
-                              <div className="flex flex-col items-center h-full justify-end flex-1">
-                                <span className="text-[10px] font-bold text-[#C94A4A] mb-1">{formatoCOP(edades.vMas60, simboloMoneda)}</span>
-                                <div style={{ height: `${Math.max(edades.hMas60, 8)}%` }} className="w-full bg-[#C94A4A] rounded-t-lg transition-all duration-300"></div>
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-3 text-[10px] font-bold text-center text-slate-600 pt-2">
-                              <span>1 - 30 días</span>
-                              <span>31 - 60 días</span>
-                              <span>&gt; 60 días</span>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
+                    {/* 1. SALDOS / FORMULARIOS DE REGISTRO ARRIBA */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
                       <div>
                         <label className="text-xs font-bold text-[#112A20] block mb-1">{t.tipoOp}</label>
@@ -1312,6 +1270,41 @@
                           <button onClick={guardarCxP} className="w-full bg-[#C94A4A] text-white font-bold py-2 rounded-xl text-xs">{t.guardarCxPBtn}</button>
                         </div>
                       )}
+                    </div>
+
+                    {/* 2. GRÁFICA ABAJO */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-xs font-bold text-[#112A20]">📊 Edades de Vencimiento (Cartera)</h4>
+                        <span className="text-[10px] font-extrabold text-[#205B43] uppercase">{tipoCxUnified}</span>
+                      </div>
+
+                      {(() => {
+                        const edades = tipoCxUnified === 'CxC' ? edadesCxC : edadesCxP;
+                        return (
+                          <div className="pt-2">
+                            <div className="h-36 flex items-end justify-around gap-4 px-2 border-b border-slate-200 pb-1">
+                              <div className="flex flex-col items-center h-full justify-end flex-1">
+                                <span className="text-[9px] font-extrabold text-[#2D6A4F] mb-1 text-center">{formatoCOP(edades.v1_30, simboloMoneda)}</span>
+                                <div style={{ height: `${Math.max(edades.h1_30, 8)}%` }} className="w-full bg-[#2D6A4F] rounded-t-lg transition-all duration-300"></div>
+                              </div>
+                              <div className="flex flex-col items-center h-full justify-end flex-1">
+                                <span className="text-[9px] font-extrabold text-[#B8860B] mb-1 text-center">{formatoCOP(edades.v31_60, simboloMoneda)}</span>
+                                <div style={{ height: `${Math.max(edades.h31_60, 8)}%` }} className="w-full bg-[#D4AF37] rounded-t-lg transition-all duration-300"></div>
+                              </div>
+                              <div className="flex flex-col items-center h-full justify-end flex-1">
+                                <span className="text-[9px] font-extrabold text-[#C94A4A] mb-1 text-center">{formatoCOP(edades.vMas60, simboloMoneda)}</span>
+                                <div style={{ height: `${Math.max(edades.hMas60, 8)}%` }} className="w-full bg-[#C94A4A] rounded-t-lg transition-all duration-300"></div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 text-[10px] font-bold text-center text-slate-600 pt-2">
+                              <span>1 - 30 días</span>
+                              <span>31 - 60 días</span>
+                              <span>&gt; 60 días</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}
