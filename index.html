@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MIA - Mi Inteligencia de Ahorro</title>
     
-    <!-- CONFIGURACIÓN DE ICONO Y PWA PARA DISPOSITIVOS MÓVILES -->
+    <!-- CONFIGURACIÓN DE LOGOTIPO PARA ACCESO DIRECTO EN CELULARES -->
     <link rel="icon" type="image/png" href="https://i.ibb.co/6P26q1s/logo.png">
     <link rel="apple-touch-icon" href="https://i.ibb.co/6P26q1s/logo.png">
     <link rel="apple-touch-icon" sizes="180x180" href="https://i.ibb.co/6P26q1s/logo.png">
@@ -112,7 +112,7 @@
         };
 
         const CUENTAS_BASE = [
-          { id: '1', nombre: 'Efectivo in Mano', tipo: 'Efectivo', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '💵' },
+          { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '💵' },
           { id: '2', nombre: 'Bancolombia', tipo: 'Banco', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '🏦' },
           { id: '3', nombre: 'Nequi', tipo: 'Billetera', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '📱' },
         ];
@@ -915,9 +915,12 @@
           });
 
           const exportarReporteCarteraCSV = () => {
-            let csvContent = "\uFEFFTercero (CC/NIT),Concepto,Valor Total,Saldo Pendiente,Fecha Inicial,Vencimiento,Estado\n";
+            let csvContent = "\uFEFFCC / NIT,Tercero,Concepto,Valor Total,Saldo Pendiente,Fecha Inicial,Vencimiento,Estado\n";
             listaDeudasReporte.forEach(i => {
-              csvContent += `${i.tercero},${i.concepto},${i.valorTotal},${i.saldoPendiente},${i.fechaInicial || ''},${i.vencimiento},${i.estado}\n`;
+              const match = i.tercero.match(/^(.*?)\s*\(([^)]+)\)$/);
+              const nombre = match ? match[1].trim() : i.tercero;
+              const cc = match ? match[2].trim() : '';
+              csvContent += `${cc},${nombre},${i.concepto},${i.valorTotal},${i.saldoPendiente},${i.fechaInicial || ''},${i.vencimiento},${i.estado}\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -950,7 +953,8 @@
                   <table>
                     <thead>
                       <tr>
-                        <th>Identificación y Tercero</th>
+                        <th>CC / NIT</th>
+                        <th>Tercero</th>
                         <th>Concepto</th>
                         <th>Valor Total</th>
                         <th>Saldo Pendiente</th>
@@ -959,16 +963,22 @@
                       </tr>
                     </thead>
                     <tbody>
-                      ${listaDeudasReporte.map(i => `
-                        <tr>
-                          <td>${i.tercero}</td>
-                          <td>${i.concepto}</td>
-                          <td>${formatoCOP(i.valorTotal, simboloMoneda)}</td>
-                          <td>${formatoCOP(i.saldoPendiente, simboloMoneda)}</td>
-                          <td>${i.vencimiento}</td>
-                          <td>${i.estado}</td>
-                        </tr>
-                      `).join('')}
+                      ${listaDeudasReporte.map(i => {
+                        const match = i.tercero.match(/^(.*?)\s*\(([^)]+)\)$/);
+                        const nombre = match ? match[1].trim() : i.tercero;
+                        const cc = match ? match[2].trim() : '';
+                        return `
+                          <tr>
+                            <td><b>${cc}</b></td>
+                            <td>${nombre}</td>
+                            <td>${i.concepto}</td>
+                            <td>${formatoCOP(i.valorTotal, simboloMoneda)}</td>
+                            <td>${formatoCOP(i.saldoPendiente, simboloMoneda)}</td>
+                            <td>${i.vencimiento}</td>
+                            <td>${i.estado}</td>
+                          </tr>
+                        `;
+                      }).join('')}
                     </tbody>
                   </table>
                   <br/><hr/>
