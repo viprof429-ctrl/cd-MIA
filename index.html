@@ -440,6 +440,26 @@
           const [terceroCC, setTerceroCC] = useState('');
           const [terceroNombre, setTerceroNombre] = useState('');
 
+          // AUTOCOMPLETADO INTELIGENTE AL DIGITAR CÉDULA/NIT EN MOVIMIENTOS
+          const handleIdentificacionMovimientoChange = (cc) => {
+            setTerceroCC(cc);
+            const limpioCC = cc.trim();
+            if (!limpioCC) return;
+            // Buscar en CxC o CxP según corresponda
+            const listaBusqueda = (tipoMovimiento === 'Ingreso' && categoriaSeleccionada === 'Abono de Terceros') || (tipoMovimiento === 'Gasto' && categoriaSeleccionada === 'Préstamos a Clientes') 
+              ? cuentasPorCobrar 
+              : cuentasPorPagar;
+
+            const encontrado = listaBusqueda.find(item => item.tercero && item.tercero.includes(limpioCC));
+            if (encontrado) {
+              // Extraer el nombre antes del paréntesis
+              const partes = encontrado.tercero.split('(');
+              if (partes.length > 0) {
+                setTerceroNombre(partes[0].trim());
+              }
+            }
+          };
+
           const [modalEditarMovimiento, setModalEditarMovimiento] = useState(false);
           const [movimientoAEditar, setMovimientoAEditar] = useState(null);
           const [editConcepto, setEditConcepto] = useState('');
@@ -544,11 +564,11 @@
             const nombreTerceroCompleto = terceroNombre.trim() ? `${terceroNombre.trim()} (${terceroCC.trim() || 'NIT/CC N/A'})` : '';
 
             if (tipoMovimiento === 'Ingreso' && categoriaSeleccionada === 'Abono de Terceros') {
-              if (!terceroNombre.trim() || isNaN(num) || num <= 0) {
-                notificar('Datos incompletos', 'Ingresa el nombre del tercero y un valor válido.');
+              if (!terceroCC.trim() || isNaN(num) || num <= 0) {
+                notificar('Datos incompletos', 'Ingresa la identificación (Cédula o NIT) y un valor válido.');
                 return;
               }
-              let itemCxC = cuentasPorCobrar.find(c => c.tercero.toLowerCase().includes(terceroNombre.trim().toLowerCase()));
+              let itemCxC = cuentasPorCobrar.find(c => c.tercero.toLowerCase().includes(terceroCC.trim().toLowerCase()));
               if (itemCxC) {
                 const nuevoSaldo = Math.max(0, itemCxC.saldoPendiente - num);
                 setCuentasPorCobrar(prev => prev.map(c => c.id === itemCxC.id ? {
@@ -575,11 +595,11 @@
             }
 
             if (tipoMovimiento === 'Ingreso' && categoriaSeleccionada === 'Préstamo de Terceros') {
-              if (!terceroNombre.trim() || isNaN(num) || num <= 0) {
-                notificar('Datos incompletos', 'Ingresa el nombre del prestamista y un valor válido.');
+              if (!terceroCC.trim() || isNaN(num) || num <= 0) {
+                notificar('Datos incompletos', 'Ingresa la identificación (Cédula o NIT) y un valor válido.');
                 return;
               }
-              let itemCxP = cuentasPorPagar.find(c => c.tercero.toLowerCase().includes(terceroNombre.trim().toLowerCase()));
+              let itemCxP = cuentasPorPagar.find(c => c.tercero.toLowerCase().includes(terceroCC.trim().toLowerCase()));
               if (!itemCxP) {
                 itemCxP = {
                   id: Date.now(),
@@ -619,11 +639,11 @@
             }
 
             if (tipoMovimiento === 'Gasto' && categoriaSeleccionada === 'Préstamos a Clientes') {
-              if (!terceroNombre.trim() || isNaN(num) || num <= 0) {
-                notificar('Datos incompletos', 'Ingresa el nombre del cliente y un valor válido.');
+              if (!terceroCC.trim() || isNaN(num) || num <= 0) {
+                notificar('Datos incompletos', 'Ingresa la identificación (Cédula o NIT) y un valor válido.');
                 return;
               }
-              let itemCxC = cuentasPorCobrar.find(c => c.tercero.toLowerCase().includes(terceroNombre.trim().toLowerCase()));
+              let itemCxC = cuentasPorCobrar.find(c => c.tercero.toLowerCase().includes(terceroCC.trim().toLowerCase()));
               if (!itemCxC) {
                 itemCxC = {
                   id: Date.now(),
@@ -663,13 +683,13 @@
             }
 
             if (tipoMovimiento === 'Gasto' && categoriaSeleccionada === 'Pago a Terceros') {
-              if (!terceroNombre.trim() || isNaN(num) || num <= 0) {
-                notificar('Datos incompletos', 'Ingresa el nombre del tercero y un valor válido.');
+              if (!terceroCC.trim() || isNaN(num) || num <= 0) {
+                notificar('Datos incompletos', 'Ingresa la identificación (Cédula o NIT) y un valor válido.');
                 return;
               }
-              let itemCxP = cuentasPorPagar.find(c => c.tercero.toLowerCase().includes(terceroNombre.trim().toLowerCase()));
+              let itemCxP = cuentasPorPagar.find(c => c.tercero.toLowerCase().includes(terceroCC.trim().toLowerCase()));
               if (!itemCxP) {
-                notificar('Aviso', 'No se encontró una CxP activa con ese nombre de tercero.');
+                notificar('Aviso', 'No se encontró una CxP activa con esa identificación.');
                 return;
               }
 
@@ -798,9 +818,9 @@
 
           const guardarCxC = () => {
             const num = obtenerNumeroLimpio(saldoInicialCxCDisplay);
-            const terceroCompleto = `${terceroNombreReg.trim()} (${terceroCCReg.trim() || 'NIT/CC N/A'})`;
-            if (!terceroNombreReg.trim() || isNaN(num) || num <= 0) {
-              notificar('Datos incompletos', 'Ingresa el nombre del tercero y un saldo válido.');
+            const terceroCompleto = `${terceroNombreReg.trim()} (${terceroCCReg.trim()})`;
+            if (!terceroCCReg.trim() || !terceroNombreReg.trim() || isNaN(num) || num <= 0) {
+              notificar('Datos incompletos', 'Ingresa la Cédula/NIT, Nombre y un saldo válido.');
               return;
             }
             const nuevaCxC = {
@@ -823,9 +843,9 @@
 
           const guardarCxP = () => {
             const num = obtenerNumeroLimpio(saldoInicialCxPDisplay);
-            const terceroCompleto = `${terceroNombreRegP.trim()} (${terceroCCRegP.trim() || 'NIT/CC N/A'})`;
-            if (!terceroNombreRegP.trim() || isNaN(num) || num <= 0) {
-              notificar('Datos incompletos', 'Ingresa el nombre del tercero y un saldo válido.');
+            const terceroCompleto = `${terceroNombreRegP.trim()} (${terceroCCRegP.trim()})`;
+            if (!terceroCCRegP.trim() || !terceroNombreRegP.trim() || isNaN(num) || num <= 0) {
+              notificar('Datos incompletos', 'Ingresa la Cédula/NIT, Nombre y un saldo válido.');
               return;
             }
             const nuevaCxP = {
@@ -855,7 +875,7 @@
           });
 
           const exportarReporteCarteraCSV = () => {
-            let csvContent = "\uFEFFTercero,Concepto,Valor Total,Saldo Pendiente,Fecha Inicial,Vencimiento,Estado\n";
+            let csvContent = "\uFEFFTercero (CC/NIT),Concepto,Valor Total,Saldo Pendiente,Fecha Inicial,Vencimiento,Estado\n";
             listaDeudasReporte.forEach(i => {
               csvContent += `${i.tercero},${i.concepto},${i.valorTotal},${i.saldoPendiente},${i.fechaInicial || ''},${i.vencimiento},${i.estado}\n`;
             });
@@ -890,7 +910,7 @@
                   <table>
                     <thead>
                       <tr>
-                        <th>Tercero</th>
+                        <th>Identificación y Tercero</th>
                         <th>Concepto</th>
                         <th>Valor Total</th>
                         <th>Saldo Pendiente</th>
@@ -1154,12 +1174,13 @@
                         </select>
                       </div>
 
+                      {/* CAMPOS CON AUTOCOMPLETADO POR CÉDULA/NIT */}
                       {((tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) || 
                         (tipoMovimiento === 'Gasto' && (categoriaSeleccionada === 'Préstamos a Clientes' || categoriaSeleccionada === 'Pago a Terceros'))) && (
                         <div className="bg-[#E8EFE9] p-3 rounded-xl border border-[#D2E2D5] space-y-2">
-                          <label className="text-xs font-bold text-[#205B43] block">Identificación del Tercero:</label>
-                          <input type="text" placeholder="Cédula o NIT" value={terceroCC} onChange={(e) => setTerceroCC(e.target.value)} className="w-full bg-white rounded-lg p-2.5 border text-xs outline-none font-medium" />
-                          <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombre} onChange={(e) => setTerceroNombre(e.target.value)} className="w-full bg-white rounded-lg p-2.5 border text-xs outline-none font-medium" />
+                          <label className="text-xs font-bold text-[#205B43] block">Identificación del Tercero (Llave Principal):</label>
+                          <input type="text" placeholder="Digita Cédula o NIT..." value={terceroCC} onChange={(e) => handleIdentificacionMovimientoChange(e.target.value)} className="w-full bg-white rounded-lg p-2.5 border text-xs outline-none font-bold" />
+                          <input type="text" placeholder="Nombre completo autocompletado..." value={terceroNombre} onChange={(e) => setTerceroNombre(e.target.value)} className="w-full bg-white rounded-lg p-2.5 border text-xs outline-none font-medium" />
                         </div>
                       )}
 
@@ -1255,16 +1276,16 @@
 
                       {tipoCxUnified === 'CxC' ? (
                         <div className="space-y-2">
-                          <label className="text-[11px] font-bold text-[#2D6A4F] block">Registrar Tercero (Cliente / Deudor):</label>
-                          <input type="text" placeholder="Cédula o NIT" value={terceroCCReg} onChange={(e) => setTerceroCCReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
+                          <label className="text-[11px] font-bold text-[#2D6A4F] block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
+                          <input type="text" placeholder="Cédula o NIT..." value={terceroCCReg} onChange={(e) => setTerceroCCReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs font-bold" />
                           <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreReg} onChange={(e) => setTerceroNombreReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
                           <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
                           <button onClick={guardarCxC} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-xl text-xs">{t.guardarCxCBtn}</button>
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <label className="text-[11px] font-bold text-[#C94A4A] block">Registrar Tercero (Proveedor / Acreedor):</label>
-                          <input type="text" placeholder="Cédula o NIT" value={terceroCCRegP} onChange={(e) => setTerceroCCRegP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
+                          <label className="text-[11px] font-bold text-[#C94A4A] block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
+                          <input type="text" placeholder="Cédula o NIT..." value={terceroCCRegP} onChange={(e) => setTerceroCCRegP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs font-bold" />
                           <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreRegP} onChange={(e) => setTerceroNombreRegP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
                           <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
                           <button onClick={guardarCxP} className="w-full bg-[#C94A4A] text-white font-bold py-2 rounded-xl text-xs">{t.guardarCxPBtn}</button>
@@ -1314,7 +1335,7 @@
                     <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.reportesTitulo}</h3>
                     
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
-                      <h4 className="text-xs font-bold text-[#112A20]">📑 Reporte Avanzado de Cartera</h4>
+                      <h4 className="text-xs font-bold text-[#112A20]">📑 Reporte Avanzado de Cartera (Cruce por NIT/CC)</h4>
                       
                       <select value={repTipoCartera} onChange={(e) => setRepTipoCartera(e.target.value)} className="w-full bg-[#F8FAF8] rounded-lg p-2 border text-xs font-semibold">
                         <option value="CxC">Cuentas por Cobrar (CxC)</option>
@@ -1333,8 +1354,8 @@
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Filtrar por Tercero (NIT, Cédula, Nombre o "Todos"):</label>
-                        <input type="text" placeholder="Escribe para buscar (o deja 'Todos')..." value={repTerceroBusqueda} onChange={(e) => setRepTerceroBusqueda(e.target.value)} className="w-full bg-white rounded-lg p-2 border text-xs" />
+                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Buscar por Cédula, NIT, Nombre o "Todos":</label>
+                        <input type="text" placeholder="Digita Cédula o NIT..." value={repTerceroBusqueda} onChange={(e) => setRepTerceroBusqueda(e.target.value)} className="w-full bg-white rounded-lg p-2 border text-xs font-bold" />
                       </div>
 
                       <div className="pt-2 border-t space-y-2">
