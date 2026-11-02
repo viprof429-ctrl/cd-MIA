@@ -243,7 +243,7 @@
               
               if (data.id || data.user?.id) {
                 const uid = data.id || data.user.id;
-                await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
+                await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?on_conflict=user_id`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -322,7 +322,6 @@
           },
           async guardarDatosNube(token, userId, payload) {
             try {
-              // URL corregida con on_conflict para solucionar el error 400 de Supabase
               await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?on_conflict=user_id`, {
                 method: 'POST',
                 headers: {
@@ -1073,7 +1072,7 @@
                   <p><strong>Concepto:</strong> ${terceroItem.concepto}</p>
                   <p><strong>Fecha Inicial:</strong> ${terceroItem.fechaInicial || 'N/A'}</p>
                   <p><strong>Fecha Vencimiento:</strong> ${terceroItem.vencimiento}</p>
-                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(terceroItem.valorTotal, simboloMoneda)}</p>
+                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
                   <p><strong>Saldo Pendiente Actual:</strong> ${formatoCOP(terceroItem.saldoPendiente, simboloMoneda)}</p>
                   <p><strong>Estado:</strong> ${terceroItem.estado}</p>
                   <p><strong>Observaciones:</strong> ${terceroItem.observacion || 'Ninguna'}</p>
@@ -1816,7 +1815,7 @@
                                 <p className="text-emerald-700 font-semibold">🟢 {itemSel.fechaInicial || 'Inicio'} — Saldo Inicial: +{formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
                                 ${(itemSel.historialPagos || []).map((p, idx) => `
                                   <p key=${idx} class="text-red-600 font-semibold">
-                                    🔴 ${p.fecha} — Abono (${p.cuentaName}): -{formatoCOP(p.monto, simboloMoneda)}
+                                    🔴 ${p.fecha} — Abono (${p.cuentaName}): -${formatoCOP(p.monto, simboloMoneda)}
                                   </p>
                                 `).join('')}
                               </div>
