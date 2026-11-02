@@ -322,33 +322,23 @@
           },
           async guardarDatosNube(token, userId, payload) {
             try {
-              // Verificamos si ya existe el registro del usuario
-              const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}&select=user_id`, {
-                method: 'GET',
+              // Actualización directa mediante PATCH usando user_id como filtro (evita conflictos y error 400)
+              const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}`, {
+                method: 'PATCH',
                 headers: {
+                  'Content-Type': 'application/json',
                   'apikey': SUPABASE_ANON_KEY,
-                  'Authorization': `Bearer ${token}`
-                }
+                  'Authorization': `Bearer ${token}`,
+                  'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({
+                  correo: payload.correo,
+                  data: payload.data
+                })
               });
-              const existingRows = await checkRes.json();
 
-              if (existingRows && existingRows.length > 0) {
-                // Si existe, actualizamos con PATCH limpio (sin errores 400)
-                await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}`, {
-                  method: 'PATCH',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${token}`,
-                    'Prefer': 'return=minimal'
-                  },
-                  body: JSON.stringify({
-                    correo: payload.correo,
-                    data: payload.data
-                  })
-                });
-              } else {
-                // Si no existe, creamos el registro con POST
+              if (!res.ok) {
+                // Si por alguna razón no existe la fila, la creamos con POST
                 await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
                   method: 'POST',
                   headers: {
@@ -1100,7 +1090,7 @@
                   <p><strong>Concepto:</strong> ${terceroItem.concepto}</p>
                   <p><strong>Fecha Inicial:</strong> ${terceroItem.fechaInicial || 'N/A'}</p>
                   <p><strong>Fecha Vencimiento:</strong> ${terceroItem.vencimiento}</p>
-                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(terceroItem.valorTotal, simboloMoneda)}</p>
+                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
                   <p><strong>Saldo Pendiente Actual:</strong> ${formatoCOP(terceroItem.saldoPendiente, simboloMoneda)}</p>
                   <p><strong>Estado:</strong> ${terceroItem.estado}</p>
                   <p><strong>Observaciones:</strong> ${terceroItem.observacion || 'Ninguna'}</p>
@@ -1843,7 +1833,7 @@
                                 <p className="text-emerald-700 font-semibold">🟢 {itemSel.fechaInicial || 'Inicio'} — Saldo Inicial: +{formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
                                 ${(itemSel.historialPagos || []).map((p, idx) => `
                                   <p key=${idx} class="text-red-600 font-semibold">
-                                    🔴 ${p.fecha} — Abono (${p.cuentaName}): -${formatoCOP(p.monto, simboloMoneda)}
+                                    🔴 ${p.fecha} — Abono (${p.cuentaName}): -{formatoCOP(p.monto, simboloMoneda)}
                                   </p>
                                 `).join('')}
                               </div>
