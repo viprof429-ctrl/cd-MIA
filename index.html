@@ -6,22 +6,22 @@
     <title>MIA - Mi Inteligencia de Ahorro</title>
     
     <!-- LOGOTIPO OFICIAL DIRECTO PARA PWA Y ACCESO DIRECTO MÓVIL -->
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/githubnext/workspace-blank/main/assets/favicon.png">
+    <link rel="icon" type="image/png" href="https://i.ibb.co/6P26q1s/logo.png">
     <link rel="apple-touch-icon" href="https://i.ibb.co/6P26q1s/logo.png">
     <link rel="apple-touch-icon" sizes="180x180" href="https://i.ibb.co/6P26q1s/logo.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MIA">
     
-    <!-- Manifest dinámico optimizado -->
+    <!-- Manifest dinámico optimizado para móviles -->
     <script>
       const manifestData = {
         "name": "MIA - Mi Inteligencia de Ahorro",
         "short_name": "MIA",
         "start_url": "./",
         "display": "standalone",
-        "background_color": "#112A20",
-        "theme_color": "#112A20",
+        "background_color": "#0D211A",
+        "theme_color": "#0D211A",
         "icons": [
           {
             "src": "https://i.ibb.co/6P26q1s/logo.png",
@@ -50,20 +50,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white !important; color: black !important; }
         }
         html, body {
             height: 100%;
             width: 100%;
             margin: 0;
             padding: 0;
-            background-color: #112A20;
+            background-color: #0D211A;
             overflow: hidden;
         }
     </style>
 </head>
-<body class="flex justify-center items-center w-full h-full">
-    <div id="root" class="w-full h-full md:max-w-md md:h-[92vh] md:rounded-3xl bg-[#F3F7F2] shadow-2xl flex flex-col relative overflow-hidden"></div>
+<body class="flex justify-center items-center w-full h-full text-slate-100">
+    <!-- CONTENEDOR ADAPTADO A LA RESOLUCIÓN REAL DEL CELULAR CON ESTILO DARK MODE -->
+    <div id="root" class="w-full h-full md:max-w-md md:h-[92vh] md:rounded-3xl bg-[#112A20] border border-[#D4AF37]/20 shadow-2xl flex flex-col relative overflow-hidden"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
@@ -357,7 +358,7 @@
         };
 
         const LogoOficialMIA = ({ logoCustom }) => (
-          <div className="flex items-center justify-center overflow-hidden rounded-2xl shadow-xl bg-[#112A20] border border-[#D4AF37]/30 w-36 h-36">
+          <div className="flex items-center justify-center overflow-hidden rounded-2xl shadow-xl bg-[#16382D] border border-[#D4AF37]/40 w-36 h-36">
             {logoCustom ? <img src={logoCustom} alt="Logo" className="w-full h-full object-contain" /> : <span className="text-[#D4AF37] font-bold text-xl">MIA</span>}
           </div>
         );
@@ -1100,31 +1101,31 @@
 
           if (!sesion) {
             return (
-              <div className="flex flex-col h-full bg-[#112A20] justify-center items-center p-3 w-full text-white overflow-y-auto">
+              <div className="flex flex-col h-full bg-[#0D211A] justify-center items-center p-4 w-full text-slate-100 overflow-y-auto">
                 <LogoOficialMIA logoCustom={logoGlobal} />
-                <div className="bg-white text-slate-800 rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 shrink-0 mt-3">
-                  <h2 className="text-lg font-bold text-center text-[#112A20]">{modoRegistro ? 'Crea tu cuenta' : 'Iniciar Sesión'}</h2>
+                <div className="bg-[#16382D] text-slate-100 rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-[#D4AF37]/30 space-y-4 shrink-0 mt-4">
+                  <h2 className="text-xl font-bold text-center text-[#D4AF37]">{modoRegistro ? 'Crea tu cuenta' : 'Iniciar Sesión'}</h2>
                   <div>
-                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Correo electrónico:</label>
-                    <input type="email" placeholder="tucorreo@email.com" value={emailInput} onChange={(e) => setEmailInput(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none" />
+                    <label className="text-xs font-semibold text-emerald-300 block mb-1">Correo electrónico:</label>
+                    <input type="email" placeholder="tucorreo@email.com" value={emailInput} onChange={(e) => setEmailInput(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-[#D4AF37]/50" />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Contraseña:</label>
-                    <input type="password" placeholder="••••••••" value={passInput} onChange={(e) => setPassInput(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none" />
+                    <label className="text-xs font-semibold text-emerald-300 block mb-1">Contraseña:</label>
+                    <input type="password" placeholder="••••••••" value={passInput} onChange={(e) => setPassInput(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-[#D4AF37]/50" />
                   </div>
                   {modoRegistro && (
-                    <div className="space-y-3 pt-1 border-t border-slate-100">
+                    <div className="space-y-3 pt-2 border-t border-emerald-900/40">
                       <div>
-                        <label className="text-xs font-semibold text-[#52725F] block mb-1">🌐 Idioma:</label>
-                        <select value={idiomaSeleccionado} onChange={(e) => setIdiomaSeleccionado(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none font-medium">
+                        <label className="text-xs font-semibold text-emerald-300 block mb-1">🌐 Idioma:</label>
+                        <select value={idiomaSeleccionado} onChange={(e) => setIdiomaSeleccionado(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none font-medium">
                           <option value="Español">🇪🇸 Español</option>
                           <option value="Inglés">🇺🇸 English</option>
                           <option value="Portugués">🇧🇷 Português</option>
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-[#52725F] block mb-1">💱 Moneda:</label>
-                        <select value={monedaSeleccionada} onChange={(e) => setMonedaSeleccionada(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none font-medium">
+                        <label className="text-xs font-semibold text-emerald-300 block mb-1">💱 Moneda:</label>
+                        <select value={monedaSeleccionada} onChange={(e) => setMonedaSeleccionada(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none font-medium">
                           <option value="COP ($)">COP ($)</option>
                           <option value="USD ($)">USD ($)</option>
                           <option value="EUR (€)">EUR (€)</option>
@@ -1133,11 +1134,11 @@
                     </div>
                   )}
                   {modoRegistro ? (
-                    <button onClick={manejarRegistro} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition mt-2">Registrarse</button>
+                    <button onClick={manejarRegistro} className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0D211A] font-extrabold py-3.5 rounded-2xl shadow-lg transition mt-2">Registrarse</button>
                   ) : (
-                    <button onClick={manejarLogin} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition mt-2">Ingresar</button>
+                    <button onClick={manejarLogin} className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0D211A] font-extrabold py-3.5 rounded-2xl shadow-lg transition mt-2">Ingresar</button>
                   )}
-                  <button onClick={() => setModoRegistro(!modoRegistro)} className="w-full text-center text-xs text-[#2D6A4F] font-bold hover:underline pt-1">
+                  <button onClick={() => setModoRegistro(!modoRegistro)} className="w-full text-center text-xs text-[#D4AF37] font-bold hover:underline pt-1">
                     {modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí'}
                   </button>
                 </div>
@@ -1148,125 +1149,127 @@
           const esSuperAdmin = sesion?.user?.email?.trim().toLowerCase() === 'viprof429@gmail.com';
 
           return (
-            <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
-              <div className="p-2 px-4 flex justify-between items-center bg-white border-b border-slate-100 shadow-sm">
+            <div className="flex flex-col h-full bg-[#0D211A] relative w-full text-slate-100">
+              <div className="p-3 px-5 flex justify-between items-center bg-[#112A20] border-b border-[#D4AF37]/20 shadow-md">
                 <LogoHeaderMIA logoCustom={logoGlobal} />
                 <div className="flex items-center gap-2">
                   {esSuperAdmin && (
-                    <button onClick={() => setTab('admin')} className="bg-[#D4AF37]/20 text-[#B8860B] px-3 py-1.5 rounded-xl text-xs font-bold border border-[#D4AF37]/50">Admin</button>
+                    <button onClick={() => setTab('admin')} className="bg-[#D4AF37]/20 text-[#D4AF37] px-3.5 py-1.5 rounded-xl text-xs font-bold border border-[#D4AF37]/50">Admin</button>
                   )}
-                  <button onClick={cerrarSesion} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200">Salir</button>
+                  <button onClick={cerrarSesion} className="bg-red-500/20 text-red-300 px-3.5 py-1.5 rounded-xl text-xs font-bold border border-red-500/30">Salir</button>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 pb-24">
+              <div className="flex-1 overflow-y-auto p-4 pb-28">
                 {tab === 'inicio' && (
                   <div>
-                    <div className="bg-[#112A20] rounded-2xl p-5 mb-4 shadow-md text-white">
+                    {/* HERO CARD PATRIMONIO CON DEGRADADO Y TOQUE DORADO */}
+                    <div className="bg-gradient-to-br from-[#112A20] to-[#1B4332] rounded-3xl p-5 mb-5 shadow-xl border border-[#D4AF37]/40 text-white relative overflow-hidden">
+                      <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-[#D4AF37]/10 rounded-full blur-2xl"></div>
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-[11px] font-bold text-[#B7E4C7] tracking-wider">{t.patrimonio} ({monedaSeleccionada})</span>
-                        <button onClick={() => setTab('cuentas')} className="text-[#B7E4C7] text-xs font-bold hover:underline">{t.ajustarSaldos}</button>
+                        <span className="text-[11px] font-extrabold text-[#D4AF37] tracking-wider">{t.patrimonio} ({monedaSeleccionada})</span>
+                        <button onClick={() => setTab('cuentas')} className="text-emerald-300 text-xs font-bold hover:underline">{t.ajustarSaldos}</button>
                       </div>
-                      <h2 className="text-3xl font-extrabold my-2">{formatoCOP(patrimonioTotal, simboloMoneda)}</h2>
-                      <p className="text-[11px] text-[#D8F3DC]">{t.subPatrimonio}</p>
+                      <h2 className="text-3xl font-black my-2 tracking-tight text-white">{formatoCOP(patrimonioTotal, simboloMoneda)}</h2>
+                      <p className="text-[11px] text-emerald-200/80">{t.subPatrimonio}</p>
                     </div>
 
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-[17px] font-bold text-[#112A20]">{t.fondosActivos}</h3>
-                      <button onClick={() => setTab('cuentas')} className="text-xs text-[#2D6A4F] font-bold hover:underline">{t.verCuentas}</button>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-base font-bold text-slate-100">{t.fondosActivos}</h3>
+                      <button onClick={() => setTab('cuentas')} className="text-xs text-emerald-400 font-bold hover:underline">{t.verCuentas}</button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 mb-4">
+                    <div className="grid grid-cols-2 gap-3 mb-5">
                       {cuentasConSaldo.length === 0 && totalCxCPendiente === 0 && totalCxPPendiente === 0 ? (
-                        <p className="col-span-2 text-center text-xs text-[#718078] italic py-2">{t.sinCuentas}</p>
+                        <p className="col-span-2 text-center text-xs text-slate-400 italic py-2">{t.sinCuentas}</p>
                       ) : (
                         <>
                           {cuentasConSaldo.map((c) => (
-                            <div key={c.id} className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                              <div className="flex items-center gap-1.5">
+                            <div key={c.id} className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-emerald-900/30 flex flex-col justify-between">
+                              <div className="flex items-center gap-2">
                                 <span className="text-xl">{c.icono}</span>
-                                <p className="text-xs font-semibold text-slate-700 truncate">{c.nombre}</p>
+                                <p className="text-xs font-semibold text-slate-200 truncate">{c.nombre}</p>
                               </div>
-                              <p className="text-[14px] font-bold text-[#205B43] mt-2">{formatoCOP(obtenerSaldoCuenta(c.id), simboloMoneda)}</p>
+                              <p className="text-[14px] font-extrabold text-emerald-400 mt-2">{formatoCOP(obtenerSaldoCuenta(c.id), simboloMoneda)}</p>
                             </div>
                           ))}
                           {totalCxCPendiente > 0 && (
-                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-emerald-100 flex flex-col justify-between">
-                              <div className="flex items-center gap-1.5"><span className="text-xl">📥</span><p className="text-xs font-semibold text-slate-700 truncate">{t.totalCxCPend}</p></div>
-                              <p className="text-[14px] font-bold text-[#2D6A4F] mt-2">{formatoCOP(totalCxCPendiente, simboloMoneda)}</p>
+                            <div className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-emerald-900/30 flex flex-col justify-between">
+                              <div className="flex items-center gap-2"><span className="text-xl">📥</span><p className="text-xs font-semibold text-slate-200 truncate">{t.totalCxCPend}</p></div>
+                              <p className="text-[14px] font-extrabold text-emerald-400 mt-2">{formatoCOP(totalCxCPendiente, simboloMoneda)}</p>
                             </div>
                           )}
                           {totalCxPPendiente > 0 && (
-                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-red-100 flex flex-col justify-between">
-                              <div className="flex items-center gap-1.5"><span className="text-xl">📤</span><p className="text-xs font-semibold text-slate-700 truncate">{t.totalCxPPend}</p></div>
-                              <p className="text-[14px] font-bold text-[#C94A4A] mt-2">{formatoCOP(totalCxPPendiente, simboloMoneda)}</p>
+                            <div className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-red-900/30 flex flex-col justify-between">
+                              <div className="flex items-center gap-2"><span className="text-xl">📤</span><p className="text-xs font-semibold text-slate-200 truncate">{t.totalCxPPend}</p></div>
+                              <p className="text-[14px] font-extrabold text-red-400 mt-2">{formatoCOP(totalCxPPendiente, simboloMoneda)}</p>
                             </div>
                           )}
                         </>
                       )}
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">{t.registrarMov}</h3>
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <h3 className="text-base font-bold text-slate-100 mb-3">{t.registrarMov}</h3>
+                    <div className="bg-[#16382D] rounded-3xl p-4 shadow-xl border border-emerald-900/30 space-y-3.5">
                       <div className="flex gap-2">
-                        <button onClick={() => { setTipoMovimiento('Gasto'); setCategoriaSeleccionada(categoriasGasto[0]); }} className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Gasto' ? 'bg-[#C94A4A] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}>{t.gasto}</button>
-                        <button onClick={() => { setTipoMovimiento('Ingreso'); setCategoriaSeleccionada(categoriasIngreso[0]); }} className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Ingreso' ? 'bg-[#2D6A4F] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}>{t.ingreso}</button>
+                        <button onClick={() => { setTipoMovimiento('Gasto'); setCategoriaSeleccionada(categoriasGasto[0]); }} className={`flex-1 py-2.5 rounded-2xl font-bold text-sm transition ${tipoMovimiento === 'Gasto' ? 'bg-[#EF4444] text-white shadow-lg' : 'bg-[#112A20] text-slate-300'}`}>{t.gasto}</button>
+                        <button onClick={() => { setTipoMovimiento('Ingreso'); setCategoriaSeleccionada(categoriasIngreso[0]); }} className={`flex-1 py-2.5 rounded-2xl font-bold text-sm transition ${tipoMovimiento === 'Ingreso' ? 'bg-[#10B981] text-[#0D211A] shadow-lg font-black' : 'bg-[#112A20] text-slate-300'}`}>{t.ingreso}</button>
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-[#52725F] block mb-1">{t.medioPago}</label>
-                        <select value={cuentaSeleccionada} onChange={(e) => setCuentaSeleccionada(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none font-medium">
+                        <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.medioPago}</label>
+                        <select value={cuentaSeleccionada} onChange={(e) => setCuentaSeleccionada(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none font-medium focus:ring-2 focus:ring-emerald-500/20">
                           {cuentas.map((c) => (<option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>))}
                         </select>
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-[#52725F] block mb-1">{t.fecha}</label>
-                        <input type="text" value={fechaMovimiento} onChange={(e) => setFechaMovimiento(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none" />
+                        <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.fecha}</label>
+                        <input type="text" value={fechaMovimiento} onChange={(e) => setFechaMovimiento(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20" />
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-[#52725F] block mb-1">{t.rubro}</label>
-                        <select value={categoriaSeleccionada} onChange={(e) => setCategoriaSeleccionada(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none font-medium">
+                        <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.rubro}</label>
+                        <select value={categoriaSeleccionada} onChange={(e) => setCategoriaSeleccionada(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none font-medium focus:ring-2 focus:ring-emerald-500/20">
                           {(tipoMovimiento === 'Gasto' ? categoriasGasto : categoriasIngreso).map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
                         </select>
                       </div>
 
                       {((tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) || 
                         (tipoMovimiento === 'Gasto' && (categoriaSeleccionada === 'Préstamos a Clientes' || categoriaSeleccionada === 'Pago a Terceros'))) && (
-                        <div className="bg-[#E8EFE9] p-3 rounded-xl border border-[#D2E2D5] space-y-2">
-                          <label className="text-xs font-bold text-[#205B43] block">Identificación del Tercero (Llave Principal):</label>
-                          <input type="text" placeholder="Digita Cédula o NIT..." value={terceroCC} onChange={(e) => handleIdentificacionMovimientoChange(e.target.value)} className="w-full bg-white rounded-lg p-2.5 border text-xs outline-none font-bold" />
-                          <input type="text" placeholder="Nombre completo autocompletado..." value={terceroNombre} onChange={(e) => setTerceroNombre(e.target.value)} className="w-full bg-white rounded-lg p-2.5 border text-xs outline-none font-medium" />
+                        <div className="bg-[#112A20] p-3.5 rounded-2xl border border-emerald-900/40 space-y-2">
+                          <label className="text-xs font-bold text-[#D4AF37] block">Identificación del Tercero (Llave Principal):</label>
+                          <input type="text" placeholder="Digita Cédula o NIT..." value={terceroCC} onChange={(e) => handleIdentificacionMovimientoChange(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs outline-none font-bold focus:ring-2 focus:ring-[#D4AF37]/50" />
+                          <input type="text" placeholder="Nombre completo autocompletado..." value={terceroNombre} onChange={(e) => setTerceroNombre(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs outline-none font-medium" />
                         </div>
                       )}
 
                       {!( (tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) || 
                           (tipoMovimiento === 'Gasto' && (categoriaSeleccionada === 'Préstamos a Clientes' || categoriaSeleccionada === 'Pago a Terceros')) ) && (
-                        <input type="text" placeholder={t.conceptoPlaceholder} value={concepto} onChange={(e) => setConcepto(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none" />
+                        <input type="text" placeholder={t.conceptoPlaceholder} value={concepto} onChange={(e) => setConcepto(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20" />
                       )}
 
-                      <input type="text" placeholder={t.valorPlaceholder(monedaSeleccionada)} value={valorDisplay} onChange={(e) => setValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none" />
-                      <button onClick={guardarMovimiento} className="w-full bg-[#205B43] text-white font-bold py-3.5 rounded-xl shadow-md mt-2">{t.guardarMovBtn}</button>
+                      <input type="text" placeholder={t.valorPlaceholder(monedaSeleccionada)} value={valorDisplay} onChange={(e) => setValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold" />
+                      <button onClick={guardarMovimiento} className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0D211A] font-extrabold py-3.5 rounded-2xl shadow-lg mt-2 transition">{t.guardarMovBtn}</button>
                     </div>
 
-                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">{t.movRecientes}</h3>
+                    <h3 className="text-base font-bold text-slate-100 mt-5 mb-2.5">{t.movRecientes}</h3>
                     {movimientos.length === 0 ? (
-                      <p className="text-center text-[#718078] my-6 italic text-sm">{t.sinMovs}</p>
+                      <p className="text-center text-slate-400 my-6 italic text-sm">{t.sinMovs}</p>
                     ) : (
                       movimientos.slice(0, 5).map((m) => {
                         const cuentaAsociada = cuentas.find((c) => c.id === m.cuentaId);
                         const esIngreso = m.tipo === 'Ingreso';
                         return (
-                          <div key={m.id} className="bg-white rounded-xl p-3.5 my-1.5 flex justify-between items-center shadow-sm border border-slate-100">
+                          <div key={m.id} className="bg-[#16382D] rounded-2xl p-3.5 my-2 flex justify-between items-center shadow-md border border-emerald-900/30">
                             <div className="flex-1 pr-2">
-                              <p className="text-sm font-semibold text-[#1F2937]">{m.concepto}</p>
-                              <p className="text-[11px] text-[#718078] mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
+                              <p className="text-sm font-semibold text-slate-200">{m.concepto}</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`text-sm font-bold ${esIngreso ? 'text-[#2D6A4F] ' : 'text-[#C94A4A]'}`}>{esIngreso ? '+ ' : '- '}{formatoCOP(m.valor, simboloMoneda)}</span>
-                              <button onClick={() => abrirModalEditarMovimiento(m)} className="p-1.5 bg-[#E8EFE9] text-[#205B43] rounded-lg text-xs font-bold">✏️</button>
-                              <button onClick={() => eliminarMovimiento(m.id)} className="p-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-bold">🗑️</button>
+                              <span className={`text-sm font-extrabold ${esIngreso ? 'text-emerald-400' : 'text-red-400'}`}>{esIngreso ? '+ ' : '- '}{formatoCOP(m.valor, simboloMoneda)}</span>
+                              <button onClick={() => abrirModalEditarMovimiento(m)} className="p-1.5 bg-[#112A20] text-emerald-400 rounded-xl text-xs font-bold border border-emerald-900/40">✏️</button>
+                              <button onClick={() => eliminarMovimiento(m.id)} className="p-1.5 bg-red-950/40 text-red-400 rounded-xl text-xs font-bold border border-red-950/50">🗑️</button>
                             </div>
                           </div>
                         );
@@ -1278,104 +1281,103 @@
                 {tab === 'cuentas' && (
                   <div>
                     <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-[17px] font-bold text-[#112A20]">{t.cuentasTitulo}</h3>
-                      <button onClick={() => setModalNuevaCuenta(true)} className="bg-[#2D6A4F] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow">{t.crearCuentaBtn}</button>
+                      <h3 className="text-base font-bold text-slate-100">{t.cuentasTitulo}</h3>
+                      <button onClick={() => setModalNuevaCuenta(true)} className="bg-[#10B981] text-[#0D211A] px-4 py-2 rounded-full text-xs font-extrabold shadow-lg">{t.crearCuentaBtn}</button>
                     </div>
-                    <p className="text-[13px] text-[#52725F] mb-4">{t.cuentasSub}</p>
+                    <p className="text-[13px] text-emerald-300 mb-4">{t.cuentasSub}</p>
 
                     {cuentas.map((c) => {
                       const saldoActual = obtenerSaldoCuenta(c.id);
                       return (
-                        <div key={c.id} className="bg-white rounded-2xl p-4 my-3 shadow-sm border border-slate-100 space-y-3">
+                        <div key={c.id} className="bg-[#16382D] rounded-3xl p-4 my-3 shadow-md border border-emerald-900/30 space-y-3">
                           <div className="flex items-center">
                             <span className="text-3xl">{c.icono}</span>
                             <div className="ml-3 flex-1">
-                              <h4 className="text-base font-bold text-[#1F2937]">{c.nombre}</h4>
-                              <p className="text-xs text-[#718078]">Tipo: {c.tipo}</p>
+                              <h4 className="text-base font-bold text-slate-100">{c.nombre}</h4>
+                              <p className="text-xs text-slate-400">Tipo: {c.tipo}</p>
                             </div>
                             <div className="text-right">
-                              <span className="text-[11px] text-[#718078]">{t.saldoActual}</span>
-                              <p className="text-base font-bold text-[#205B43]">{formatoCOP(saldoActual, simboloMoneda)}</p>
+                              <span className="text-[11px] text-slate-400">{t.saldoActual}</span>
+                              <p className="text-base font-extrabold text-emerald-400">{formatoCOP(saldoActual, simboloMoneda)}</p>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                          <div className="flex justify-between items-center pt-2 border-t border-emerald-900/40">
                             <div>
-                              <span className="text-[10px] font-bold text-[#718078]">{t.saldoInicialLabel} (Desde: {c.fechaSaldoInicial || fechaHoy()})</span>
-                              <p className="text-[14px] font-bold text-[#1F2937]">{formatoCOP(c.saldoInicial, simboloMoneda)}</p>
+                              <span className="text-[10px] font-bold text-slate-400">{t.saldoInicialLabel} (Desde: {c.fechaSaldoInicial || fechaHoy()})</span>
+                              <p className="text-[14px] font-bold text-slate-200">{formatoCOP(c.saldoInicial, simboloMoneda)}</p>
                             </div>
-                            <button onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setFechaSaldoEditado(c.fechaSaldoInicial || fechaHoy()); setModalEditarSaldo(true); }} className="bg-[#E8EFE9] px-3 py-2 rounded-xl text-xs font-bold text-[#205B43]">{t.modificarBtn}</button>
+                            <button onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setFechaSaldoEditado(c.fechaSaldoInicial || fechaHoy()); setModalEditarSaldo(true); }} className="bg-[#112A20] px-3.5 py-2 rounded-2xl text-xs font-bold text-emerald-300 border border-emerald-900/50">{t.modificarBtn}</button>
                           </div>
                         </div>
                       );
                     })}
-                    <button onClick={reiniciarTodo} className="w-full mt-4 p-3 bg-[#FDE8E8] rounded-xl text-[#9B1C1C] font-bold text-xs border border-[#F8B4B4]">{t.reiniciarCelularBtn}</button>
+                    <button onClick={reiniciarTodo} className="w-full mt-5 p-3.5 bg-red-950/30 rounded-2xl text-red-400 font-bold text-xs border border-red-900/40">{t.reiniciarCelularBtn}</button>
                   </div>
                 )}
 
                 {tab === 'deudas' && (
                   <div>
-                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.deudasTitulo}</h3>
+                    <h3 className="text-base font-bold text-slate-100 mb-3">{t.deudasTitulo}</h3>
                     
-                    {/* 1. SALDOS / FORMULARIOS DE REGISTRO ARRIBA CON BOTÓN DE GUARDAR VISIBLE */}
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
+                    <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3.5">
                       <div>
-                        <label className="text-xs font-bold text-[#112A20] block mb-1">{t.tipoOp}</label>
-                        <select value={tipoCxUnified} onChange={(e) => setTipoCxUnified(e.target.value)} className="w-full bg-[#E8EFE9] text-[#205B43] font-extrabold rounded-xl p-3 text-sm outline-none">
+                        <label className="text-xs font-bold text-slate-200 block mb-1">{t.tipoOp}</label>
+                        <select value={tipoCxUnified} onChange={(e) => setTipoCxUnified(e.target.value)} className="w-full bg-[#112A20] text-emerald-300 font-extrabold rounded-2xl p-3 text-sm outline-none border border-emerald-900/40">
                           <option value="CxC">{t.cxcOption}</option>
                           <option value="CxP">{t.cxpOption}</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-bold text-[#52725F] block mb-1">📅 Fecha inicial del saldo inicial:</label>
-                        <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs font-semibold" />
+                        <label className="text-[11px] font-bold text-emerald-300 block mb-1">📅 Fecha inicial del saldo inicial:</label>
+                        <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-2.5 border border-emerald-900/40 text-xs font-semibold" />
                       </div>
 
                       {tipoCxUnified === 'CxC' ? (
                         <div className="space-y-2">
-                          <label className="text-[11px] font-bold text-[#2D6A4F] block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
-                          <input type="text" placeholder="Cédula o NIT..." value={terceroCCReg} onChange={(e) => setTerceroCCReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs font-bold" />
-                          <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreReg} onChange={(e) => setTerceroNombreReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
-                          <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
-                          <button onClick={guardarCxC} className="w-full bg-[#2D6A4F] text-white font-bold py-3 px-4 rounded-xl shadow-md text-xs mt-2 hover:bg-[#1B4332] transition block text-center">Guardar Cuenta por Cobrar</button>
+                          <label className="text-[11px] font-bold text-emerald-400 block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
+                          <input type="text" placeholder="Cédula o NIT..." value={terceroCCReg} onChange={(e) => setTerceroCCReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
+                          <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreReg} onChange={(e) => setTerceroNombreReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs" />
+                          <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
+                          <button onClick={guardarCxC} className="w-full bg-[#10B981] text-[#0D211A] font-extrabold py-3 px-4 rounded-2xl shadow-md text-xs mt-2 hover:bg-[#059669] transition block text-center">Guardar Cuenta por Cobrar</button>
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <label className="text-[11px] font-bold text-[#C94A4A] block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
-                          <input type="text" placeholder="Cédula o NIT..." value={terceroCCRegP} onChange={(e) => setTerceroCCRegP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs font-bold" />
-                          <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreRegP} onChange={(e) => setTerceroNombreRegP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
-                          <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
-                          <button onClick={guardarCxP} className="w-full bg-[#C94A4A] text-white font-bold py-3 px-4 rounded-xl shadow-md text-xs mt-2 hover:bg-[#A33B3B] transition block text-center">Guardar Cuenta por Pagar</button>
+                          <label className="text-[11px] font-bold text-red-400 block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
+                          <input type="text" placeholder="Cédula o NIT..." value={terceroCCRegP} onChange={(e) => setTerceroCCRegP(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
+                          <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreRegP} onChange={(e) => setTerceroNombreRegP(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs" />
+                          <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
+                          <button onClick={guardarCxP} className="w-full bg-[#EF4444] text-white font-extrabold py-3 px-4 rounded-2xl shadow-md text-xs mt-2 hover:bg-[#DC2626] transition block text-center">Guardar Cuenta por Pagar</button>
                         </div>
                       )}
                     </div>
 
-                    {/* 2. GRÁFICA ABAJO */}
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
+                    {/* GRÁFICO DE EDADES ESTILIZADO CON BARRAS REDONDEADAS */}
+                    <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3">
                       <div className="flex justify-between items-center">
-                        <h4 className="text-xs font-bold text-[#112A20]">📊 Edades de Vencimiento (Cartera)</h4>
-                        <span className="text-[10px] font-extrabold text-[#205B43] uppercase">{tipoCxUnified}</span>
+                        <h4 className="text-xs font-bold text-slate-200">📊 Edades de Vencimiento (Cartera)</h4>
+                        <span className="text-[10px] font-extrabold text-[#D4AF37] uppercase">{tipoCxUnified}</span>
                       </div>
 
                       {(() => {
                         const edades = tipoCxUnified === 'CxC' ? edadesCxC : edadesCxP;
                         return (
                           <div className="pt-2">
-                            <div className="h-36 flex items-end justify-around gap-4 px-2 border-b border-slate-200 pb-1">
+                            <div className="h-36 flex items-end justify-around gap-4 px-2 border-b border-emerald-900/40 pb-1">
                               <div className="flex flex-col items-center h-full justify-end flex-1">
-                                <span className="text-[9px] font-extrabold text-[#2D6A4F] mb-1 text-center">{formatoCOP(edades.v1_30, simboloMoneda)}</span>
-                                <div style={{ height: `${Math.max(edades.h1_30, 8)}%` }} className="w-full bg-[#2D6A4F] rounded-t-lg transition-all duration-300"></div>
+                                <span className="text-[9px] font-extrabold text-emerald-400 mb-1 text-center">{formatoCOP(edades.v1_30, simboloMoneda)}</span>
+                                <div style={{ height: `${Math.max(edades.h1_30, 8)}%` }} className="w-full bg-[#10B981] rounded-t-xl transition-all duration-300 shadow-sm"></div>
                               </div>
                               <div className="flex flex-col items-center h-full justify-end flex-1">
-                                <span className="text-[9px] font-extrabold text-[#B8860B] mb-1 text-center">{formatoCOP(edades.v31_60, simboloMoneda)}</span>
-                                <div style={{ height: `${Math.max(edades.h31_60, 8)}%` }} className="w-full bg-[#D4AF37] rounded-t-lg transition-all duration-300"></div>
+                                <span className="text-[9px] font-extrabold text-[#D4AF37] mb-1 text-center">{formatoCOP(edades.v31_60, simboloMoneda)}</span>
+                                <div style={{ height: `${Math.max(edades.h31_60, 8)}%` }} className="w-full bg-[#D4AF37] rounded-t-xl transition-all duration-300 shadow-sm"></div>
                               </div>
                               <div className="flex flex-col items-center h-full justify-end flex-1">
-                                <span className="text-[9px] font-extrabold text-[#C94A4A] mb-1 text-center">{formatoCOP(edades.vMas60, simboloMoneda)}</span>
-                                <div style={{ height: `${Math.max(edades.hMas60, 8)}%` }} className="w-full bg-[#C94A4A] rounded-t-lg transition-all duration-300"></div>
+                                <span className="text-[9px] font-extrabold text-red-400 mb-1 text-center">{formatoCOP(edades.vMas60, simboloMoneda)}</span>
+                                <div style={{ height: `${Math.max(edades.hMas60, 8)}%` }} className="w-full bg-[#EF4444] rounded-t-xl transition-all duration-300 shadow-sm"></div>
                               </div>
                             </div>
-                            <div className="grid grid-cols-3 text-[10px] font-bold text-center text-slate-600 pt-2">
+                            <div className="grid grid-cols-3 text-[10px] font-bold text-center text-slate-400 pt-2">
                               <span>1 - 30 días</span>
                               <span>31 - 60 días</span>
                               <span>&gt; 60 días</span>
@@ -1389,37 +1391,37 @@
 
                 {tab === 'reportes' && (
                   <div>
-                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.reportesTitulo}</h3>
+                    <h3 className="text-base font-bold text-slate-100 mb-3">{t.reportesTitulo}</h3>
                     
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
-                      <h4 className="text-xs font-bold text-[#112A20]">📑 Reporte Avanzado de Cartera (Cruce por NIT/CC)</h4>
+                    <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3.5">
+                      <h4 className="text-xs font-bold text-slate-200">📑 Reporte Avanzado de Cartera (Cruce por NIT/CC)</h4>
                       
-                      <select value={repTipoCartera} onChange={(e) => setRepTipoCartera(e.target.value)} className="w-full bg-[#F8FAF8] rounded-lg p-2 border text-xs font-semibold">
+                      <select value={repTipoCartera} onChange={(e) => setRepTipoCartera(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-2.5 border border-emerald-900/40 text-xs font-semibold">
                         <option value="CxC">Cuentas por Cobrar (CxC)</option>
                         <option value="CxP">Cuentas por Pagar (CxP)</option>
                       </select>
 
                       <div className="flex gap-2">
                         <div className="flex-1">
-                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Desde:</label>
-                          <input type="date" value={repFechaDesde} onChange={(e) => setRepFechaDesde(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border text-[11px]" />
+                          <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Desde:</label>
+                          <input type="date" value={repFechaDesde} onChange={(e) => setRepFechaDesde(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2 border border-emerald-900/40 text-[11px]" />
                         </div>
                         <div className="flex-1">
-                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Hasta:</label>
-                          <input type="date" value={repFechaHasta} onChange={(e) => setRepFechaHasta(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border text-[11px]" />
+                          <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Hasta:</label>
+                          <input type="date" value={repFechaHasta} onChange={(e) => setRepFechaHasta(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2 border border-emerald-900/40 text-[11px]" />
                         </div>
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Buscar por Cédula, NIT, Nombre o "Todos":</label>
-                        <input type="text" placeholder="Digita Cédula o NIT..." value={repTerceroBusqueda} onChange={(e) => setRepTerceroBusqueda(e.target.value)} className="w-full bg-white rounded-lg p-2 border text-xs font-bold" />
+                        <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Buscar por Cédula, NIT, Nombre o "Todos":</label>
+                        <input type="text" placeholder="Digita Cédula o NIT..." value={repTerceroBusqueda} onChange={(e) => setRepTerceroBusqueda(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/40 text-xs font-bold" />
                       </div>
 
-                      <div className="pt-2 border-t space-y-2">
-                        <p className="text-xs font-bold text-[#205B43]">Registros encontrados: {listaDeudasReporte.length}</p>
+                      <div className="pt-2 border-t border-emerald-900/40 space-y-2">
+                        <p className="text-xs font-bold text-emerald-400">Registros encontrados: {listaDeudasReporte.length}</p>
                         <div className="flex gap-2">
-                          <button onClick={exportarReporteCarteraCSV} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold">📊 Exportar Excel</button>
-                          <button onClick={exportarReporteCarteraPDF} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold">📄 Exportar PDF</button>
+                          <button onClick={exportarReporteCarteraCSV} className="flex-1 bg-[#10B981] text-[#0D211A] py-2.5 rounded-2xl text-xs font-extrabold shadow">📊 Exportar Excel</button>
+                          <button onClick={exportarReporteCarteraPDF} className="flex-1 bg-[#059669] text-white py-2.5 rounded-2xl text-xs font-extrabold shadow">📄 Exportar PDF</button>
                         </div>
                       </div>
                     </div>
@@ -1427,51 +1429,51 @@
                 )}
 
                 {tab === 'admin' && esSuperAdmin && (
-                  <div className="bg-white rounded-3xl p-5 shadow-lg border border-[#D4AF37]/30 space-y-4">
-                    <h3 className="text-lg font-extrabold text-[#112A20] border-b pb-2">{t.adminPanel}</h3>
+                  <div className="bg-[#16382D] rounded-3xl p-5 shadow-xl border border-[#D4AF37]/30 space-y-4">
+                    <h3 className="text-lg font-extrabold text-[#D4AF37] border-b border-emerald-900/40 pb-2">{t.adminPanel}</h3>
                     
-                    <div className="space-y-3 bg-[#F8FAF8] p-4 rounded-2xl border">
-                      <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios</h4>
+                    <div className="space-y-3 bg-[#0D211A] p-4 rounded-2xl border border-emerald-900/40">
+                      <h4 className="text-xs font-bold text-slate-200">📊 Reporte Ejecutivo de Usuarios</h4>
                       
                       <div className="flex gap-2">
                         <div className="flex-1">
-                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Desde:</label>
-                          <input type="date" value={filtroFechaDesde} onChange={(e) => setFiltroFechaDesde(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border text-[11px]" />
+                          <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Desde:</label>
+                          <input type="date" value={filtroFechaDesde} onChange={(e) => setFiltroFechaDesde(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-1.5 border border-emerald-900/40 text-[11px]" />
                         </div>
                         <div className="flex-1">
-                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Hasta:</label>
-                          <input type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border text-[11px]" />
+                          <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Hasta:</label>
+                          <input type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-1.5 border border-emerald-900/40 text-[11px]" />
                         </div>
                       </div>
 
-                      <select value={tipoBusqueda} onChange={(e) => setTipoBusqueda(e.target.value)} className="w-full bg-white rounded-lg p-2 border text-xs">
+                      <select value={tipoBusqueda} onChange={(e) => setTipoBusqueda(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-2 border border-emerald-900/40 text-xs">
                         <option value="correo">Buscar por Correo</option>
                         <option value="idioma">Buscar por Idioma</option>
                         <option value="moneda">Buscar por Moneda</option>
                       </select>
-                      <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#205B43] text-white font-bold py-2 rounded-xl text-xs">🔍 Mostrar Reporte por Fechas</button>
+                      <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#10B981] text-[#0D211A] font-extrabold py-2.5 rounded-xl text-xs">🔍 Mostrar Reporte por Fechas</button>
                     </div>
 
                     {reporteGenerado && (
-                      <div className="space-y-3 pt-3 border-t">
-                        <div className="bg-[#112A20] text-white p-3 rounded-xl">
-                          <p className="text-[10px] text-[#B7E4C7] font-bold uppercase">Total Usuarios en el Rango</p>
-                          <h3 className="text-2xl font-extrabold">{usuariosFiltrados.length}</h3>
+                      <div className="space-y-3 pt-3 border-t border-emerald-900/40">
+                        <div className="bg-[#112A20] text-white p-3.5 rounded-2xl border border-emerald-900/40">
+                          <p className="text-[10px] text-[#D4AF37] font-bold uppercase">Total Usuarios en el Rango</p>
+                          <h3 className="text-2xl font-black text-white">{usuariosFiltrados.length}</h3>
                         </div>
                         <div className="flex gap-2">
-                          <button onClick={exportarReporteUsuariosCSV} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold">📊 Excel (CSV)</button>
-                          <button onClick={exportarReporteUsuariosPDF} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold">📄 PDF</button>
+                          <button onClick={exportarReporteUsuariosCSV} className="flex-1 bg-[#10B981] text-[#0D211A] py-2.5 rounded-xl text-xs font-extrabold shadow">📊 Excel (CSV)</button>
+                          <button onClick={exportarReporteUsuariosPDF} className="flex-1 bg-[#059669] text-white py-2.5 rounded-xl text-xs font-extrabold shadow">📄 PDF</button>
                         </div>
                       </div>
                     )}
 
                     <div className="space-y-3 pt-2">
-                      <h4 className="text-xs font-bold text-[#112A20]">{t.cargaLogo}</h4>
-                      <div className="flex items-center gap-3 bg-[#F8FAF8] p-3 rounded-2xl border">
-                        <div className="w-12 h-12 bg-[#112A20] rounded-xl flex items-center justify-center overflow-hidden border">
+                      <h4 className="text-xs font-bold text-slate-200">{t.cargaLogo}</h4>
+                      <div className="flex items-center gap-3 bg-[#0D211A] p-3 rounded-2xl border border-emerald-900/40">
+                        <div className="w-12 h-12 bg-[#112A20] rounded-xl flex items-center justify-center overflow-hidden border border-[#D4AF37]/30">
                           {logoGlobal ? <img src={logoGlobal} alt="Logo" className="w-full h-full object-contain" /> : <span className="text-xs text-[#D4AF37] font-bold">MIA</span>}
                         </div>
-                        <input type="file" accept="image/*" onChange={manejarSubidaLogoGlobalLocal} className="w-full text-xs text-slate-500 cursor-pointer" />
+                        <input type="file" accept="image/*" onChange={manejarSubidaLogoGlobalLocal} className="w-full text-xs text-slate-400 cursor-pointer" />
                       </div>
                     </div>
                   </div>
@@ -1479,60 +1481,61 @@
               </div>
 
               {modalEditarMovimiento && (
-                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
-                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-3">
-                    <h3 className="text-lg font-extrabold text-[#112A20] text-center">Editar Movimiento</h3>
-                    <input type="text" value={editConcepto} onChange={(e) => setEditConcepto(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm" />
-                    <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm font-bold" />
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
+                  <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
+                    <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Editar Movimiento</h3>
+                    <input type="text" value={editConcepto} onChange={(e) => setEditConcepto(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
+                    <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-bold outline-none" />
                     <div className="flex gap-2">
-                      <button onClick={() => setModalEditarMovimiento(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-xs">Cancelar</button>
-                      <button onClick={guardarEdicionMovimiento} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-xs">Guardar</button>
+                      <button onClick={() => setModalEditarMovimiento(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
+                      <button onClick={guardarEdicionMovimiento} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Guardar</button>
                     </div>
                   </div>
                 </div>
               )}
 
               {modalEditarSaldo && (
-                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
-                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-3">
-                    <h3 className="text-lg font-extrabold text-[#112A20] text-center">Modificar Saldo Inicial</h3>
-                    <p className="text-xs text-[#52725F] text-center">Cuenta: <strong>{cuentaAEditar?.nombre}</strong></p>
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
+                  <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
+                    <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Modificar Saldo Inicial</h3>
+                    <p className="text-xs text-emerald-300 text-center">Cuenta: <strong>{cuentaAEditar?.nombre}</strong></p>
                     <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">📅 Fecha de corte:</label>
-                      <input type="date" value={fechaSaldoEditado} onChange={(e) => setFechaSaldoEditado(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm font-semibold mb-2" />
+                      <label className="text-xs font-semibold text-emerald-300 block mb-1">📅 Fecha de corte:</label>
+                      <input type="date" value={fechaSaldoEditado} onChange={(e) => setFechaSaldoEditado(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-semibold mb-2 outline-none" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Nuevo saldo de arranque:</label>
-                      <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm font-bold mb-3" />
+                      <label className="text-xs font-semibold text-emerald-300 block mb-1">Nuevo saldo de arranque:</label>
+                      <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-bold mb-3 outline-none" />
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-xs">Cancelar</button>
-                      <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-xs">Guardar Saldo</button>
+                      <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
+                      <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Guardar Saldo</button>
                     </div>
                   </div>
                 </div>
               )}
 
               {modalNuevaCuenta && (
-                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
-                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-3">
-                    <h3 className="text-lg font-extrabold text-[#112A20] text-center">Nueva Cuenta</h3>
-                    <input type="text" placeholder="Nombre" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm" />
-                    <input type="text" placeholder="Saldo Inicial" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm" />
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
+                  <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
+                    <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Nueva Cuenta</h3>
+                    <input type="text" placeholder="Nombre" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
+                    <input type="text" placeholder="Saldo Inicial" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
                     <div className="flex gap-2">
-                      <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-xs">Cancelar</button>
-                      <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-xs">Crear</button>
+                      <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
+                      <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Crear</button>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="absolute bottom-0 left-0 right-0 h-16 bg-white flex border-t border-[#E2E8F0] shadow-lg z-40">
-                <button onClick={() => setTab('inicio')} className="flex-1 flex flex-col items-center justify-center"><span className="text-lg">🏠</span><span className={`text-[10px] ${tab === 'inicio' ? 'text-[#205B43] font-extrabold' : 'text-slate-500'}`}>Inicio</span></button>
-                <button onClick={() => setTab('cuentas')} className="flex-1 flex flex-col items-center justify-center"><span className="text-lg">🏦</span><span className={`text-[10px] ${tab === 'cuentas' ? 'text-[#205B43] font-extrabold' : 'text-slate-500'}`}>Cuentas</span></button>
-                <button onClick={() => setTab('deudas')} className="flex-1 flex flex-col items-center justify-center"><span className="text-lg">📑</span><span className={`text-[10px] ${tab === 'deudas' ? 'text-[#205B43] font-extrabold' : 'text-slate-500'}`}>CxC / CxP</span></button>
-                <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center"><span className="text-lg">📊</span><span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-slate-500'}`}>Reportes</span></button>
-                {esSuperAdmin && (<button onClick={() => setTab('admin')} className="flex-1 flex flex-col items-center justify-center"><span className="text-lg">⚙️</span><span className={`text-[10px] ${tab === 'admin' ? 'text-amber-600 font-extrabold' : 'text-slate-500'}`}>Admin</span></button>)}
+              {/* NAVEGACIÓN INFERIOR FLOTANTE CON BACKDROP BLUR (ESTILO APP NATIVA) */}
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-[#112A20]/90 backdrop-blur-md flex border-t border-[#D4AF37]/20 shadow-2xl z-40 px-2">
+                <button onClick={() => setTab('inicio')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">🏠</span><span className={`text-[10px] ${tab === 'inicio' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Inicio</span></button>
+                <button onClick={() => setTab('cuentas')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">🏦</span><span className={`text-[10px] ${tab === 'cuentas' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Cuentas</span></button>
+                <button onClick={() => setTab('deudas')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">📑</span><span className={`text-[10px] ${tab === 'deudas' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>CxC / CxP</span></button>
+                <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">📊</span><span className={`text-[10px] ${tab === 'reportes' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Reportes</span></button>
+                {esSuperAdmin && (<button onClick={() => setTab('admin')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">⚙️</span><span className={`text-[10px] ${tab === 'admin' ? 'text-amber-400 font-black' : 'text-slate-400'}`}>Admin</span></button>)}
               </div>
             </div>
           );
