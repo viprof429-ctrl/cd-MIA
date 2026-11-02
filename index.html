@@ -320,8 +320,9 @@
               return null;
             }
           },
-          async guardarDatosNube(token, payload) {
+          async guardarDatosNube(token, userId, payload) {
             try {
+              // CORRECCIÓN CLAVE: Usamos upsert correctamente con on_conflict para evitar el error 400
               await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
                 method: 'POST',
                 headers: {
@@ -330,7 +331,11 @@
                   'Authorization': `Bearer ${token}`,
                   'Prefer': 'resolution=merge-duplicates'
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                  user_id: userId,
+                  correo: payload.correo,
+                  data: payload.data
+                })
               });
             } catch (err) {
               console.error("Error guardando en la nube:", err);
@@ -598,12 +603,13 @@
 
           useEffect(() => {
             if (sesion && sesion.access_token && datosCargados) {
+              const userId = sesion.user_id || sesion.user.id;
+              const correoUser = sesion.user?.email || emailInput;
               const payload = {
-                user_id: sesion.user_id || sesion.user.id,
-                correo: sesion.user?.email || emailInput,
-                data: { cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, moneda: monedaSeleccionada, idioma: idiomaSeleccionado, correo: sesion.user?.email || emailInput }
+                correo: correoUser,
+                data: { cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, moneda: monedaSeleccionada, idioma: idiomaSeleccionado, correo: correoUser }
               };
-              supabaseApi.guardarDatosNube(sesion.access_token, payload);
+              supabaseApi.guardarDatosNube(sesion.access_token, userId, payload);
             }
           }, [cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, monedaSeleccionada, idiomaSeleccionado, datosCargados, sesion]);
 
@@ -2187,4 +2193,4 @@
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
-</html> 
+</html>
