@@ -292,11 +292,20 @@
               const rows = await res.json();
               if (rows && rows.length > 0) {
                 let rawData = rows[0].data;
-                // EXTRACCIÓN ROBUSTA: Si data venía guardada como arreglo directo de cuentas, la normalizamos
+                // SOPORTE HíBRIDO: Si data es un objeto con cuentas, úsalo. Si es arreglo o viene vacío, respeta las cuentas base pero rescata lo guardado.
                 if (Array.isArray(rawData)) {
                   return { cuentas: rawData, movimientos: [], cuentasPorCobrar: [], cuentasPorPagar: [] };
                 }
-                return rawData;
+                if (rawData && typeof rawData === 'object') {
+                  return {
+                    cuentas: rawData.cuentas || CUENTAS_BASE,
+                    movimientos: rawData.movimientos || [],
+                    cuentasPorCobrar: rawData.cuentasPorCobrar || [],
+                    cuentasPorPagar: rawData.cuentasPorPagar || [],
+                    moneda: rawData.moneda,
+                    idioma: rawData.idioma
+                  };
+                }
               }
               return null;
             } catch (err) {
@@ -753,7 +762,7 @@
             const gas = movimientos
               .filter((m) => m.cuentaId === cuentaId && m.tipo === 'Gasto')
               .reduce((acc, m) => acc + m.valor, 0);
-            return c.saldoInicial + ing - gas;
+            return (c.saldoInicial || 0) + ing - gas;
           };
 
           const patrimonioTotal = cuentas.reduce((acc, c) => acc + obtenerSaldoCuenta(c.id), 0);
@@ -1155,7 +1164,7 @@
             const monedaUsr = usr.data?.moneda || 'COP';
 
             if (tipoBusqueda === 'correo' && filtroCorreo !== 'Todos' && correoUsr !== filtroCorreo) return false;
-            if (tipoBusqueda === 'idioma' && filtroIdioma !== 'Todos' && idiomaUsr !== idiomaUsr) return false;
+            if (tipoBusqueda === 'idioma' && filtroIdioma !== 'Todos' && idiomaUsr !== filtroIdioma) return false;
             if (tipoBusqueda === 'moneda' && filtroMoneda !== 'Todas' && !monedaUsr.includes(filtroMoneda)) return false;
 
             return true;
