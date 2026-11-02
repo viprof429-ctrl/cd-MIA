@@ -243,12 +243,12 @@
               
               if (data.id || data.user?.id) {
                 const uid = data.id || data.user.id;
-                await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?on_conflict=user_id`, {
+                await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
                     'apikey': SUPABASE_ANON_KEY,
-                    'Prefer': 'resolution=merge-duplicates'
+                    'Prefer': 'return=minimal'
                   },
                   body: JSON.stringify({
                     user_id: uid,
@@ -322,20 +322,48 @@
           },
           async guardarDatosNube(token, userId, payload) {
             try {
-              await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?on_conflict=user_id`, {
-                method: 'POST',
+              // 1. Verificamos si ya existe el registro del usuario en la tabla
+              const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}&select=user_id`, {
+                method: 'GET',
                 headers: {
-                  'Content-Type': 'application/json',
                   'apikey': SUPABASE_ANON_KEY,
-                  'Authorization': `Bearer ${token}`,
-                  'Prefer': 'resolution=merge-duplicates'
-                },
-                body: JSON.stringify({
-                  user_id: userId,
-                  correo: payload.correo,
-                  data: payload.data
-                })
+                  'Authorization': `Bearer ${token}`
+                }
               });
+              const existingRows = await checkRes.json();
+
+              if (existingRows && existingRows.length > 0) {
+                // 2. Si ya existe, hacemos un PATCH exacto (Actualización)
+                await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${token}`,
+                    'Prefer': 'return=minimal'
+                  },
+                  body: JSON.stringify({
+                    correo: payload.correo,
+                    data: payload.data
+                  })
+                });
+              } else {
+                // 3. Si no existe, hacemos un POST (Creación)
+                await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${token}`,
+                    'Prefer': 'return=minimal'
+                  },
+                  body: JSON.stringify({
+                    user_id: userId,
+                    correo: payload.correo,
+                    data: payload.data
+                  })
+                });
+              }
             } catch (err) {
               console.error("Error guardando en la nube:", err);
             }
@@ -369,13 +397,13 @@
               const updatedRows = await resPatch.json();
               if (updatedRows && updatedRows.length > 0) return true;
 
-              const resPost = await fetch(`${SUPABASE_URL}/rest/v1/mia_configuracion?on_conflict=clave`, {
+              const resPost = await fetch(`${SUPABASE_URL}/rest/v1/mia_configuracion`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
                   'apikey': SUPABASE_ANON_KEY,
                   'Authorization': `Bearer ${token}`,
-                  'Prefer': 'resolution=merge-duplicates'
+                  'Prefer': 'return=minimal'
                 },
                 body: JSON.stringify({ clave: 'logo_global', valor: logoBase64 })
               });
