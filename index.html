@@ -14,8 +14,36 @@
     <meta name="apple-mobile-web-app-title" content="MIA">
     <meta name="mobile-web-app-capable" content="yes">
 
-    <!-- ENLACE AL MANIFIESTO PWA FÍSICO -->
-    <link rel="manifest" href="./manifest.json">
+    <!-- MANIFIESTO DINÁMICO SEGURO EN LÍNEA -->
+    <script>
+      const manifestData = {
+        "name": "MIA - Mi Inteligencia de Ahorro",
+        "short_name": "MIA",
+        "start_url": "./",
+        "display": "standalone",
+        "background_color": "#0D211A",
+        "theme_color": "#0D211A",
+        "icons": [
+          {
+            "src": "https://i.ibb.co/6P26q1s/logo.png",
+            "sizes": "192x192",
+            "type": "image/png"
+          },
+          {
+            "src": "https://i.ibb.co/6P26q1s/logo.png",
+            "sizes": "512x512",
+            "type": "image/png"
+          }
+        ]
+      };
+      const stringManifest = JSON.stringify(manifestData);
+      const blob = new Blob([stringManifest], {type: 'application/json'});
+      const manifestURL = URL.createObjectURL(blob);
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = manifestURL;
+      document.head.appendChild(link);
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -1136,7 +1164,6 @@
             <div className="flex-1 overflow-y-auto p-4 pb-28">
               {tab === 'inicio' && (
                 <div>
-                  {/* HERO CARD PATRIMONIO CON DEGRADADO Y TOQUE DORADO */}
                   <div className="bg-gradient-to-br from-[#112A20] to-[#1B4332] rounded-3xl p-5 mb-5 shadow-xl border border-[#D4AF37]/40 text-white relative overflow-hidden">
                     <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-[#D4AF37]/10 rounded-full blur-2xl"></div>
                     <div className="flex justify-between items-center mb-2">
