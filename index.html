@@ -504,7 +504,7 @@
           const totalCxPPendiente = cuentasPorPagar.reduce((acc, item) => acc + item.saldoPendiente, 0);
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0 || c.saldoInicial !== 0);
 
-          // CÁLCULO DE EDADES DE CARTERA (Gráfico de barras hacia arriba)
+          // CÁLCULO DE EDADES DE CARTERA
           const calcularEdadesCartera = (listaDeudas) => {
             const hoy = new Date();
             let d1_30 = 0, d31_60 = 0, dMas60 = 0;
