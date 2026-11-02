@@ -14,27 +14,8 @@
     <meta name="apple-mobile-web-app-title" content="MIA">
     <meta name="mobile-web-app-capable" content="yes">
 
-    <!-- MANIFIESTO PWA ESTÁTICO CON ENLACE DIRECTO AL LOGO -->
-    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,{
-      %22name%22: %22MIA - Mi Inteligencia de Ahorro%22,
-      %22short_name%22: %22MIA%22,
-      %22start_url%22: %22.%22,
-      %22display%22: %22standalone%22,
-      %22background_color%22: %22%230D211A%22,
-      %22theme_color%22: %22%230D211A%22,
-      %22icons%22: [
-        {
-          %22src%22: %22https://i.ibb.co/6P26q1s/logo.png%22,
-          %22sizes%22: %22192x192%22,
-          %22type%22: %22image/png%22
-        },
-        {
-          %22src%22: %22https://i.ibb.co/6P26q1s/logo.png%22,
-          %22sizes%22: %22512x512%22,
-          %22type%22: %22image/png%22
-        }
-      ]
-    }">
+    <!-- ENLACE AL MANIFIESTO PWA FÍSICO -->
+    <link rel="manifest" href="./manifest.json">
 
     <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -86,7 +67,7 @@
             sinMovs: "Aún no has registrado movimientos. ¡Agrega tu primero arriba!",
             cuentasTitulo: "Cuentas y Saldos Iniciales",
             crearCuentaBtn: "+ Crear Cuenta",
-            cuentasSub: "Define el dinero con el que arrancas en cada cuenta. Consulta sus reportes y exporta sus historial abajo.",
+            cuentasSub: "Define el dinero con el que arrancas en cada cuenta. Consulta sus reportes y exporta su historial abajo.",
             saldoActual: "Saldo Actual:",
             saldoInicialLabel: "SALDO INICIAL:",
             modificarBtn: "✏️ Modificar",
@@ -1134,405 +1115,406 @@
                   </button>
                 </div>
               </div>
-            );
-          }
-
-          const esSuperAdmin = sesion?.user?.email?.trim().toLowerCase() === 'viprof429@gmail.com';
-
-          return (
-            <div className="flex flex-col h-full bg-[#0D211A] relative w-full text-slate-100">
-              <div className="p-3 px-5 flex justify-between items-center bg-[#112A20] border-b border-[#D4AF37]/20 shadow-md">
-                <LogoHeaderMIA logoCustom={logoGlobal} />
-                <div className="flex items-center gap-2">
-                  {esSuperAdmin && (
-                    <button onClick={() => setTab('admin')} className="bg-[#D4AF37]/20 text-[#D4AF37] px-3.5 py-1.5 rounded-xl text-xs font-bold border border-[#D4AF37]/50">Admin</button>
-                  )}
-                  <button onClick={cerrarSesion} className="bg-red-500/20 text-red-300 px-3.5 py-1.5 rounded-xl text-xs font-bold border border-red-500/30">Salir</button>
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4 pb-28">
-                {tab === 'inicio' && (
-                  <div>
-                    {/* HERO CARD PATRIMONIO CON DEGRADADO Y TOQUE DORADO */}
-                    <div className="bg-gradient-to-br from-[#112A20] to-[#1B4332] rounded-3xl p-5 mb-5 shadow-xl border border-[#D4AF37]/40 text-white relative overflow-hidden">
-                      <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-[#D4AF37]/10 rounded-full blur-2xl"></div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-[11px] font-extrabold text-[#D4AF37] tracking-wider">{t.patrimonio} ({monedaSeleccionada})</span>
-                        <button onClick={() => setTab('cuentas')} className="text-emerald-300 text-xs font-bold hover:underline">{t.ajustarSaldos}</button>
-                      </div>
-                      <h2 className="text-3xl font-black my-2 tracking-tight text-white">{formatoCOP(patrimonioTotal, simboloMoneda)}</h2>
-                      <p className="text-[11px] text-emerald-200/80">{t.subPatrimonio}</p>
-                    </div>
-
-                    <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-base font-bold text-slate-100">{t.fondosActivos}</h3>
-                      <button onClick={() => setTab('cuentas')} className="text-xs text-emerald-400 font-bold hover:underline">{t.verCuentas}</button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 mb-5">
-                      {cuentasConSaldo.length === 0 && totalCxCPendiente === 0 && totalCxPPendiente === 0 ? (
-                        <p className="col-span-2 text-center text-xs text-slate-400 italic py-2">{t.sinCuentas}</p>
-                      ) : (
-                        <>
-                          {cuentasConSaldo.map((c) => (
-                            <div key={c.id} className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-emerald-900/30 flex flex-col justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xl">{c.icono}</span>
-                                <p className="text-xs font-semibold text-slate-200 truncate">{c.nombre}</p>
-                              </div>
-                              <p className="text-[14px] font-extrabold text-emerald-400 mt-2">{formatoCOP(obtenerSaldoCuenta(c.id), simboloMoneda)}</p>
-                            </div>
-                          ))}
-                          {totalCxCPendiente > 0 && (
-                            <div className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-emerald-900/30 flex flex-col justify-between">
-                              <div className="flex items-center gap-2"><span className="text-xl">📥</span><p className="text-xs font-semibold text-slate-200 truncate">{t.totalCxCPend}</p></div>
-                              <p className="text-[14px] font-extrabold text-emerald-400 mt-2">{formatoCOP(totalCxCPendiente, simboloMoneda)}</p>
-                            </div>
-                          )}
-                          {totalCxPPendiente > 0 && (
-                            <div className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-red-900/30 flex flex-col justify-between">
-                              <div className="flex items-center gap-2"><span className="text-xl">📤</span><p className="text-xs font-semibold text-slate-200 truncate">{t.totalCxPPend}</p></div>
-                              <p className="text-[14px] font-extrabold text-red-400 mt-2">{formatoCOP(totalCxPPendiente, simboloMoneda)}</p>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-
-                    <h3 className="text-base font-bold text-slate-100 mb-3">{t.registrarMov}</h3>
-                    <div className="bg-[#16382D] rounded-3xl p-4 shadow-xl border border-emerald-900/30 space-y-3.5">
-                      <div className="flex gap-2">
-                        <button onClick={() => { setTipoMovimiento('Gasto'); setCategoriaSeleccionada(categoriasGasto[0]); }} className={`flex-1 py-2.5 rounded-2xl font-bold text-sm transition ${tipoMovimiento === 'Gasto' ? 'bg-[#EF4444] text-white shadow-lg' : 'bg-[#112A20] text-slate-300'}`}>{t.gasto}</button>
-                        <button onClick={() => { setTipoMovimiento('Ingreso'); setCategoriaSeleccionada(categoriasIngreso[0]); }} className={`flex-1 py-2.5 rounded-2xl font-bold text-sm transition ${tipoMovimiento === 'Ingreso' ? 'bg-[#10B981] text-[#0D211A] shadow-lg font-black' : 'bg-[#112A20] text-slate-300'}`}>{t.ingreso}</button>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.medioPago}</label>
-                        <select value={cuentaSeleccionada} onChange={(e) => setCuentaSeleccionada(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none font-medium focus:ring-2 focus:ring-emerald-500/20">
-                          {cuentas.map((c) => (<option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.fecha}</label>
-                        <input type="text" value={fechaMovimiento} onChange={(e) => setFechaMovimiento(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20" />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.rubro}</label>
-                        <select value={categoriaSeleccionada} onChange={(e) => setCategoriaSeleccionada(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none font-medium focus:ring-2 focus:ring-emerald-500/20">
-                          {(tipoMovimiento === 'Gasto' ? categoriasGasto : categoriasIngreso).map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
-                        </select>
-                      </div>
-
-                      {((tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) || 
-                        (tipoMovimiento === 'Gasto' && (categoriaSeleccionada === 'Préstamos a Clientes' || categoriaSeleccionada === 'Pago a Terceros'))) && (
-                        <div className="bg-[#112A20] p-3.5 rounded-2xl border border-emerald-900/40 space-y-2">
-                          <label className="text-xs font-bold text-[#D4AF37] block">Identificación del Tercero (Llave Principal):</label>
-                          <input type="text" placeholder="Digita Cédula o NIT..." value={terceroCC} onChange={(e) => handleIdentificacionMovimientoChange(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs outline-none font-bold focus:ring-2 focus:ring-[#D4AF37]/50" />
-                          <input type="text" placeholder="Nombre completo autocompletado..." value={terceroNombre} onChange={(e) => setTerceroNombre(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs outline-none font-medium" />
-                        </div>
-                      )}
-
-                      {!( (tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) || 
-                          (tipoMovimiento === 'Gasto' && (categoriaSeleccionada === 'Préstamos a Clientes' || categoriaSeleccionada === 'Pago a Terceros')) ) && (
-                        <input type="text" placeholder={t.conceptoPlaceholder} value={concepto} onChange={(e) => setConcepto(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20" />
-                      )}
-
-                      <input type="text" placeholder={t.valorPlaceholder(monedaSeleccionada)} value={valorDisplay} onChange={(e) => setValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold" />
-                      <button onClick={guardarMovimiento} className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0D211A] font-extrabold py-3.5 rounded-2xl shadow-lg mt-2 transition">{t.guardarMovBtn}</button>
-                    </div>
-
-                    <h3 className="text-base font-bold text-slate-100 mt-5 mb-2.5">{t.movRecientes}</h3>
-                    {movimientos.length === 0 ? (
-                      <p className="text-center text-slate-400 my-6 italic text-sm">{t.sinMovs}</p>
-                    ) : (
-                      movimientos.slice(0, 5).map((m) => {
-                        const cuentaAsociada = cuentas.find((c) => c.id === m.cuentaId);
-                        const esIngreso = m.tipo === 'Ingreso';
-                        return (
-                          <div key={m.id} className="bg-[#16382D] rounded-2xl p-3.5 my-2 flex justify-between items-center shadow-md border border-emerald-900/30">
-                            <div className="flex-1 pr-2">
-                              <p className="text-sm font-semibold text-slate-200">{m.concepto}</p>
-                              <p className="text-[11px] text-slate-400 mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className={`text-sm font-extrabold ${esIngreso ? 'text-emerald-400' : 'text-red-400'}`}>{esIngreso ? '+ ' : '- '}{formatoCOP(m.valor, simboloMoneda)}</span>
-                              <button onClick={() => abrirModalEditarMovimiento(m)} className="p-1.5 bg-[#112A20] text-emerald-400 rounded-xl text-xs font-bold border border-emerald-900/40">✏️</button>
-                              <button onClick={() => eliminarMovimiento(m.id)} className="p-1.5 bg-red-950/40 text-red-400 rounded-xl text-xs font-bold border border-red-950/50">🗑️</button>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                )}
-
-                {tab === 'cuentas' && (
-                  <div>
-                    <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-base font-bold text-slate-100">{t.cuentasTitulo}</h3>
-                      <button onClick={() => setModalNuevaCuenta(true)} className="bg-[#10B981] text-[#0D211A] px-4 py-2 rounded-full text-xs font-extrabold shadow-lg">{t.crearCuentaBtn}</button>
-                    </div>
-                    <p className="text-[13px] text-emerald-300 mb-4">{t.cuentasSub}</p>
-
-                    {cuentas.map((c) => {
-                      const saldoActual = obtenerSaldoCuenta(c.id);
-                      return (
-                        <div key={c.id} className="bg-[#16382D] rounded-3xl p-4 my-3 shadow-md border border-emerald-900/30 space-y-3">
-                          <div className="flex items-center">
-                            <span className="text-3xl">{c.icono}</span>
-                            <div className="ml-3 flex-1">
-                              <h4 className="text-base font-bold text-slate-100">{c.nombre}</h4>
-                              <p className="text-xs text-slate-400">Tipo: {c.tipo}</p>
-                            </div>
-                            <div className="text-right">
-                              <span className="text-[11px] text-slate-400">{t.saldoActual}</span>
-                              <p className="text-base font-extrabold text-emerald-400">{formatoCOP(saldoActual, simboloMoneda)}</p>
-                            </div>
-                          </div>
-                          <div className="flex justify-between items-center pt-2 border-t border-emerald-900/40">
-                            <div>
-                              <span className="text-[10px] font-bold text-slate-400">{t.saldoInicialLabel} (Desde: {c.fechaSaldoInicial || fechaHoy()})</span>
-                              <p className="text-[14px] font-bold text-slate-200">{formatoCOP(c.saldoInicial, simboloMoneda)}</p>
-                            </div>
-                            <button onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setFechaSaldoEditado(c.fechaSaldoInicial || fechaHoy()); setModalEditarSaldo(true); }} className="bg-[#112A20] px-3.5 py-2 rounded-2xl text-xs font-bold text-emerald-300 border border-emerald-900/50">{t.modificarBtn}</button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <button onClick={reiniciarTodo} className="w-full mt-5 p-3.5 bg-red-950/30 rounded-2xl text-red-400 font-bold text-xs border border-red-900/40">{t.reiniciarCelularBtn}</button>
-                  </div>
-                )}
-
-                {tab === 'deudas' && (
-                  <div>
-                    <h3 className="text-base font-bold text-slate-100 mb-3">{t.deudasTitulo}</h3>
-                    
-                    <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3.5">
-                      <div>
-                        <label className="text-xs font-bold text-slate-200 block mb-1">{t.tipoOp}</label>
-                        <select value={tipoCxUnified} onChange={(e) => setTipoCxUnified(e.target.value)} className="w-full bg-[#112A20] text-emerald-300 font-extrabold rounded-2xl p-3 text-sm outline-none border border-emerald-900/40">
-                          <option value="CxC">{t.cxcOption}</option>
-                          <option value="CxP">{t.cxpOption}</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="text-[11px] font-bold text-emerald-300 block mb-1">📅 Fecha inicial del saldo inicial:</label>
-                        <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-2.5 border border-emerald-900/40 text-xs font-semibold" />
-                      </div>
-
-                      {tipoCxUnified === 'CxC' ? (
-                        <div className="space-y-2">
-                          <label className="text-[11px] font-bold text-emerald-400 block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
-                          <input type="text" placeholder="Cédula o NIT..." value={terceroCCReg} onChange={(e) => setTerceroCCReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
-                          <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreReg} onChange={(e) => setTerceroNombreReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs" />
-                          <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
-                          <button onClick={guardarCxC} className="w-full bg-[#10B981] text-[#0D211A] font-extrabold py-3 px-4 rounded-2xl shadow-md text-xs mt-2 hover:bg-[#059669] transition block text-center">Guardar Cuenta por Cobrar</button>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <label className="text-[11px] font-bold text-red-400 block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
-                          <input type="text" placeholder="Cédula o NIT..." value={terceroCCRegP} onChange={(e) => setTerceroCCRegP(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
-                          <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreRegP} onChange={(e) => setTerceroNombreRegP(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs" />
-                          <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
-                          <button onClick={guardarCxP} className="w-full bg-[#EF4444] text-white font-extrabold py-3 px-4 rounded-2xl shadow-md text-xs mt-2 hover:bg-[#DC2626] transition block text-center">Guardar Cuenta por Pagar</button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* GRÁFICO DE EDADES ESTILIZADO CON BARRAS REDONDEADAS */}
-                    <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-xs font-bold text-slate-200">📊 Edades de Vencimiento (Cartera)</h4>
-                        <span className="text-[10px] font-extrabold text-[#D4AF37] uppercase">{tipoCxUnified}</span>
-                      </div>
-
-                      {(() => {
-                        const edades = tipoCxUnified === 'CxC' ? edadesCxC : edadesCxP;
-                        return (
-                          <div className="pt-2">
-                            <div className="h-36 flex items-end justify-around gap-4 px-2 border-b border-emerald-900/40 pb-1">
-                              <div className="flex flex-col items-center h-full justify-end flex-1">
-                                <span className="text-[9px] font-extrabold text-emerald-400 mb-1 text-center">{formatoCOP(edades.v1_30, simboloMoneda)}</span>
-                                <div style={{ height: `${Math.max(edades.h1_30, 8)}%` }} className="w-full bg-[#10B981] rounded-t-xl transition-all duration-300 shadow-sm"></div>
-                              </div>
-                              <div className="flex flex-col items-center h-full justify-end flex-1">
-                                <span className="text-[9px] font-extrabold text-[#D4AF37] mb-1 text-center">{formatoCOP(edades.v31_60, simboloMoneda)}</span>
-                                <div style={{ height: `${Math.max(edades.h31_60, 8)}%` }} className="w-full bg-[#D4AF37] rounded-t-xl transition-all duration-300 shadow-sm"></div>
-                              </div>
-                              <div className="flex flex-col items-center h-full justify-end flex-1">
-                                <span className="text-[9px] font-extrabold text-red-400 mb-1 text-center">{formatoCOP(edades.vMas60, simboloMoneda)}</span>
-                                <div style={{ height: `${Math.max(edades.hMas60, 8)}%` }} className="w-full bg-[#EF4444] rounded-t-xl transition-all duration-300 shadow-sm"></div>
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-3 text-[10px] font-bold text-center text-slate-400 pt-2">
-                              <span>1 - 30 días</span>
-                              <span>31 - 60 días</span>
-                              <span>&gt; 60 días</span>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                )}
-
-                {tab === 'reportes' && (
-                  <div>
-                    <h3 className="text-base font-bold text-slate-100 mb-3">{t.reportesTitulo}</h3>
-                    
-                    <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3.5">
-                      <h4 className="text-xs font-bold text-slate-200">📑 Reporte Avanzado de Cartera (Cruce por NIT/CC)</h4>
-                      
-                      <select value={repTipoCartera} onChange={(e) => setRepTipoCartera(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-2.5 border border-emerald-900/40 text-xs font-semibold">
-                        <option value="CxC">Cuentas por Cobrar (CxC)</option>
-                        <option value="CxP">Cuentas por Pagar (CxP)</option>
-                      </select>
-
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Desde:</label>
-                          <input type="date" value={repFechaDesde} onChange={(e) => setRepFechaDesde(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2 border border-emerald-900/40 text-[11px]" />
-                        </div>
-                        <div className="flex-1">
-                          <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Hasta:</label>
-                          <input type="date" value={repFechaHasta} onChange={(e) => setRepFechaHasta(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2 border border-emerald-900/40 text-[11px]" />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Buscar por Cédula, NIT, Nombre o "Todos":</label>
-                        <input type="text" placeholder="Digita Cédula o NIT..." value={repTerceroBusqueda} onChange={(e) => setRepTerceroBusqueda(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/40 text-xs font-bold" />
-                      </div>
-
-                      <div className="pt-2 border-t border-emerald-900/40 space-y-2">
-                        <p className="text-xs font-bold text-emerald-400">Registros encontrados: {listaDeudasReporte.length}</p>
-                        <div className="flex gap-2">
-                          <button onClick={exportarReporteCarteraCSV} className="flex-1 bg-[#10B981] text-[#0D211A] py-2.5 rounded-2xl text-xs font-extrabold shadow">📊 Exportar Excel</button>
-                          <button onClick={exportarReporteCarteraPDF} className="flex-1 bg-[#059669] text-white py-2.5 rounded-2xl text-xs font-extrabold shadow">📄 Exportar PDF</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {tab === 'admin' && esSuperAdmin && (
-                  <div className="bg-[#16382D] rounded-3xl p-5 shadow-xl border border-[#D4AF37]/30 space-y-4">
-                    <h3 className="text-lg font-extrabold text-[#D4AF37] border-b border-emerald-900/40 pb-2">{t.adminPanel}</h3>
-                    
-                    <div className="space-y-3 bg-[#0D211A] p-4 rounded-2xl border border-emerald-900/40">
-                      <h4 className="text-xs font-bold text-slate-200">📊 Reporte Ejecutivo de Usuarios</h4>
-                      
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Desde:</label>
-                          <input type="date" value={filtroFechaDesde} onChange={(e) => setFiltroFechaDesde(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-1.5 border border-emerald-900/40 text-[11px]" />
-                        </div>
-                        <div className="flex-1">
-                          <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Hasta:</label>
-                          <input type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-1.5 border border-emerald-900/40 text-[11px]" />
-                        </div>
-                      </div>
-
-                      <select value={tipoBusqueda} onChange={(e) => setTipoBusqueda(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-2 border border-emerald-900/40 text-xs">
-                        <option value="correo">Buscar por Correo</option>
-                        <option value="idioma">Buscar por Idioma</option>
-                        <option value="moneda">Buscar por Moneda</option>
-                      </select>
-                      <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#10B981] text-[#0D211A] font-extrabold py-2.5 rounded-xl text-xs">🔍 Mostrar Reporte por Fechas</button>
-                    </div>
-
-                    {reporteGenerado && (
-                      <div className="space-y-3 pt-3 border-t border-emerald-900/40">
-                        <div className="bg-[#112A20] text-white p-3.5 rounded-2xl border border-emerald-900/40">
-                          <p className="text-[10px] text-[#D4AF37] font-bold uppercase">Total Usuarios en el Rango</p>
-                          <h3 className="text-2xl font-black text-white">{usuariosFiltrados.length}</h3>
-                        </div>
-                        <div className="flex gap-2">
-                          <button onClick={exportarReporteUsuariosCSV} className="flex-1 bg-[#10B981] text-[#0D211A] py-2.5 rounded-xl text-xs font-extrabold shadow">📊 Excel (CSV)</button>
-                          <button onClick={exportarReporteUsuariosPDF} className="flex-1 bg-[#059669] text-white py-2.5 rounded-xl text-xs font-extrabold shadow">📄 PDF</button>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="space-y-3 pt-2">
-                      <h4 className="text-xs font-bold text-slate-200">{t.cargaLogo}</h4>
-                      <div className="flex items-center gap-3 bg-[#0D211A] p-3 rounded-2xl border border-emerald-900/40">
-                        <div className="w-12 h-12 bg-[#112A20] rounded-xl flex items-center justify-center overflow-hidden border border-[#D4AF37]/30">
-                          {logoGlobal ? <img src={logoGlobal} alt="Logo" className="w-full h-full object-contain" /> : <span className="text-xs text-[#D4AF37] font-bold">MIA</span>}
-                        </div>
-                        <input type="file" accept="image/*" onChange={manejarSubidaLogoGlobalLocal} className="w-full text-xs text-slate-400 cursor-pointer" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {modalEditarMovimiento && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
-                  <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
-                    <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Editar Movimiento</h3>
-                    <input type="text" value={editConcepto} onChange={(e) => setEditConcepto(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
-                    <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-bold outline-none" />
-                    <div className="flex gap-2">
-                      <button onClick={() => setModalEditarMovimiento(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
-                      <button onClick={guardarEdicionMovimiento} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Guardar</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {modalEditarSaldo && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
-                  <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
-                    <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Modificar Saldo Inicial</h3>
-                    <p className="text-xs text-emerald-300 text-center">Cuenta: <strong>{cuentaAEditar?.nombre}</strong></p>
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-300 block mb-1">📅 Fecha de corte:</label>
-                      <input type="date" value={fechaSaldoEditado} onChange={(e) => setFechaSaldoEditado(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-semibold mb-2 outline-none" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-300 block mb-1">Nuevo saldo de arranque:</label>
-                      <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-bold mb-3 outline-none" />
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
-                      <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Guardar Saldo</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {modalNuevaCuenta && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
-                  <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
-                    <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Nueva Cuenta</h3>
-                    <input type="text" placeholder="Nombre" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
-                    <input type="text" placeholder="Saldo Inicial" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
-                    <div className="flex gap-2">
-                      <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
-                      <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Crear</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* NAVEGACIÓN INFERIOR FLOTANTE CON BACKDROP BLUR (ESTILO APP NATIVA) */}
-              <div className="absolute bottom-0 left-0 right-0 h-16 bg-[#112A20]/90 backdrop-blur-md flex border-t border-[#D4AF37]/20 shadow-2xl z-40 px-2">
-                <button onClick={() => setTab('inicio')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">🏠</span><span className={`text-[10px] ${tab === 'inicio' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Inicio</span></button>
-                <button onClick={() => setTab('cuentas')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">🏦</span><span className={`text-[10px] ${tab === 'cuentas' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Cuentas</span></button>
-                <button onClick={() => setTab('deudas')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">📑</span><span className={`text-[10px] ${tab === 'deudas' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>CxC / CxP</span></button>
-                <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">📊</span><span className={`text-[10px] ${tab === 'reportes' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Reportes</span></button>
-                {esSuperAdmin && (<button onClick={() => setTab('admin')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">⚙️</span><span className={`text-[10px] ${tab === 'admin' ? 'text-amber-400 font-black' : 'text-slate-400'}`}>Admin</span></button>)}
-              </div>
             </div>
           );
         }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        const esSuperAdmin = sesion?.user?.email?.trim().toLowerCase() === 'viprof429@gmail.com';
+
+        return (
+          <div className="flex flex-col h-full bg-[#0D211A] relative w-full text-slate-100">
+            <div className="p-3 px-5 flex justify-between items-center bg-[#112A20] border-b border-[#D4AF37]/20 shadow-md">
+              <LogoHeaderMIA logoCustom={logoGlobal} />
+              <div className="flex items-center gap-2">
+                {esSuperAdmin && (
+                  <button onClick={() => setTab('admin')} className="bg-[#D4AF37]/20 text-[#D4AF37] px-3.5 py-1.5 rounded-xl text-xs font-bold border border-[#D4AF37]/50">Admin</button>
+                )}
+                <button onClick={cerrarSesion} className="bg-red-500/20 text-red-300 px-3.5 py-1.5 rounded-xl text-xs font-bold border border-red-500/30">Salir</button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 pb-28">
+              {tab === 'inicio' && (
+                <div>
+                  {/* HERO CARD PATRIMONIO CON DEGRADADO Y TOQUE DORADO */}
+                  <div className="bg-gradient-to-br from-[#112A20] to-[#1B4332] rounded-3xl p-5 mb-5 shadow-xl border border-[#D4AF37]/40 text-white relative overflow-hidden">
+                    <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-[#D4AF37]/10 rounded-full blur-2xl"></div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-[11px] font-extrabold text-[#D4AF37] tracking-wider">{t.patrimonio} ({monedaSeleccionada})</span>
+                      <button onClick={() => setTab('cuentas')} className="text-emerald-300 text-xs font-bold hover:underline">{t.ajustarSaldos}</button>
+                    </div>
+                    <h2 className="text-3xl font-black my-2 tracking-tight text-white">{formatoCOP(patrimonioTotal, simboloMoneda)}</h2>
+                    <p className="text-[11px] text-emerald-200/80">{t.subPatrimonio}</p>
+                  </div>
+
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-base font-bold text-slate-100">{t.fondosActivos}</h3>
+                    <button onClick={() => setTab('cuentas')} className="text-xs text-emerald-400 font-bold hover:underline">{t.verCuentas}</button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    {cuentasConSaldo.length === 0 && totalCxCPendiente === 0 && totalCxPPendiente === 0 ? (
+                      <p className="col-span-2 text-center text-xs text-slate-400 italic py-2">{t.sinCuentas}</p>
+                    ) : (
+                      <>
+                        {cuentasConSaldo.map((c) => (
+                          <div key={c.id} className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-emerald-900/30 flex flex-col justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl">{c.icono}</span>
+                              <p className="text-xs font-semibold text-slate-200 truncate">{c.nombre}</p>
+                            </div>
+                            <p className="text-[14px] font-extrabold text-emerald-400 mt-2">{formatoCOP(obtenerSaldoCuenta(c.id), simboloMoneda)}</p>
+                          </div>
+                        ))}
+                        {totalCxCPendiente > 0 && (
+                          <div className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-emerald-900/30 flex flex-col justify-between">
+                            <div className="flex items-center gap-2"><span className="text-xl">📥</span><p className="text-xs font-semibold text-slate-200 truncate">{t.totalCxCPend}</p></div>
+                            <p className="text-[14px] font-extrabold text-emerald-400 mt-2">{formatoCOP(totalCxCPendiente, simboloMoneda)}</p>
+                          </div>
+                        )}
+                        {totalCxPPendiente > 0 && (
+                          <div className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-red-900/30 flex flex-col justify-between">
+                            <div className="flex items-center gap-2"><span className="text-xl">📤</span><p className="text-xs font-semibold text-slate-200 truncate">{t.totalCxPPend}</p></div>
+                            <p className="text-[14px] font-extrabold text-red-400 mt-2">{formatoCOP(totalCxPPendiente, simboloMoneda)}</p>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <h3 className="text-base font-bold text-slate-100 mb-3">{t.registrarMov}</h3>
+                  <div className="bg-[#16382D] rounded-3xl p-4 shadow-xl border border-emerald-900/30 space-y-3.5">
+                    <div className="flex gap-2">
+                      <button onClick={() => { setTipoMovimiento('Gasto'); setCategoriaSeleccionada(categoriasGasto[0]); }} className={`flex-1 py-2.5 rounded-2xl font-bold text-sm transition ${tipoMovimiento === 'Gasto' ? 'bg-[#EF4444] text-white shadow-lg' : 'bg-[#112A20] text-slate-300'}`}>{t.gasto}</button>
+                      <button onClick={() => { setTipoMovimiento('Ingreso'); setCategoriaSeleccionada(categoriasIngreso[0]); }} className={`flex-1 py-2.5 rounded-2xl font-bold text-sm transition ${tipoMovimiento === 'Ingreso' ? 'bg-[#10B981] text-[#0D211A] shadow-lg font-black' : 'bg-[#112A20] text-slate-300'}`}>{t.ingreso}</button>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.medioPago}</label>
+                      <select value={cuentaSeleccionada} onChange={(e) => setCuentaSeleccionada(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none font-medium focus:ring-2 focus:ring-emerald-500/20">
+                        {cuentas.map((c) => (<option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.fecha}</label>
+                      <input type="text" value={fechaMovimiento} onChange={(e) => setFechaMovimiento(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20" />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.rubro}</label>
+                      <select value={categoriaSeleccionada} onChange={(e) => setCategoriaSeleccionada(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none font-medium focus:ring-2 focus:ring-emerald-500/20">
+                        {(tipoMovimiento === 'Gasto' ? categoriasGasto : categoriasIngreso).map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
+                      </select>
+                    </div>
+
+                    {((tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) || 
+                      (tipoMovimiento === 'Gasto' && (categoriaSeleccionada === 'Préstamos a Clientes' || categoriaSeleccionada === 'Pago a Terceros'))) && (
+                      <div className="bg-[#112A20] p-3.5 rounded-2xl border border-emerald-900/40 space-y-2">
+                        <label className="text-xs font-bold text-[#D4AF37] block">Identificación del Tercero (Llave Principal):</label>
+                        <input type="text" placeholder="Digita Cédula o NIT..." value={terceroCC} onChange={(e) => handleIdentificacionMovimientoChange(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs outline-none font-bold focus:ring-2 focus:ring-[#D4AF37]/50" />
+                        <input type="text" placeholder="Nombre completo autocompletado..." value={terceroNombre} onChange={(e) => setTerceroNombre(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs outline-none font-medium" />
+                      </div>
+                    )}
+
+                    {!( (tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) || 
+                        (tipoMovimiento === 'Gasto' && (categoriaSeleccionada === 'Préstamos a Clientes' || categoriaSeleccionada === 'Pago a Terceros')) ) && (
+                      <input type="text" placeholder={t.conceptoPlaceholder} value={concepto} onChange={(e) => setConcepto(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20" />
+                    )}
+
+                    <input type="text" placeholder={t.valorPlaceholder(monedaSeleccionada)} value={valorDisplay} onChange={(e) => setValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold" />
+                    <button onClick={guardarMovimiento} className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0D211A] font-extrabold py-3.5 rounded-2xl shadow-lg mt-2 transition">{t.guardarMovBtn}</button>
+                  </div>
+
+                  <h3 className="text-base font-bold text-slate-100 mt-5 mb-2.5">{t.movRecientes}</h3>
+                  {movimientos.length === 0 ? (
+                    <p className="text-center text-slate-400 my-6 italic text-sm">{t.sinMovs}</p>
+                  ) : (
+                    movimientos.slice(0, 5).map((m) => {
+                      const cuentaAsociada = cuentas.find((c) => c.id === m.cuentaId);
+                      const esIngreso = m.tipo === 'Ingreso';
+                      return (
+                        <div key={m.id} className="bg-[#16382D] rounded-2xl p-3.5 my-2 flex justify-between items-center shadow-md border border-emerald-900/30">
+                          <div className="flex-1 pr-2">
+                            <p className="text-sm font-semibold text-slate-200">{m.concepto}</p>
+                            <p className="text-[11px] text-slate-400 mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-extrabold ${esIngreso ? 'text-emerald-400' : 'text-red-400'}`}>{esIngreso ? '+ ' : '- '}{formatoCOP(m.valor, simboloMoneda)}</span>
+                            <button onClick={() => abrirModalEditarMovimiento(m)} className="p-1.5 bg-[#112A20] text-emerald-400 rounded-xl text-xs font-bold border border-emerald-900/40">✏️</button>
+                            <button onClick={() => eliminarMovimiento(m.id)} className="p-1.5 bg-red-950/40 text-red-400 rounded-xl text-xs font-bold border border-red-950/50">🗑️</button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+
+              {tab === 'cuentas' && (
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-base font-bold text-slate-100">{t.cuentasTitulo}</h3>
+                    <button onClick={() => setModalNuevaCuenta(true)} className="bg-[#10B981] text-[#0D211A] px-4 py-2 rounded-full text-xs font-extrabold shadow-lg">{t.crearCuentaBtn}</button>
+                  </div>
+                  <p className="text-[13px] text-emerald-300 mb-4">{t.cuentasSub}</p>
+
+                  {cuentas.map((c) => {
+                    const saldoActual = obtenerSaldoCuenta(c.id);
+                    return (
+                      <div key={c.id} className="bg-[#16382D] rounded-3xl p-4 my-3 shadow-md border border-emerald-900/30 space-y-3">
+                        <div className="flex items-center">
+                          <span className="text-3xl">{c.icono}</span>
+                          <div className="ml-3 flex-1">
+                            <h4 className="text-base font-bold text-slate-100">{c.nombre}</h4>
+                            <p className="text-xs text-slate-400">Tipo: {c.tipo}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[11px] text-slate-400">{t.saldoActual}</span>
+                            <p className="text-base font-extrabold text-emerald-400">{formatoCOP(saldoActual, simboloMoneda)}</p>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center pt-2 border-t border-emerald-900/40">
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-400">{t.saldoInicialLabel} (Desde: {c.fechaSaldoInicial || fechaHoy()})</span>
+                            <p className="text-[14px] font-bold text-slate-200">{formatoCOP(c.saldoInicial, simboloMoneda)}</p>
+                          </div>
+                          <button onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setFechaSaldoEditado(c.fechaSaldoInicial || fechaHoy()); setModalEditarSaldo(true); }} className="bg-[#112A20] px-3.5 py-2 rounded-2xl text-xs font-bold text-emerald-300 border border-emerald-900/50">{t.modificarBtn}</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <button onClick={reiniciarTodo} className="w-full mt-5 p-3.5 bg-red-950/30 rounded-2xl text-red-400 font-bold text-xs border border-red-900/40">{t.reiniciarCelularBtn}</button>
+                </div>
+              )}
+
+              {tab === 'deudas' && (
+                <div>
+                  <h3 className="text-base font-bold text-slate-100 mb-3">{t.deudasTitulo}</h3>
+                  
+                  <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3.5">
+                    <div>
+                      <label className="text-xs font-bold text-slate-200 block mb-1">{t.tipoOp}</label>
+                      <select value={tipoCxUnified} onChange={(e) => setTipoCxUnified(e.target.value)} className="w-full bg-[#112A20] text-emerald-300 font-extrabold rounded-2xl p-3 text-sm outline-none border border-emerald-900/40">
+                        <option value="CxC">{t.cxcOption}</option>
+                        <option value="CxP">{t.cxpOption}</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-emerald-300 block mb-1">📅 Fecha inicial del saldo inicial:</label>
+                      <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-2.5 border border-emerald-900/40 text-xs font-semibold" />
+                    </div>
+
+                    {tipoCxUnified === 'CxC' ? (
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-emerald-400 block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
+                        <input type="text" placeholder="Cédula o NIT..." value={terceroCCReg} onChange={(e) => setTerceroCCReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
+                        <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreReg} onChange={(e) => setTerceroNombreReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs" />
+                        <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
+                        <button onClick={guardarCxC} className="w-full bg-[#10B981] text-[#0D211A] font-extrabold py-3 px-4 rounded-2xl shadow-md text-xs mt-2 hover:bg-[#059669] transition block text-center">Guardar Cuenta por Cobrar</button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <label className="text-[11px] font-bold text-red-400 block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
+                        <input type="text" placeholder="Cédula o NIT..." value={terceroCCRegP} onChange={(e) => setTerceroCCRegP(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
+                        <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreRegP} onChange={(e) => setTerceroNombreRegP(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs" />
+                        <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
+                        <button onClick={guardarCxP} className="w-full bg-[#EF4444] text-white font-extrabold py-3 px-4 rounded-2xl shadow-md text-xs mt-2 hover:bg-[#DC2626] transition block text-center">Guardar Cuenta por Pagar</button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* GRÁFICO DE EDADES ESTILIZADO CON BARRAS REDONDEADAS */}
+                  <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-xs font-bold text-slate-200">📊 Edades de Vencimiento (Cartera)</h4>
+                      <span className="text-[10px] font-extrabold text-[#D4AF37] uppercase">{tipoCxUnified}</span>
+                    </div>
+
+                    {(() => {
+                      const edades = tipoCxUnified === 'CxC' ? edadesCxC : edadesCxP;
+                      return (
+                        <div className="pt-2">
+                          <div className="h-36 flex items-end justify-around gap-4 px-2 border-b border-emerald-900/40 pb-1">
+                            <div className="flex flex-col items-center h-full justify-end flex-1">
+                              <span className="text-[9px] font-extrabold text-emerald-400 mb-1 text-center">{formatoCOP(edades.v1_30, simboloMoneda)}</span>
+                              <div style={{ height: `${Math.max(edades.h1_30, 8)}%` }} className="w-full bg-[#10B981] rounded-t-xl transition-all duration-300 shadow-sm"></div>
+                            </div>
+                            <div className="flex flex-col items-center h-full justify-end flex-1">
+                              <span className="text-[9px] font-extrabold text-[#D4AF37] mb-1 text-center">{formatoCOP(edades.v31_60, simboloMoneda)}</span>
+                              <div style={{ height: `${Math.max(edades.h31_60, 8)}%` }} className="w-full bg-[#D4AF37] rounded-t-xl transition-all duration-300 shadow-sm"></div>
+                            </div>
+                            <div className="flex flex-col items-center h-full justify-end flex-1">
+                              <span className="text-[9px] font-extrabold text-red-400 mb-1 text-center">{formatoCOP(edades.vMas60, simboloMoneda)}</span>
+                              <div style={{ height: `${Math.max(edades.hMas60, 8)}%` }} className="w-full bg-[#EF4444] rounded-t-xl transition-all duration-300 shadow-sm"></div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 text-[10px] font-bold text-center text-slate-400 pt-2">
+                            <span>1 - 30 días</span>
+                            <span>31 - 60 días</span>
+                            <span>&gt; 60 días</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {tab === 'reportes' && (
+                <div>
+                  <h3 className="text-base font-bold text-slate-100 mb-3">{t.reportesTitulo}</h3>
+                  
+                  <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3.5">
+                    <h4 className="text-xs font-bold text-slate-200">📑 Reporte Avanzado de Cartera (Cruce por NIT/CC)</h4>
+                    
+                    <select value={repTipoCartera} onChange={(e) => setRepTipoCartera(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-2.5 border border-emerald-900/40 text-xs font-semibold">
+                      <option value="CxC">Cuentas por Cobrar (CxC)</option>
+                      <option value="CxP">Cuentas por Pagar (CxP)</option>
+                    </select>
+
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Desde:</label>
+                        <input type="date" value={repFechaDesde} onChange={(e) => setRepFechaDesde(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2 border border-emerald-900/40 text-[11px]" />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Hasta:</label>
+                        <input type="date" value={repFechaHasta} onChange={(e) => setRepFechaHasta(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2 border border-emerald-900/40 text-[11px]" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Buscar por Cédula, NIT, Nombre o "Todos":</label>
+                      <input type="text" placeholder="Digita Cédula o NIT..." value={repTerceroBusqueda} onChange={(e) => setRepTerceroBusqueda(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/40 text-xs font-bold" />
+                    </div>
+
+                    <div className="pt-2 border-t border-emerald-900/40 space-y-2">
+                      <p className="text-xs font-bold text-emerald-400">Registros encontrados: {listaDeudasReporte.length}</p>
+                      <div className="flex gap-2">
+                        <button onClick={exportarReporteCarteraCSV} className="flex-1 bg-[#10B981] text-[#0D211A] py-2.5 rounded-2xl text-xs font-extrabold shadow">📊 Exportar Excel</button>
+                        <button onClick={exportarReporteCarteraPDF} className="flex-1 bg-[#059669] text-white py-2.5 rounded-2xl text-xs font-extrabold shadow">📄 Exportar PDF</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {tab === 'admin' && esSuperAdmin && (
+                <div className="bg-[#16382D] rounded-3xl p-5 shadow-xl border border-[#D4AF37]/30 space-y-4">
+                  <h3 className="text-lg font-extrabold text-[#D4AF37] border-b border-emerald-900/40 pb-2">{t.adminPanel}</h3>
+                  
+                  <div className="space-y-3 bg-[#0D211A] p-4 rounded-2xl border border-emerald-900/40">
+                    <h4 className="text-xs font-bold text-slate-200">📊 Reporte Ejecutivo de Usuarios</h4>
+                    
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Desde:</label>
+                        <input type="date" value={filtroFechaDesde} onChange={(e) => setFiltroFechaDesde(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-1.5 border border-emerald-900/40 text-[11px]" />
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Hasta:</label>
+                        <input type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-1.5 border border-emerald-900/40 text-[11px]" />
+                      </div>
+                    </div>
+
+                    <select value={tipoBusqueda} onChange={(e) => setTipoBusqueda(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-2 border border-emerald-900/40 text-xs">
+                      <option value="correo">Buscar por Correo</option>
+                      <option value="idioma">Buscar por Idioma</option>
+                      <option value="moneda">Buscar por Moneda</option>
+                    </select>
+                    <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#10B981] text-[#0D211A] font-extrabold py-2.5 rounded-xl text-xs">🔍 Mostrar Reporte por Fechas</button>
+                  </div>
+
+                  {reporteGenerado && (
+                    <div className="space-y-3 pt-3 border-t border-emerald-900/40">
+                      <div className="bg-[#112A20] text-white p-3.5 rounded-2xl border border-emerald-900/40">
+                        <p className="text-[10px] text-[#D4AF37] font-bold uppercase">Total Usuarios en el Rango</p>
+                        <h3 className="text-2xl font-black text-white">{usuariosFiltrados.length}</h3>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={exportarReporteUsuariosCSV} className="flex-1 bg-[#10B981] text-[#0D211A] py-2.5 rounded-xl text-xs font-extrabold shadow">📊 Excel (CSV)</button>
+                        <button onClick={exportarReporteUsuariosPDF} className="flex-1 bg-[#059669] text-white py-2.5 rounded-xl text-xs font-extrabold shadow">📄 PDF</button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-3 pt-2">
+                    <h4 className="text-xs font-bold text-slate-200">{t.cargaLogo}</h4>
+                    <div className="flex items-center gap-3 bg-[#0D211A] p-3 rounded-2xl border border-emerald-900/40">
+                      <div className="w-12 h-12 bg-[#112A20] rounded-xl flex items-center justify-center overflow-hidden border border-[#D4AF37]/30">
+                        {logoGlobal ? <img src={logoGlobal} alt="Logo" className="w-full h-full object-contain" /> : <span className="text-xs text-[#D4AF37] font-bold">MIA</span>}
+                      </div>
+                      <input type="file" accept="image/*" onChange={manejarSubidaLogoGlobalLocal} className="w-full text-xs text-slate-400 cursor-pointer" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {modalEditarMovimiento && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
+                <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
+                  <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Editar Movimiento</h3>
+                  <input type="text" value={editConcepto} onChange={(e) => setEditConcepto(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
+                  <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-bold outline-none" />
+                  <div className="flex gap-2">
+                    <button onClick={() => setModalEditarMovimiento(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
+                    <button onClick={guardarEdicionMovimiento} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Guardar</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {modalEditarSaldo && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
+                <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
+                  <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Modificar Saldo Inicial</h3>
+                  <p className="text-xs text-emerald-300 text-center">Cuenta: <strong>{cuentaAEditar?.nombre}</strong></p>
+                  <div>
+                    <label className="text-xs font-semibold text-emerald-300 block mb-1">📅 Fecha de corte:</label>
+                    <input type="date" value={fechaSaldoEditado} onChange={(e) => setFechaSaldoEditado(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-semibold mb-2 outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-emerald-300 block mb-1">Nuevo saldo de arranque:</label>
+                    <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-bold mb-3 outline-none" />
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
+                    <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Guardar Saldo</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {modalNuevaCuenta && (
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
+                <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
+                  <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Nueva Cuenta</h3>
+                  <input type="text" placeholder="Nombre" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
+                  <input type="text" placeholder="Saldo Inicial" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
+                  <div className="flex gap-2">
+                    <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
+                    <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Crear</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* NAVEGACIÓN INFERIOR FLOTANTE CON BACKDROP BLUR (ESTILO APP NATIVA) */}
+            <div className="absolute bottom-0 left-0 right-0 h-16 bg-[#112A20]/90 backdrop-blur-md flex border-t border-[#D4AF37]/20 shadow-2xl z-40 px-2">
+              <button onClick={() => setTab('inicio')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">🏠</span><span className={`text-[10px] ${tab === 'inicio' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Inicio</span></button>
+              <button onClick={() => setTab('cuentas')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">🏦</span><span className={`text-[10px] ${tab === 'cuentas' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Cuentas</span></button>
+              <button onClick={() => setTab('deudas')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">📑</span><span className={`text-[10px] ${tab === 'deudas' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>CxC / CxP</span></button>
+              <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">📊</span><span className={`text-[10px] ${tab === 'reportes' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Reportes</span></button>
+              {esSuperAdmin && (<button onClick={() => setTab('admin')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">⚙️</span><span className={`text-[10px] ${tab === 'admin' ? 'text-amber-400 font-black' : 'text-slate-400'}`}>Admin</span></button>)}
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>
