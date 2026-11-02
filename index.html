@@ -58,39 +58,11 @@
             tipoOp: "Tipo:",
             cxcOption: "📥 Cuentas por Cobrar (CxC)",
             cxpOption: "📤 Cuentas por Pagar (CxP)",
-            terceroClientePlaceholder: "Tercero (Cliente / Deudor)",
-            terceroProveedorPlaceholder: "Tercero (Proveedor / Acreedor)",
-            conceptoDeuda: "Concepto / Rubro:",
-            nuevoBtn: "+ Nuevo",
-            cancelar: "Cancelar",
-            vencimiento: "Fecha Vencimiento:",
-            cuentaAfectadaCobrar: "Cuenta afectada al cobrar:",
-            cuentaAfectadaPagar: "Cuenta afectada al pagar:",
-            obsPlaceholder: "Observación / Nota",
-            guardarCxCBtn: "Guardar Cuenta por Cobrar",
-            guardarCxPBtn: "Guardar Cuenta por Pagar",
-            registrarAbonoPago: "⚡ Registrar Abono o Pago",
-            fechaAbono: "Fecha del Abono:",
-            seleccionarTerceroCliente: "Seleccionar Tercero Pendiente (Cliente):",
-            seleccionarTerceroProveedor: "Seleccionar Tercero Pendiente (Acreedor/Proveedor):",
-            montoAbonarPlaceholder: "Monto a abonar",
-            recibirPagoBtn: "Recibir Pago en Cuenta",
-            pagarDeudaBtn: "Pagar Deuda desde Cuenta",
             reportesTitulo: "Reportes y Estado de Deudas",
-            reporteDetallado: "📑 Reporte Detallado por Tercero (CxC / CxP)",
-            balanceDeudas: "📊 Balance General de Deudas",
-            reporteFechas: "Reporte Financiero por Fechas",
-            gastosPeriodo: "GASTOS DEL PERÍODO",
-            distribucionRubro: "Distribución por Rubro",
             adminPanel: "⚙️ Panel de Superusuario (ALGC)",
             cargaLogo: "Carga de Logotipo Institucional Global:",
             salir: "Salir",
-            superusuario: "⚙️ Superusuario",
-            inicioNav: "Inicio",
-            cuentasNav: "Cuentas",
-            deudasNav: "CxC / CxP",
-            reportesNav: "Reportes",
-            adminNav: "Admin"
+            superusuario: "⚙️ Superusuario"
           }
         };
 
@@ -168,7 +140,6 @@
                   })
                 });
               }
-
               return { data, error: null };
             } catch (err) {
               return { data: null, error: err };
@@ -201,7 +172,7 @@
               const rows = await res.json();
               if (rows && rows.length > 0) {
                 let rawData = rows[0].data;
-                let cuentasExtraidas = rawData?.cuentas || CUENTAS_BASE;
+                let cuentasExtraidas = rawData?.cuentas && rawData.cuentas.length > 0 ? rawData.cuentas : CUENTAS_BASE;
                 cuentasExtraidas = cuentasExtraidas.map(c => ({
                   ...c,
                   saldoInicial: Number(c.saldoInicial !== undefined ? c.saldoInicial : (c.saldoinicial !== undefined ? c.saldoinicial : 0)),
@@ -233,9 +204,7 @@
                   'Authorization': `Bearer ${token}`,
                   'Prefer': 'return=minimal'
                 },
-                body: JSON.stringify({
-                  data: jsonData
-                })
+                body: JSON.stringify({ data: jsonData })
               });
 
               if (!res.ok) {
@@ -247,10 +216,7 @@
                     'Authorization': `Bearer ${token}`,
                     'Prefer': 'return=minimal'
                   },
-                  body: JSON.stringify({
-                    user_id: userId,
-                    data: jsonData
-                  })
+                  body: JSON.stringify({ user_id: userId, data: jsonData })
                 });
               }
             } catch (err) {
@@ -373,7 +339,6 @@
 
           const [categoriasGasto] = useState(CATEGORIAS_GASTO_BASE);
           const [categoriasIngreso] = useState(CATEGORIAS_INGRESO_BASE);
-          const [conceptosDeuda, setConceptosDeuda] = useState([...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión']);
           
           const [datosCargados, setDatosCargados] = useState(false);
           const datosCargadosRef = useRef(false);
@@ -488,9 +453,7 @@
           const [fechaGeneralReg, setFechaGeneralReg] = useState(fechaHoy());
           const [terceroCCReg, setTerceroCCReg] = useState('');
           const [terceroNombreReg, setTerceroNombreReg] = useState('');
-          const [conceptoCxC, setConceptoCxC] = useState(conceptosDeuda[0]);
-          const [nuevoConceptoCxC, setNuevoConceptoCxC] = useState('');
-          const [usarNuevoConceptoCxC, setUsarNuevoConceptoCxC] = useState(false);
+          const [conceptoCxC, setConceptoCxC] = useState(categoriasGasto[0]);
           const [saldoInicialCxCDisplay, setSaldoInicialCxCDisplay] = useState('');
           const [vencimientoCxC, setVencimientoCxC] = useState(fechaHoy());
           const [cuentaCxC, setCuentaCxC] = useState(cuentas[0]?.id || '1');
@@ -498,9 +461,7 @@
 
           const [terceroCCRegP, setTerceroCCRegP] = useState('');
           const [terceroNombreRegP, setTerceroNombreRegP] = useState('');
-          const [conceptoCxP, setConceptoCxP] = useState(conceptosDeuda[0]);
-          const [nuevoConceptoCxP, setNuevoConceptoCxP] = useState('');
-          const [usarNuevoConceptoCxP, setUsarNuevoConceptoCxP] = useState(false);
+          const [conceptoCxP, setConceptoCxP] = useState(categoriasGasto[0]);
           const [saldoInicialCxPDisplay, setSaldoInicialCxPDisplay] = useState('');
           const [vencimientoCxP, setVencimientoCxP] = useState(fechaHoy());
           const [cuentaCxP, setCuentaCxP] = useState(cuentas[0]?.id || '1');
@@ -522,8 +483,6 @@
           const [repFechaHasta, setRepFechaHasta] = useState('');
           const [repTerceroBusqueda, setRepTerceroBusqueda] = useState('Todos');
 
-          const [fechaDesde, setFechaDesde] = useState('');
-          const [fechaHasta, setFechaHasta] = useState('');
           const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
           const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
           const [tipoBusqueda, setTipoBusqueda] = useState('correo');
@@ -545,7 +504,7 @@
           const totalCxPPendiente = cuentasPorPagar.reduce((acc, item) => acc + item.saldoPendiente, 0);
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0 || c.saldoInicial !== 0);
 
-          // CÁLCULO DE EDADES DE CARTERA (1-30, 31-60, >60 días)
+          // CÁLCULO DE EDADES DE CARTERA (Torta / Barras hacia arriba)
           const calcularEdadesCartera = (listaDeudas) => {
             const hoy = new Date();
             let d1_30 = 0, d31_60 = 0, dMas60 = 0;
@@ -571,6 +530,9 @@
               h1_30: Math.round((d1_30 / maxVal) * 100),
               h31_60: Math.round((d31_60 / maxVal) * 100),
               hMas60: Math.round((dMas60 / maxVal) * 100),
+              p1_30: total > 0 ? Math.round((d1_30 / total) * 100) : 0,
+              p31_60: total > 0 ? Math.round((d31_60 / total) * 100) : 0,
+              pMas60: total > 0 ? Math.round((dMas60 / total) * 100) : 0,
               v1_30: d1_30,
               v31_60: d31_60,
               vMas60: dMas60,
@@ -840,16 +802,15 @@
 
           const guardarCxC = () => {
             const num = obtenerNumeroLimpio(saldoInicialCxCDisplay);
-            const conceptoFinal = usarNuevoConceptoCxC ? nuevoConceptoCxC.trim() : conceptoCxC;
             const terceroCompleto = `${terceroNombreReg.trim()} (${terceroCCReg.trim() || 'NIT/CC N/A'})`;
-            if (!terceroNombreReg.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
-              notificar('Datos incompletos', 'Ingresa el nombre del tercero, concepto y un saldo válido.');
+            if (!terceroNombreReg.trim() || isNaN(num) || num <= 0) {
+              notificar('Datos incompletos', 'Ingresa el nombre del tercero y un saldo válido.');
               return;
             }
             const nuevaCxC = {
               id: Date.now(),
               tercero: terceroCompleto,
-              concepto: conceptoFinal,
+              concepto: conceptoCxC,
               valorTotal: num,
               saldoPendiente: num,
               fechaInicial: fechaGeneralReg,
@@ -866,16 +827,15 @@
 
           const guardarCxP = () => {
             const num = obtenerNumeroLimpio(saldoInicialCxPDisplay);
-            const conceptoFinal = usarNuevoConceptoCxP ? nuevoConceptoCxP.trim() : conceptoCxP;
             const terceroCompleto = `${terceroNombreRegP.trim()} (${terceroCCRegP.trim() || 'NIT/CC N/A'})`;
-            if (!terceroNombreRegP.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
-              notificar('Datos incompletos', 'Ingresa el nombre del tercero, concepto y un saldo válido.');
+            if (!terceroNombreRegP.trim() || isNaN(num) || num <= 0) {
+              notificar('Datos incompletos', 'Ingresa el nombre del tercero y un saldo válido.');
               return;
             }
             const nuevaCxP = {
               id: Date.now(),
               tercero: terceroCompleto,
-              concepto: conceptoFinal,
+              concepto: conceptoCxP,
               valorTotal: num,
               saldoPendiente: num,
               fechaInicial: fechaGeneralReg,
@@ -1283,10 +1243,10 @@
                   <div>
                     <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.deudasTitulo}</h3>
                     
-                    {/* GRÁFICO DE BARRAS VERTICALES HACIA ARRIBA - EDADES DE CARTERA */}
+                    {/* GRÁFICO DE BARRAS VERTICALES HACIA ARRIBA */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
                       <div className="flex justify-between items-center">
-                        <h4 className="text-xs font-bold text-[#112A20]">📊 Edades de Vencimiento</h4>
+                        <h4 className="text-xs font-bold text-[#112A20]">📊 Edades de Vencimiento (Cartera)</h4>
                         <select value={tipoCxUnified} onChange={(e) => setTipoCxUnified(e.target.value)} className="bg-[#E8EFE9] text-[#205B43] font-bold text-xs rounded-lg p-1 outline-none">
                           <option value="CxC">CxC (Cobrar)</option>
                           <option value="CxP">CxP (Pagar)</option>
@@ -1360,7 +1320,6 @@
                   <div>
                     <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.reportesTitulo}</h3>
                     
-                    {/* MÓDULO DE REPORTE AVANZADO DE CARTERA */}
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
                       <h4 className="text-xs font-bold text-[#112A20]">📑 Reporte Avanzado de Cartera</h4>
                       
@@ -1381,7 +1340,7 @@
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Filtrar por Tercero (NIT, Cédula o Nombre o "Todos"):</label>
+                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Filtrar por Tercero (NIT, Cédula, Nombre o "Todos"):</label>
                         <input type="text" placeholder="Escribe para buscar (o deja 'Todos')..." value={repTerceroBusqueda} onChange={(e) => setRepTerceroBusqueda(e.target.value)} className="w-full bg-white rounded-lg p-2 border text-xs" />
                       </div>
 
@@ -1392,12 +1351,6 @@
                           <button onClick={exportarReporteCarteraPDF} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold">📄 Exportar PDF</button>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3 space-y-2">
-                      <span className="text-[11px] font-bold text-[#718078]">{t.gastosPeriodo}</span>
-                      <h2 className="text-2xl font-extrabold text-[#C94A4A]">{formatoCOP(totalGastosReporte, simboloMoneda)}</h2>
-                      <p className="text-xs text-[#52725F]">Ingresos: {formatoCOP(totalIngresosReporte, simboloMoneda)}</p>
                     </div>
                   </div>
                 )}
@@ -1494,7 +1447,7 @@
                   <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-3">
                     <h3 className="text-lg font-extrabold text-[#112A20] text-center">Nueva Cuenta</h3>
                     <input type="text" placeholder="Nombre" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm" />
-                    <input type="text" placeholder="Saldo Inicial" value={nuevoSaldoInitDisplay} onChange={(e) => setSaldoInicialInitDisplay ? null : setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm" />
+                    <input type="text" placeholder="Saldo Inicial" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm" />
                     <div className="flex gap-2">
                       <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-xs">Cancelar</button>
                       <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-xs">Crear</button>
