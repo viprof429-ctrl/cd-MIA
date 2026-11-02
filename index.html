@@ -4,12 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MIA - Mi Inteligencia de Ahorro</title>
+    
+    <!-- CONFIGURACIÓN DE ICONO Y PWA PARA DISPOSITIVOS MÓVILES -->
+    <link rel="icon" type="image/png" href="https://i.ibb.co/6P26q1s/logo.png">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/6P26q1s/logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://i.ibb.co/6P26q1s/logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MIA">
+    
+    <!-- Manifest dinámico para Android / PWA -->
+    <script>
+      const manifestData = {
+        "name": "MIA - Mi Inteligencia de Ahorro",
+        "short_name": "MIA",
+        "start_url": "./",
+        "display": "standalone",
+        "background_color": "#112A20",
+        "theme_color": "#112A20",
+        "icons": [
+          {
+            "src": "https://i.ibb.co/6P26q1s/logo.png",
+            "sizes": "192x192",
+            "type": "image/png"
+          },
+          {
+            "src": "https://i.ibb.co/6P26q1s/logo.png",
+            "sizes": "512x512",
+            "type": "image/png"
+          }
+        ]
+      };
+      const stringManifest = JSON.stringify(manifestData);
+      const blob = new Blob([stringManifest], {type: 'application/json'});
+      const manifestURL = URL.createObjectURL(blob);
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = manifestURL;
+      document.head.appendChild(link);
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/png" href="https://i.ibb.co/6P26q1s/logo.png">
-    <link rel="apple-touch-icon" href="https://i.ibb.co/6P26q1s/logo.png">
     <style>
         @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -74,7 +112,7 @@
         };
 
         const CUENTAS_BASE = [
-          { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '💵' },
+          { id: '1', nombre: 'Efectivo in Mano', tipo: 'Efectivo', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '💵' },
           { id: '2', nombre: 'Bancolombia', tipo: 'Banco', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '🏦' },
           { id: '3', nombre: 'Nequi', tipo: 'Billetera', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '📱' },
         ];
@@ -172,17 +210,23 @@
               if (rows && rows.length > 0) {
                 let rawData = rows[0].data;
                 let cuentasExtraidas = rawData?.cuentas && rawData.cuentas.length > 0 ? rawData.cuentas : CUENTAS_BASE;
-                cuentasExtraidas = cuentasExtraidas.map(c => ({
-                  ...c,
-                  saldoInicial: Number(c.saldoInicial !== undefined ? c.saldoInicial : (c.saldoinicial !== undefined ? c.saldoinicial : 0)),
-                  fechaSaldoInicial: c.fechaSaldoInicial || fechaHoy()
-                }));
+                
+                cuentasExtraidas = cuentasExtraidas.map(c => {
+                  const baseOriginal = CUENTAS_BASE.find(b => b.id === c.id) || {};
+                  const saldoVal = Number(c.saldoInicial !== undefined ? c.saldoInicial : (c.saldoinicial !== undefined ? c.saldoinicial : baseOriginal.saldoInicial || 0));
+                  return {
+                    ...baseOriginal,
+                    ...c,
+                    saldoInicial: isNaN(saldoVal) ? 0 : saldoVal,
+                    fechaSaldoInicial: c.fechaSaldoInicial || c.fechasaldoinicial || fechaHoy()
+                  };
+                });
 
                 return {
                   cuentas: cuentasExtraidas,
-                  movimientos: rawData?.movimientos || [],
-                  cuentasPorCobrar: rawData?.cuentasPorCobrar || [],
-                  cuentasPorPagar: rawData?.cuentasPorPagar || [],
+                  movimientos: rawData?.movimientos || rawData?.movimiento || [],
+                  cuentasPorCobrar: rawData?.cuentasPorCobrar || rawData?.cuentas_por_cobrar || [],
+                  cuentasPorPagar: rawData?.cuentasPorPagar || rawData?.cuentas_por_pagar || [],
                   moneda: rawData?.moneda || 'COP ($)',
                   idioma: rawData?.idioma || 'Español'
                 };
