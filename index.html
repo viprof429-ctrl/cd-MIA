@@ -302,7 +302,8 @@
 
                 cuentasExtraidas = cuentasExtraidas.map(c => ({
                   ...c,
-                  saldoInicial: Number(c.saldoInicial !== undefined ? c.saldoInicial : (c.saldoinicial !== undefined ? c.saldoinicial : 0))
+                  saldoInicial: Number(c.saldoInicial !== undefined ? c.saldoInicial : (c.saldoinicial !== undefined ? c.saldoinicial : 0)),
+                  fechaSaldoInicial: c.fechaSaldoInicial || fechaHoy()
                 }));
 
                 return {
@@ -322,7 +323,6 @@
           },
           async guardarDatosNube(token, userId, payload) {
             try {
-              // Actualización directa mediante PATCH usando user_id como filtro (evita conflictos y error 400)
               const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}`, {
                 method: 'PATCH',
                 headers: {
@@ -338,7 +338,6 @@
               });
 
               if (!res.ok) {
-                // Si por alguna razón no existe la fila, la creamos con POST
                 await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
                   method: 'POST',
                   headers: {
@@ -497,9 +496,9 @@
         );
 
         const CUENTAS_BASE = [
-          { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, icono: '💵' },
-          { id: '2', nombre: 'Bancolombia', tipo: 'Banco', saldoInicial: 0, icono: '🏦' },
-          { id: '3', nombre: 'Nequi', tipo: 'Billetera', saldoInicial: 0, icono: '📱' },
+          { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '💵' },
+          { id: '2', nombre: 'Bancolombia', tipo: 'Banco', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '🏦' },
+          { id: '3', nombre: 'Nequi', tipo: 'Billetera', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '📱' },
         ];
 
         const CATEGORIAS_GASTO_BASE = [
@@ -735,41 +734,6 @@
           const [editCuentaId, setEditCuentaId] = useState('');
           const [editCategoria, setEditCategoria] = useState('');
 
-          const [tipoCxUnified, setTipoCxUnified] = useState('CxC');
-          const [fechaGeneralReg, setFechaGeneralReg] = useState(fechaHoy());
-
-          const [terceroCxC, setTerceroCxC] = useState('');
-          const [conceptoCxC, setConceptoCxC] = useState(conceptosDeuda[0]);
-          const [nuevoConceptoCxC, setNuevoConceptoCxC] = useState('');
-          const [usarNuevoConceptoCxC, setUsarNuevoConceptoCxC] = useState(false);
-          const [saldoInicialCxCDisplay, setSaldoInicialCxCDisplay] = useState('');
-          const [vencimientoCxC, setVencimientoCxC] = useState(fechaHoy());
-          const [cuentaCxC, setCuentaCxC] = useState(cuentas[0]?.id || '1');
-          const [obsCxC, setObsCxC] = useState('');
-
-          const [terceroCxP, setTerceroCxP] = useState('');
-          const [conceptoCxP, setConceptoCxP] = useState(conceptosDeuda[0]);
-          const [nuevoConceptoCxP, setNuevoConceptoCxP] = useState('');
-          const [usarNuevoConceptoCxP, setUsarNuevoConceptoCxP] = useState(false);
-          const [saldoInicialCxPDisplay, setSaldoInicialCxPDisplay] = useState('');
-          const [vencimientoCxP, setVencimientoCxP] = useState(fechaHoy());
-          const [cuentaCxP, setCuentaCxP] = useState(cuentas[0]?.id || '1');
-          const [obsCxP, setObsCxP] = useState('');
-
-          const [tipoAbonoUnified, setTipoAbonoUnified] = useState('CxC');
-          const [fechaAbonoUnified, setFechaAbonoUnified] = useState(fechaHoy());
-          const [pagoIdCxC, setPagoIdCxC] = useState('');
-          const [montoPagoCxCDisplay, setMontoPagoCxCDisplay] = useState('');
-          const [cuentaPagoCxC, setCuentaPagoCxC] = useState(cuentas[0]?.id || '1');
-
-          const [pagoIdCxP, setPagoIdCxP] = useState('');
-          const [montoPagoCxPDisplay, setMontoPagoCxPDisplay] = useState('');
-          const [cuentaPagoCxP, setCuentaPagoCxP] = useState(cuentas[0]?.id || '1');
-
-          const [tipoReporteTercero, setTipoReporteTercero] = useState('CxC');
-          const [terceroSeleccionadoId, setTerceroSeleccionadoId] = useState('');
-          const [cuentaReporteId, setCuentaReporteId] = useState('');
-
           const [modalNuevaCuenta, setModalNuevaCuenta] = useState(false);
           const [nuevoNombre, setNuevoNombre] = useState('');
           const [nuevoTipo, setNuevoTipo] = useState('Banco');
@@ -778,6 +742,7 @@
           const [modalEditarSaldo, setModalEditarSaldo] = useState(false);
           const [cuentaAEditar, setCuentaAEditar] = useState(null);
           const [saldoEditadoValorDisplay, setSaldoEditadoValorDisplay] = useState('');
+          const [fechaSaldoEditado, setFechaSaldoEditado] = useState(fechaHoy());
 
           const [fechaDesde, setFechaDesde] = useState('');
           const [fechaHasta, setFechaHasta] = useState('');
@@ -858,257 +823,15 @@
             }
           };
 
-          const guardarCxC = () => {
-            const num = obtenerNumeroLimpio(saldoInicialCxCDisplay);
-            const conceptoFinal = usarNuevoConceptoCxC ? nuevoConceptoCxC.trim() : conceptoCxC;
-            if (!terceroCxC.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
-              notificar('Datos incompletos', 'Ingresa el tercero, concepto y un saldo inicial válido.');
-              return;
-            }
-            if (usarNuevoConceptoCxC && !conceptosDeuda.includes(conceptoFinal)) {
-              setConceptosDeuda(prev => [...prev, conceptoFinal]);
-            }
-            const nuevaCxC = {
-              id: Date.now(),
-              tercero: terceroCxC.trim(),
-              concepto: conceptoFinal,
-              valorTotal: num,
-              saldoPendiente: num,
-              fechaInicial: fechaGeneralReg,
-              vencimiento: vencimientoCxC,
-              cuentaId: cuentaCxC,
-              observacion: obsCxC.trim(),
-              estado: 'Pendiente',
-              historialPagos: []
-            };
-            setCuentasPorCobrar(prev => [nuevaCxC, ...prev]);
-            setTerceroCxC('');
-            setSaldoInicialCxCDisplay('');
-            setObsCxC('');
-            setUsarNuevoConceptoCxC(false);
-            setNuevoConceptoCxC('');
-            notificar('Cuenta por Cobrar', 'Tercero y plazos registrados correctamente.');
-          };
-
-          const procesarCobroUnificado = () => {
-            const item = cuentasPorCobrar.find(c => c.id.toString() === pagoIdCxC);
-            const abono = obtenerNumeroLimpio(montoPagoCxCDisplay);
-            if (!item || isNaN(abono) || abono <= 0) {
-              notificar('Datos inválidos', 'Selecciona una cuenta por cobrar e ingresa un monto válido.');
-              return;
-            }
-            if (abono > item.saldoPendiente) {
-              notificar('Monto excedentario', 'El abono no puede ser mayor al saldo pendiente.');
-              return;
-            }
-            const cuentaAsoc = cuentas.find(c => c.id === cuentaPagoCxC);
-            const movimientoIngreso = {
-              id: Date.now(),
-              cuentaId: cuentaPagoCxC,
-              categoria: 'Otros Ingresos',
-              concepto: `Abono de ${item.tercero} (${item.concepto})`,
-              valor: abono,
-              tipo: 'Ingreso',
-              fecha: fechaAbonoUnified,
-            };
-            setMovimientos(prev => [movimientoIngreso, ...prev]);
-            const nuevoSaldo = item.saldoPendiente - abono;
-            const nuevoEstado = nuevoSaldo === 0 ? 'Pagado' : 'Parcial';
-            const registroPago = { fecha: fechaAbonoUnified, monto: abono, cuentaName: cuentaAsoc?.nombre || 'Cuenta' };
-
-            setCuentasPorCobrar(prev => prev.map(c => c.id === item.id ? { 
-              ...c, 
-              saldoPendiente: nuevoSaldo, 
-              estado: nuevoEstado,
-              historialPagos: [...(c.historialPagos || []), registroPago]
-            } : c));
-
-            setPagoIdCxC('');
-            setMontoPagoCxCDisplay('');
-            notificar('¡Pago Recibido!', `Se registraron ${formatoCOP(abono, simboloMoneda)} con éxito.`);
-          };
-
-          const guardarCxP = () => {
-            const num = obtenerNumeroLimpio(saldoInicialCxPDisplay);
-            const conceptoFinal = usarNuevoConceptoCxP ? nuevoConceptoCxP.trim() : conceptoCxP;
-            if (!terceroCxP.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
-              notificar('Datos incompletos', 'Ingresa el tercero, concepto y un saldo inicial válido.');
-              return;
-            }
-            if (usarNuevoConceptoCxP && !conceptosDeuda.includes(conceptoFinal)) {
-              setConceptosDeuda(prev => [...prev, conceptoFinal]);
-            }
-            const nuevaCxP = {
-              id: Date.now(),
-              tercero: terceroCxP.trim(),
-              concepto: conceptoFinal,
-              valorTotal: num,
-              saldoPendiente: num,
-              fechaInicial: fechaGeneralReg,
-              vencimiento: vencimientoCxP,
-              cuentaId: cuentaCxP,
-              observacion: obsCxP.trim(),
-              estado: 'Pendiente',
-              historialPagos: []
-            };
-            setCuentasPorPagar(prev => [nuevaCxP, ...prev]);
-            setTerceroCxP('');
-            setSaldoInicialCxPDisplay('');
-            setObsCxP('');
-            setUsarNuevoConceptoCxP(false);
-            setNuevoConceptoCxP('');
-            notificar('Cuenta por Pagar', 'Tercero y plazos registrados correctamente.');
-          };
-
-          const procesarPagoUnificado = () => {
-            const item = cuentasPorPagar.find(c => c.id.toString() === pagoIdCxP);
-            const abono = obtenerNumeroLimpio(montoPagoCxPDisplay);
-            if (!item || isNaN(abono) || abono <= 0) {
-              notificar('Datos inválidos', 'Selecciona una cuenta por pagar e ingresa un monto válido.');
-              return;
-            }
-            if (abono > item.saldoPendiente) {
-              notificar('Monto excedentario', 'El pago no puede ser mayor al saldo pendiente.');
-              return;
-            }
-            const cuentaAsoc = cuentas.find(c => c.id === cuentaPagoCxP);
-            const movimientoGasto = {
-              id: Date.now(),
-              cuentaId: cuentaPagoCxP,
-              categoria: 'Otros Gastos',
-              concepto: `Abono a ${item.tercero} (${item.concepto})`,
-              valor: abono,
-              tipo: 'Gasto',
-              fecha: fechaAbonoUnified,
-            };
-            setMovimientos(prev => [movimientoGasto, ...prev]);
-            const nuevoSaldo = item.saldoPendiente - abono;
-            const nuevoEstado = nuevoSaldo === 0 ? 'Pagado' : 'Parcial';
-            const registroPago = { fecha: fechaAbonoUnified, monto: abono, cuentaName: cuentaAsoc?.nombre || 'Cuenta' };
-
-            setCuentasPorPagar(prev => prev.map(c => c.id === item.id ? { 
-              ...c, 
-              saldoPendiente: nuevoSaldo, 
-              estado: nuevoEstado,
-              historialPagos: [...(c.historialPagos || []), registroPago]
-            } : c));
-
-            setPagoIdCxP('');
-            setMontoPagoCxPDisplay('');
-            notificar('¡Pago Realizado!', `Se descontaron ${formatoCOP(abono, simboloMoneda)} con éxito.`);
-          };
-
-          const exportarPDFCuenta = (cuentaObj, movimientosCuenta, saldoActualCuenta) => {
-            if (!cuentaObj) return;
-            const contenidoHtml = `
-              <html>
-                <head>
-                  <meta charset="UTF-8">
-                  <title>Reporte Cuenta - MIA</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
-                    .ingreso { color: #2D6A4F; font-weight: bold; }
-                    .gasto { color: #C94A4A; font-weight: bold; }
-                    .btn-volver { display: block; width: 100%; padding: 12px; background: #205B43; color: white; text-align: center; text-decoration: none; font-weight: bold; border-radius: 8px; margin-top: 20px; }
-                  </style>
-                </head>
-                <body>
-                  <h2>MIA - Reporte de Movimientos de Cuenta</h2>
-                  <hr/>
-                  <p><strong>Cuenta:</strong> ${cuentaObj.nombre} (${cuentaObj.tipo})</p>
-                  <p><strong>Saldo Inicial:</strong> ${formatoCOP(cuentaObj.saldoInicial, simboloMoneda)}</p>
-                  <p><strong>Saldo Actual:</strong> ${formatoCOP(saldoActualCuenta, simboloMoneda)}</p>
-                  <hr/>
-                  <h3>Movimientos:</h3>
-                  <ul>
-                    ${movimientosCuenta.map(m => {
-                      const esIngreso = m.tipo === 'Ingreso';
-                      const claseCSS = esIngreso ? 'ingreso' : 'gasto';
-                      const signo = esIngreso ? '+' : '-';
-                      return `<li>${m.fecha} - ${m.concepto} (${m.categoria}) [<span class="${claseCSS}">${m.tipo}</span>]: <span class="${claseCSS}">${signo}${formatoCOP(m.valor, simboloMoneda)}</span></li>`;
-                    }).join('')}
-                  </ul>
-                  <br/><hr/>
-                  <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
-                  <a href="javascript:window.close();" class="btn-volver">Cerrar y Volver a la App</a>
-                </body>
-              </html>
-            `;
-            const blob = new Blob([contenidoHtml], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-          };
-
-          const exportarCSVCuenta = (cuentaObj, movimientosCuenta) => {
-            if (!cuentaObj) return;
-            let csvContent = "\uFEFFFecha,Concepto,Categoria,Tipo,Valor\n";
-            movimientosCuenta.forEach(m => {
-              csvContent += `${m.fecha},${m.concepto},${m.categoria},${m.tipo},${m.valor}\n`;
-            });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `reporte_cuenta_${cuentaObj.nombre}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          };
-
-          const exportarCSV = (terceroItem) => {
-            if (!terceroItem) return;
-            let csvContent = "\uFEFFFecha,Tercero,Concepto,Valor Total,Saldo Pendiente,Estado\n";
-            csvContent += `${fechaHoy()},${terceroItem.tercero},${terceroItem.concepto},${terceroItem.valorTotal},${terceroItem.saldoPendiente},${terceroItem.estado}\n`;
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `reporte_${terceroItem.tercero}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          };
-
-          const exportarPDF = (terceroItem) => {
-            if (!terceroItem) return;
-            const contenidoHtml = `
-              <html>
-                <head>
-                  <meta charset="UTF-8">
-                  <title>Reporte Tercero - MIA</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
-                    .ingreso { color: #2D6A4F; font-weight: bold; }
-                    .gasto { color: #C94A4A; font-weight: bold; }
-                    .btn-volver { display: block; width: 100%; padding: 12px; background: #205B43; color: white; text-align: center; text-decoration: none; font-weight: bold; border-radius: 8px; margin-top: 20px; }
-                  </style>
-                </head>
-                <body>
-                  <h2>MIA - Reporte Detallado por Tercero</h2>
-                  <hr/>
-                  <p><strong>Tercero:</strong> ${terceroItem.tercero}</p>
-                  <p><strong>Concepto:</strong> ${terceroItem.concepto}</p>
-                  <p><strong>Fecha Inicial:</strong> ${terceroItem.fechaInicial || 'N/A'}</p>
-                  <p><strong>Fecha Vencimiento:</strong> ${terceroItem.vencimiento}</p>
-                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
-                  <p><strong>Saldo Pendiente Actual:</strong> ${formatoCOP(terceroItem.saldoPendiente, simboloMoneda)}</p>
-                  <p><strong>Estado:</strong> ${terceroItem.estado}</p>
-                  <p><strong>Observaciones:</strong> ${terceroItem.observacion || 'Ninguna'}</p>
-                  <hr/>
-                  <h3>Historial de Movimientos:</h3>
-                  <ul>
-                    <li class="ingreso">${terceroItem.fechaInicial || ''} - Saldo Inicial: +${formatoCOP(terceroItem.valorTotal, simboloMoneda)}</li>
-                    ${(terceroItem.historialPagos || []).map(p => `<li class="gasto">${p.fecha} - Abono (${p.cuentaName}): -${formatoCOP(p.monto, simboloMoneda)}</li>`).join('')}
-                  </ul>
-                  <br/><hr/>
-                  <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
-                  <a href="javascript:window.close();" class="btn-volver">Cerrar y Volver a la App</a>
-                </body>
-              </html>
-            `;
-            const blob = new Blob([contenidoHtml], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
+          const actualizarSaldoInicial = () => {
+            if (!cuentaAEditar) return;
+            const nuevoMonto = obtenerNumeroLimpio(saldoEditadoValorDisplay);
+            setCuentas((prev) =>
+              prev.map((c) => (c.id === cuentaAEditar.id ? { ...c, saldoInicial: nuevoMonto, fechaSaldoInicial: fechaSaldoEditado } : c))
+            );
+            setModalEditarSaldo(false);
+            setCuentaAEditar(null);
+            notificar('Saldo Actualizado', 'El saldo inicial y su fecha han sido modificados.');
           };
 
           const guardarNuevaCuenta = () => {
@@ -1123,23 +846,13 @@
               nombre: nuevoNombre.trim(),
               tipo: nuevoTipo,
               saldoInicial: saldo,
+              fechaSaldoInicial: fechaHoy(),
               icono: iconos[nuevoTipo],
             };
             setCuentas((prev) => [...prev, nueva]);
             setNuevoNombre('');
             setNuevoSaldoInitDisplay('');
             setModalNuevaCuenta(false);
-          };
-
-          const actualizarSaldoInicial = () => {
-            if (!cuentaAEditar) return;
-            const nuevoMonto = obtenerNumeroLimpio(saldoEditadoValorDisplay);
-            setCuentas((prev) =>
-              prev.map((c) => (c.id === cuentaAEditar.id ? { ...c, saldoInicial: nuevoMonto } : c))
-            );
-            setModalEditarSaldo(false);
-            setCuentaAEditar(null);
-            notificar('Saldo Actualizado', 'El saldo inicial ha sido modificado.');
           };
 
           const reiniciarTodo = () => {
@@ -1153,119 +866,7 @@
             }
           };
 
-          const movimientosReporte = movimientos.filter((m) => {
-            if (!fechaDesde && !fechaHasta) return true;
-            if (fechaDesde && m.fecha < fechaDesde) return false;
-            if (fechaHasta && m.fecha > fechaHasta) return false;
-            return true;
-          });
-
-          const totalGastosReporte = movimientosReporte
-            .filter((m) => m.tipo === 'Gasto')
-            .reduce((acc, m) => acc + m.valor, 0);
-
-          const totalIngresosReporte = movimientosReporte
-            .filter((m) => m.tipo === 'Ingreso')
-            .reduce((acc, m) => acc + m.valor, 0);
-
-          const rubrosAgrupados = movimientosReporte
-            .filter((m) => m.tipo === 'Gasto')
-            .reduce((acc, m) => {
-              acc[m.categoria] = (acc[m.categoria] || 0) + m.valor;
-              return acc;
-            }, {});
-
-          const listaRubros = Object.entries(rubrosAgrupados).sort((a, b) => b[1] - a[1]);
-          const totalDeudasGrafico = totalCxCPendiente + totalCxPPendiente;
-          const pctCxC = totalDeudasGrafico > 0 ? Math.round((totalCxCPendiente / totalDeudasGrafico) * 100) : 50;
-          const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
-          const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0);
-
-          // EXTRACCIÓN INTELIGENTE DE CORREOS
-          const correosUnicos = [...new Set(listaUsuariosCloud.map(u => u.correo || u.data?.correo || u.data?.user?.email || u.user_id).filter(Boolean))];
-          const idiomasUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.idioma || 'Español').filter(Boolean))];
-          const monedasUnicas = [...new Set(listaUsuariosCloud.map(u => u.data?.moneda || 'COP').filter(Boolean))];
-
-          // FILTRADO DINÁMICO
-          const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
-            const correoUsr = usr.correo || usr.data?.correo || usr.data?.user?.email || usr.user_id || '';
-            const idiomaUsr = usr.data?.idioma || 'Español';
-            const monedaUsr = usr.data?.moneda || 'COP';
-
-            if (tipoBusqueda === 'correo' && filtroCorreo !== 'Todos' && correoUsr !== filtroCorreo) return false;
-            if (tipoBusqueda === 'idioma' && filtroIdioma !== 'Todos' && idiomaUsr !== filtroIdioma) return false;
-            if (tipoBusqueda === 'moneda' && filtroMoneda !== 'Todas' && !monedaUsr.includes(filtroMoneda)) return false;
-
-            return true;
-          });
-
-          const exportarReporteUsuariosCSV = () => {
-            let csvContent = "\uFEFFCorreo Electrónico,Idioma,Moneda,Última Actualización\n";
-            usuariosFiltrados.forEach(u => {
-              const mail = u.correo || u.data?.correo || u.data?.user?.email || u.user_id || 'N/A';
-              csvContent += `${mail},${u.data?.idioma || 'Español'},${u.data?.moneda || 'COP'},${u.updated_at}\n`;
-            });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `reporte_usuarios_mia.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          };
-
-          const exportarReporteUsuariosPDF = () => {
-            const contenidoHtml = `
-              <html>
-                <head>
-                  <meta charset="UTF-8">
-                  <title>Reporte de Usuarios - MIA</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-                    th { background-color: #205B43; color: white; }
-                    .btn-volver { display: block; width: 100%; padding: 12px; background: #205B43; color: white; text-align: center; text-decoration: none; font-weight: bold; border-radius: 8px; margin-top: 20px; }
-                  </style>
-                </head>
-                <body>
-                  <h2>MIA - Reporte Ejecutivo de Usuarios Registrados</h2>
-                  <p><strong>Total de usuarios encontrados:</strong> ${usuariosFiltrados.length}</p>
-                  <hr/>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Correo Electrónico</th>
-                        <th>Idioma</th>
-                        <th>Moneda</th>
-                        <th>Última Actualización</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${usuariosFiltrados.map(u => {
-                        const mail = u.correo || u.data?.correo || u.data?.user?.email || u.user_id || 'N/A';
-                        return `
-                          <tr>
-                            <td>${mail}</td>
-                            <td>${u.data?.idioma || 'Español'}</td>
-                            <td>${u.data?.moneda || 'COP'}</td>
-                            <td>${new Date(u.updated_at).toLocaleString()}</td>
-                          </tr>
-                        `;
-                      }).join('')}
-                    </tbody>
-                  </table>
-                  <br/><hr/>
-                  <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
-                  <a href="javascript:window.close();" class="btn-volver">Cerrar y Volver a la App</a>
-                </body>
-              </html>
-            `;
-            const blob = new Blob([contenidoHtml], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-          };
+          const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0 || c.saldoInicial !== 0);
 
           if (!sesion) {
             return (
@@ -1387,38 +988,18 @@
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 mb-4">
-                      {cuentasConSaldo.length === 0 && totalCxCPendiente === 0 && totalCxPPendiente === 0 ? (
+                      {cuentasConSaldo.length === 0 ? (
                         <p className="col-span-2 text-center text-xs text-[#718078] italic py-2">{t.sinCuentas}</p>
                       ) : (
-                        <>
-                          {cuentasConSaldo.map((c) => (
-                            <div key={c.id} className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xl">{c.icono}</span>
-                                <p className="text-xs font-semibold text-slate-700 truncate">{c.nombre}</p>
-                              </div>
-                              <p className="text-[14px] font-bold text-[#205B43] mt-2">{formatoCOP(obtenerSaldoCuenta(c.id), simboloMoneda)}</p>
+                        cuentasConSaldo.map((c) => (
+                          <div key={c.id} className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xl">{c.icono}</span>
+                              <p className="text-xs font-semibold text-slate-700 truncate">{c.nombre}</p>
                             </div>
-                          ))}
-                          {totalCxCPendiente > 0 && (
-                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-emerald-100 flex flex-col justify-between">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xl">📥</span>
-                                <p className="text-xs font-semibold text-slate-700 truncate">{t.totalCxCPend}</p>
-                              </div>
-                              <p className="text-[14px] font-bold text-[#2D6A4F] mt-2">{formatoCOP(totalCxCPendiente, simboloMoneda)}</p>
-                            </div>
-                          )}
-                          {totalCxPPendiente > 0 && (
-                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-red-100 flex flex-col justify-between">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xl">📤</span>
-                                <p className="text-xs font-semibold text-slate-700 truncate">{t.totalCxPPend}</p>
-                              </div>
-                              <p className="text-[14px] font-bold text-[#C94A4A] mt-2">{formatoCOP(totalCxPPendiente, simboloMoneda)}</p>
-                            </div>
-                          )}
-                        </>
+                            <p className="text-[14px] font-bold text-[#205B43] mt-2">{formatoCOP(obtenerSaldoCuenta(c.id), simboloMoneda)}</p>
+                          </div>
+                        ))
                       )}
                     </div>
 
@@ -1557,65 +1138,15 @@
 
                           <div className="flex justify-between items-center">
                             <div>
-                              <span className="text-[10px] font-bold text-[#718078] tracking-wider">{t.saldoInicialLabel}</span>
+                              <span className="text-[10px] font-bold text-[#718078] tracking-wider">{t.saldoInicialLabel} (Desde: {c.fechaSaldoInicial || fechaHoy()})</span>
                               <p className="text-[14px] font-bold text-[#1F2937] mt-0.5">{formatoCOP(c.saldoInicial, simboloMoneda)}</p>
                             </div>
                             <button
-                              onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setModalEditarSaldo(true); }}
+                              onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setFechaSaldoEditado(c.fechaSaldoInicial || fechaHoy()); setModalEditarSaldo(true); }}
                               className="bg-[#E8EFE9] px-3 py-2 rounded-xl text-xs font-bold text-[#205B43] hover:bg-slate-200 transition"
                             >
                               {t.modificarBtn}
                             </button>
-                          </div>
-
-                          <div className="pt-2 border-t border-slate-100">
-                            <button 
-                              onClick={() => setCuentaReporteId(cuentaReporteId === c.id ? '' : c.id)}
-                              className="w-full py-2 bg-[#F8FAF8] rounded-xl text-xs font-bold text-[#2D6A4F] border border-[#DCE5DB] hover:bg-[#E8EFE9] transition"
-                            >
-                              {cuentaReporteId === c.id ? `🔼 ${t.ocultarReporteCuentaBtn}` : `📊 ${t.verReporteCuentaBtn}`}
-                            </button>
-
-                            {cuentaReporteId === c.id && (() => {
-                              const movsCuenta = movimientos.filter(m => m.cuentaId === c.id);
-                              return (
-                                <div className="mt-3 p-3 bg-[#F8FAF8] rounded-xl border border-slate-200 space-y-2">
-                                  <p className="text-xs font-bold text-[#112A20]">Movimientos de {c.nombre}:</p>
-                                  {movsCuenta.length === 0 ? (
-                                    <p className="text-[11px] text-slate-500 italic">No hay movimientos registrados en esta cuenta.</p>
-                                  ) : (
-                                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                                      {movsCuenta.map(m => {
-                                        const esIngreso = m.tipo === 'Ingreso';
-                                        return (
-                                          <div key={m.id} className="flex justify-between items-center text-[11px] bg-white p-2 rounded border border-slate-100">
-                                            <div>
-                                              <span className="font-semibold text-slate-800">{m.fecha} - {m.concepto}</span>
-                                              <span className="block text-[10px] text-slate-400">{m.categoria}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                              <span className={esIngreso ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>
-                                                {esIngreso ? '+' : '-'}{formatoCOP(m.valor, simboloMoneda)}
-                                              </span>
-                                              <button onClick={() => abrirModalEditarMovimiento(m)} className="p-1 bg-[#E8EFE9] text-[#205B43] rounded text-[10px] font-bold">✏️</button>
-                                              <button onClick={() => eliminarMovimiento(m.id)} className="p-1 bg-red-50 text-red-600 rounded text-[10px] font-bold">🗑️</button>
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                  <div className="flex gap-2 pt-2">
-                                    <button onClick={() => exportarCSVCuenta(c, movsCuenta)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#112A20] transition">
-                                      📊 Excel (CSV)
-                                    </button>
-                                    <button onClick={() => exportarPDFCuenta(c, movsCuenta, saldoActual)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-[11px] font-bold hover:bg-[#2D6A4F] transition">
-                                      📄 PDF
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })()}
                           </div>
                         </div>
                       );
@@ -1626,526 +1157,38 @@
                     </button>
                   </div>
                 )}
-
-                {tab === 'deudas' && (
-                  <div>
-                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.deudasTitulo}</h3>
-
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
-                      <div>
-                        <label className="text-xs font-bold text-[#112A20] block mb-1">{t.fechaRegistro}</label>
-                        <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold" />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-bold text-[#112A20] block mb-1">{t.tipoOp}</label>
-                        <select 
-                          value={tipoCxUnified} 
-                          onChange={(e) => setTipoCxUnified(e.target.value)} 
-                          className="w-full bg-[#E8EFE9] text-[#205B43] font-extrabold rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none"
-                        >
-                          <option value="CxC">{t.cxcOption}</option>
-                          <option value="CxP">{t.cxpOption}</option>
-                        </select>
-                      </div>
-
-                      <div className="h-[1px] bg-[#EEF2EE] my-2"></div>
-
-                      {tipoCxUnified === 'CxC' ? (
-                        <div>
-                          <h4 className="text-sm font-bold text-[#2D6A4F] mb-2">Nuevo Registro - Cuenta por Cobrar</h4>
-                          <input type="text" placeholder={t.terceroClientePlaceholder} value={terceroCxC} onChange={(e) => setTerceroCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          
-                          <div className="mb-2">
-                            <label className="text-[11px] font-semibold text-[#52725F] block mb-1">{t.conceptoDeuda}</label>
-                            {!usarNuevoConceptoCxC ? (
-                              <div className="flex gap-2">
-                                <select value={conceptoCxC} onChange={(e) => setConceptoCxC(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-medium">
-                                  {conceptosDeuda.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                                <button onClick={() => setUsarNuevoConceptoCxC(true)} className="bg-[#E8EFE9] text-[#205B43] px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap hover:bg-slate-200 transition">
-                                  {t.nuevoBtn}
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="flex gap-2">
-                                <input type="text" placeholder="Escribe el nuevo concepto..." value={nuevoConceptoCxC} onChange={(e) => setNuevoConceptoCxC(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                                <button onClick={() => setUsarNuevoConceptoCxC(false)} className="bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-[11px] font-bold">{t.cancelar}</button>
-                              </div>
-                            )}
-                          </div>
-
-                          <input type="text" placeholder={`Saldo Inicial (${monedaSeleccionada})`} value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          
-                          <div className="mb-2">
-                            <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">{t.vencimiento}</span>
-                            <input type="date" value={vencimientoCxC} onChange={(e) => setVencimientoCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                          </div>
-
-                          <label className="text-[11px] font-semibold text-[#52725F] block mb-1">{t.cuentaAfectadaCobrar}</label>
-                          <select value={cuentaCxC} onChange={(e) => setCuentaCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
-                            {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
-                          </select>
-                          <input type="text" placeholder={t.obsPlaceholder} value={obsCxC} onChange={(e) => setObsCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-3" />
-                          <button onClick={guardarCxC} className="w-full bg-[#2D6A4F] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-[#112A20] transition">{t.guardarCxCBtn}</button>
-                        </div>
-                      ) : (
-                        <div>
-                          <h4 className="text-sm font-bold text-[#C94A4A] mb-2">Nuevo Registro - Cuenta por Pagar</h4>
-                          <input type="text" placeholder={t.terceroProveedorPlaceholder} value={terceroCxP} onChange={(e) => setTerceroCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          
-                          <div className="mb-2">
-                            <label className="text-[11px] font-semibold text-[#52725F] block mb-1">{t.conceptoDeuda}</label>
-                            {!usarNuevoConceptoCxP ? (
-                              <div className="flex gap-2">
-                                <select value={conceptoCxP} onChange={(e) => setConceptoCxP(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-medium">
-                                  {conceptosDeuda.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                                <button onClick={() => setUsarNuevoConceptoCxP(true)} className="bg-[#E8EFE9] text-[#205B43] px-3 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap hover:bg-slate-200 transition">
-                                  {t.nuevoBtn}
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="flex gap-2">
-                                <input type="text" placeholder="Escribe el nuevo concepto..." value={nuevoConceptoCxP} onChange={(e) => setNuevoConceptoCxP(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                                <button onClick={() => setUsarNuevoConceptoCxP(false)} className="bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-[11px] font-bold">{t.cancelar}</button>
-                              </div>
-                            )}
-                          </div>
-
-                          <input type="text" placeholder={`Saldo Inicial (${monedaSeleccionada})`} value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2" />
-                          
-                          <div className="mb-2">
-                            <span className="text-[10px] text-[#52725F] block mb-0.5 font-semibold">{t.vencimiento}</span>
-                            <input type="date" value={vencimientoCxP} onChange={(e) => setVencimientoCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                          </div>
-
-                          <label className="text-[11px] font-semibold text-[#52725F] block mb-1">{t.cuentaAfectadaPagar}</label>
-                          <select value={cuentaCxP} onChange={(e) => setCuentaCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-2">
-                            {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
-                          </select>
-                          <input type="text" placeholder={t.obsPlaceholder} value={obsCxP} onChange={(e) => setObsCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none mb-3" />
-                          <button onClick={guardarCxP} className="w-full bg-[#C94A4A] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-red-700 transition">{t.guardarCxPBtn}</button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
-                      <h4 className="text-sm font-bold text-[#112A20]">{t.registrarAbonoPago}</h4>
-                      
-                      <div>
-                        <label className="text-[11px] font-bold text-[#52725F] block mb-1">{t.fechaAbono}</label>
-                        <input type="date" value={fechaAbonoUnified} onChange={(e) => setFechaAbonoUnified(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold" />
-                      </div>
-
-                      <div>
-                        <label className="text-[11px] font-bold text-[#52725F] block mb-1">{t.tipoOp}</label>
-                        <select 
-                          value={tipoAbonoUnified} 
-                          onChange={(e) => {
-                            setTipoAbonoUnified(e.target.value);
-                            setPagoIdCxC('');
-                            setPagoIdCxP('');
-                          }} 
-                          className="w-full bg-[#F8FAF8] text-[#1F2937] font-bold rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none"
-                        >
-                          <option value="CxC">{t.cxcOption}</option>
-                          <option value="CxP">{t.cxpOption}</option>
-                        </select>
-                      </div>
-
-                      {tipoAbonoUnified === 'CxC' ? (
-                        <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
-                          <label className="text-[11px] font-bold text-[#2D6A4F] block">{t.seleccionarTerceroCliente}</label>
-                          <select value={pagoIdCxC} onChange={(e) => setPagoIdCxC(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
-                            <option value="">-- Seleccionar --</option>
-                            {cuentasPorCobrar.filter(c => c.estado !== 'Pagado').map(c => (
-                              <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} ({formatoCOP(c.saldoPendiente, simboloMoneda)})</option>
-                            ))}
-                          </select>
-
-                          <div className="flex gap-2">
-                            <input type="text" placeholder={t.montoAbonarPlaceholder} value={montoPagoCxCDisplay} onChange={(e) => setMontoPagoCxCDisplay(formatearInputEnVivo(e.target.value))} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                            <select value={cuentaPagoCxC} onChange={(e) => setCuentaPagoCxC(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
-                              {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
-                            </select>
-                          </div>
-                          <button onClick={procesarCobroUnificado} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-lg text-xs hover:bg-[#112A20] transition">{t.recibirPagoBtn}</button>
-                        </div>
-                      ) : (
-                        <div className="bg-[#F8FAF8] p-3 rounded-xl border border-[#DCE5DB] space-y-2">
-                          <label className="text-[11px] font-bold text-[#C94A4A] block">{t.seleccionarTerceroProveedor}</label>
-                          <select value={pagoIdCxP} onChange={(e) => setPagoIdCxP(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
-                            <option value="">-- Seleccionar --</option>
-                            {cuentasPorPagar.filter(c => c.estado !== 'Pagado').map(c => (
-                              <option key={c.id} value={c.id}>{c.tercero} - {c.concepto} ({formatoCOP(c.saldoPendiente, simboloMoneda)})</option>
-                            ))}
-                          </select>
-
-                          <div className="flex gap-2">
-                            <input type="text" placeholder={t.montoAbonarPlaceholder} value={montoPagoCxPDisplay} onChange={(e) => setMontoPagoCxPDisplay(formatearInputEnVivo(e.target.value))} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                            <select value={cuentaPagoCxP} onChange={(e) => setCuentaPagoCxP(e.target.value)} className="flex-1 bg-white rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
-                              {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
-                            </select>
-                          </div>
-                          <button onClick={procesarPagoUnificado} className="w-full bg-[#C94A4A] text-white font-bold py-2 rounded-lg text-xs hover:bg-red-700 transition">{t.pagarDeudaBtn}</button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {tab === 'reportes' && (
-                  <div>
-                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.reportesTitulo}</h3>
-
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
-                      <h4 className="text-sm font-bold text-[#112A20] mb-2">{t.reporteDetallado}</h4>
-                      <div className="flex gap-2 mb-2">
-                        <select value={tipoReporteTercero} onChange={(e) => { setTipoReporteTercero(e.target.value); setTerceroSeleccionadoId(''); }} className="flex-1 bg-[#F8FAF8] rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none font-semibold">
-                          <option value="CxC">Cuentas por Cobrar</option>
-                          <option value="CxP">Cuentas por Pagar</option>
-                        </select>
-                        <select value={terceroSeleccionadoId} onChange={(e) => setTerceroSeleccionadoId(e.target.value)} className="flex-1 bg-[#F8FAF8] rounded-lg p-2 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none">
-                          <option value="">-- Seleccionar Tercero --</option>
-                          {(tipoReporteTercero === 'CxC' ? cuentasPorCobrar : cuentasPorPagar).map(item => (
-                            <option key={item.id} value={item.id}>{item.tercero} ({item.concepto})</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {terceroSeleccionadoId && (() => {
-                        const itemSel = (tipoReporteTercero === 'CxC' ? cuentasPorCobrar : cuentasPorPagar).find(c => c.id.toString() === terceroSeleccionadoId);
-                        if (!itemSel) return null;
-                        return (
-                          <div className="mt-3 p-3 bg-[#F8FAF8] rounded-xl border border-slate-200 space-y-2">
-                            <p className="text-xs font-bold text-[#1F2937]">👤 Tercero: {itemSel.tercero}</p>
-                            <p className="text-xs text-[#52725F]">Concepto: {itemSel.concepto}</p>
-                            <p className="text-xs text-slate-600">📅 Fecha Inicial: {itemSel.fechaInicial || 'N/A'} · Vence: {itemSel.vencimiento}</p>
-                            <p className="text-xs font-bold">Valor Total Inicial: {formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
-                            <p className="text-xs font-bold text-[#C94A4A]">Saldo Pendiente Actual: {formatoCOP(itemSel.saldoPendiente, simboloMoneda)}</p>
-                            <p className="text-xs text-slate-500">Estado: <span className="font-bold">{itemSel.estado}</span></p>
-                            {itemSel.observacion && <p className="text-xs italic text-slate-500">Nota: {itemSel.observacion}</p>}
-
-                            <div className="mt-3 pt-2 border-t border-slate-200">
-                              <p className="text-[11px] font-bold text-[#112A20] mb-1">📜 Historial de Movimientos:</p>
-                              <div className="text-[11px] space-y-1 bg-white p-2 rounded-lg border border-slate-100">
-                                <p className="text-emerald-700 font-semibold">🟢 {itemSel.fechaInicial || 'Inicio'} — Saldo Inicial: +{formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
-                                ${(itemSel.historialPagos || []).map((p, idx) => `
-                                  <p key=${idx} class="text-red-600 font-semibold">
-                                    🔴 ${p.fecha} — Abono (${p.cuentaName}): -{formatoCOP(p.monto, simboloMoneda)}
-                                  </p>
-                                `).join('')}
-                              </div>
-                            </div>
-
-                            <div className="flex gap-2 pt-2">
-                              <button onClick={() => exportarCSV(itemSel)} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#112A20] transition">
-                                📊 Exportar a Excel (CSV)
-                              </button>
-                              <button onClick={() => exportarPDF(itemSel)} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#2D6A4F] transition">
-                                📄 PDF
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4">
-                      <h4 className="text-sm font-bold text-[#112A20] mb-3">{t.balanceDeudas}</h4>
-                      
-                      <div className="flex justify-between items-center mb-1 text-xs">
-                        <span className="font-semibold text-[#2D6A4F]">📥 CxC: {formatoCOP(totalCxCPendiente, simboloMoneda)} ({pctCxC}%)</span>
-                        <span className="font-semibold text-[#C94A4A]">📤 CxP: {formatoCOP(totalCxPPendiente, simboloMoneda)} ({pctCxP}%)</span>
-                      </div>
-
-                      <div className="h-4 flex rounded-lg overflow-hidden bg-[#E2E8F0] mb-3">
-                        <div style={{ width: `${pctCxC}%`, backgroundColor: '#2D6A4F' }} className="h-full transition-all"></div>
-                        <div style={{ width: `${pctCxP}%`, backgroundColor: '#C94A4A' }} className="h-full transition-all"></div>
-                      </div>
-
-                      <div className="flex justify-between text-[11px] text-slate-500 font-medium">
-                        <span>Total por Cobrar</span>
-                        <span>Total por Pagar</span>
-                      </div>
-                    </div>
-
-                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3 mt-6">{t.reporteFechas}</h3>
-
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3">
-                      <label className="text-xs font-semibold text-[#52725F] block mb-2">Período de consulta (AAAA-MM-DD):</label>
-                      <div className="flex gap-2 mb-2">
-                        <div className="flex-1">
-                          <span className="text-[11px] font-semibold text-[#718078] block mb-1">Fecha Desde:</span>
-                          <input type="text" value={fechaDesde} onChange={(e) => setFechaDesde(e.target.value)} className="w-full bg-[#F8FAF8] rounded-lg p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                        </div>
-                        <div className="flex-1">
-                          <span className="text-[11px] font-semibold text-[#718078] block mb-1">Fecha Hasta:</span>
-                          <input type="text" value={fechaHasta} onChange={(e) => setFechaHasta(e.target.value)} className="w-full bg-[#F8FAF8] rounded-lg p-2.5 border border-[#DCE5DB] text-xs text-[#1F2937] outline-none" />
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <button onClick={() => { setFechaDesde(fechaHoy()); setFechaHasta(fechaHoy()); }} className="flex-1 py-1.5 bg-[#E8EFE9] rounded-lg text-xs font-bold text-[#205B43] hover:bg-slate-200 transition">Hoy</button>
-                        <button onClick={() => { setFechaDesde(primerDiaMes()); setFechaHasta(fechaHoy()); }} className="flex-1 py-1.5 bg-[#E8EFE9] rounded-lg text-xs font-bold text-[#205B43] hover:bg-slate-200 transition">Este Mes</button>
-                        <button onClick={() => { setFechaDesde('2026-01-01'); setFechaHasta('2026-12-31'); }} className="flex-1 py-1.5 bg-[#E8EFE9] rounded-lg text-xs font-bold text-[#205B43] hover:bg-slate-200 transition">Todo el Año</button>
-                      </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3">
-                      <span className="text-[11px] font-bold text-[#718078]">{t.gastosPeriodo}</span>
-                      <h2 className="text-2xl font-extrabold text-[#C94A4A] my-1">{formatoCOP(totalGastosReporte, simboloMoneda)}</h2>
-                      <div className="border-t border-[#EEF2EE] pt-2 mt-2 space-y-1">
-                        <p className="text-xs text-[#52725F] font-semibold">Ingresos en el rango: {formatoCOP(totalIngresosReporte, simboloMoneda)}</p>
-                        <p className="text-xs text-[#52725F] font-semibold">Ahorro neto: {formatoCOP(totalIngresosReporte - totalGastosReporte, simboloMoneda)}</p>
-                      </div>
-                    </div>
-
-                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">{t.distribucionRubro} ({listaRubros.length})</h3>
-
-                    {totalGastosReporte === 0 ? (
-                      <p className="text-center text-[#718078] my-6 italic text-sm">No existen gastos registrados entre {fechaDesde} y {fechaHasta}.</p>
-                    ) : (
-                      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-                        <div className="h-4 flex rounded-lg overflow-hidden bg-[#E2E8F0] mb-4">
-                          {listaRubros.map(([rubro, total], idx) => {
-                            const pct = Math.max(1, Math.round((total / totalGastosReporte) * 100));
-                            const paleta = ['#112A20', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
-                            return <div key={rubro} style={{ width: `${pct}%`, backgroundColor: paleta[idx % paleta.length] }} className="h-full"></div>;
-                          })}
-                        </div>
-
-                        {listaRubros.map(([rubro, total], idx) => {
-                          const porcentaje = Math.round((total / totalGastosReporte) * 100);
-                          const paleta = ['#112A20', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2', '#B7E4C7'];
-                          const color = paleta[idx % paleta.length];
-
-                          return (
-                            <div key={rubro} className="mt-3">
-                              <div className="flex justify-between items-center mb-1">
-                                <div className="flex items-center">
-                                  <div className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: color }}></div>
-                                  <span className="text-xs font-semibold text-[#1F2937]">{rubro}</span>
-                                </div>
-                                <span className="text-xs font-bold text-[#52725F]">{formatoCOP(total, simboloMoneda)} ({porcentaje}%)</span>
-                              </div>
-                              <div className="h-1.5 bg-[#F1F5F1] rounded-full overflow-hidden">
-                                <div className="h-full rounded-full" style={{ width: `${porcentaje}%`, backgroundColor: color }}></div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {tab === 'admin' && esSuperAdmin && (
-                    <div className="bg-white rounded-3xl p-5 shadow-lg border border-[#D4AF37]/30 space-y-4">
-                        <h3 className="text-lg font-extrabold text-[#112A20] border-b pb-2">{t.adminPanel}</h3>
-                        
-                        {/* SECCIÓN REPORTE PROFESIONAL DE USUARIOS */}
-                        <div className="space-y-3 bg-[#F8FAF8] p-4 rounded-2xl border border-[#DCE5DB]">
-                            <div className="flex justify-between items-center">
-                                <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios</h4>
-                            </div>
-                            
-                            {/* FILTROS DESPLEGABLES: CORREO, IDIOMA, MONEDA */}
-                            <div className="space-y-2 pt-1 border-t border-slate-200">
-                                <div className="flex gap-2">
-                                    <div className="flex-1">
-                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Desde (Opcional):</label>
-                                        <input type="date" value={filtroFechaDesde} onChange={(e) => setFiltroFechaDesde(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Hasta (Opcional):</label>
-                                        <input type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none" />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="text-[10px] font-bold text-slate-600 block mb-0.5">🔍 Buscar por:</label>
-                                    <select 
-                                        value={tipoBusqueda} 
-                                        onChange={(e) => {
-                                            setTipoBusqueda(e.target.value);
-                                            setFiltroCorreo('Todos');
-                                            setFiltroIdioma('Todos');
-                                            setFiltroMoneda('Todas');
-                                        }} 
-                                        className="w-full bg-white rounded-lg p-1.5 border border-slate-200 text-[11px] outline-none font-medium mb-2"
-                                    >
-                                        <option value="correo">Correo</option>
-                                        <option value="idioma">Idioma</option>
-                                        <option value="moneda">Moneda</option>
-                                    </select>
-
-                                    {tipoBusqueda === 'correo' && (
-                                        <select value={filtroCorreo} onChange={(e) => setFiltroCorreo(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-slate-200 text-xs outline-none font-medium">
-                                            <option value="Todos">Todos los correos</option>
-                                            {correosUnicos.map(c => <option key={c} value={c}>{c}</option>)}
-                                        </select>
-                                    )}
-
-                                    {tipoBusqueda === 'idioma' && (
-                                        <select value={filtroIdioma} onChange={(e) => setFiltroIdioma(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-slate-200 text-xs outline-none font-medium">
-                                            <option value="Todos">Todos los idiomas</option>
-                                            {idiomasUnicos.map(i => <option key={i} value={i}>{i}</option>)}
-                                        </select>
-                                    )}
-
-                                    {tipoBusqueda === 'moneda' && (
-                                        <select value={filtroMoneda} onChange={(e) => setFiltroMoneda(e.target.value)} className="w-full bg-white rounded-lg p-2 border border-slate-200 text-xs outline-none font-medium">
-                                            <option value="Todas">Todas las monedas</option>
-                                            {monedasUnicas.map(m => <option key={m} value={m}>{m}</option>)}
-                                        </select>
-                                    )}
-                                </div>
-
-                                <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#205B43] text-white font-bold py-2 rounded-xl text-xs hover:bg-[#112A20] transition flex items-center justify-center gap-1.5 mt-2">
-                                    🔍 Buscar y Mostrar Reporte
-                                </button>
-                            </div>
-
-                            {/* SECCIÓN MOSTRAR REPORTE EN PANTALLA CON TÍTULO DINÁMICO */}
-                            {reporteGenerado && (
-                                <div className="space-y-3 pt-3 border-t border-slate-300">
-                                    <div className="bg-[#112A20] text-white p-3 rounded-xl shadow-sm">
-                                        <p className="text-[10px] text-[#B7E4C7] font-bold uppercase tracking-wider">Total Actual de Usuarios Registrados</p>
-                                        <h3 className="text-2xl font-extrabold mt-0.5">{usuariosFiltrados.length}</h3>
-                                    </div>
-
-                                    <div className="max-h-48 overflow-y-auto space-y-2">
-                                        {usuariosFiltrados.length === 0 ? (
-                                            <p className="text-[11px] text-slate-500 text-center py-3">No hay usuarios que coincidan con los filtros aplicados.</p>
-                                        ) : (
-                                            usuariosFiltrados.map((usr, idx) => {
-                                                const correoMostrado = usr.correo || usr.data?.correo || usr.data?.user?.email || usr.user_id;
-                                                const idiomaMostrado = usr.data?.idioma || 'Español';
-                                                const monedaMostrada = usr.data?.moneda || 'COP';
-
-                                                let tituloDinamico = `✉️ Correo: ${correoMostrado}`;
-                                                if (tipoBusqueda === 'idioma') tituloDinamico = `🌐 Idioma (${idiomaMostrado}): ${correoMostrado}`;
-                                                else if (tipoBusqueda === 'moneda') tituloDinamico = `💱 Moneda (${monedaMostrada}): ${correoMostrado}`;
-
-                                                return (
-                                                    <div key={idx} className="bg-white p-2.5 rounded-xl border border-slate-200 text-xs shadow-sm space-y-0.5">
-                                                        <p className="font-bold text-[#112A20] truncate">{tituloDinamico}</p>
-                                                        <p className="text-slate-600 text-[11px]">🌐 Idioma: <span className="font-semibold">{idiomaMostrado}</span> · 💱 Moneda: <span className="font-semibold">{monedaMostrada}</span></p>
-                                                        <p className="text-[10px] text-slate-400">Última Actualización: {new Date(usr.updated_at).toLocaleString()}</p>
-                                                    </div>
-                                                );
-                                            })
-                                        )}
-                                    </div>
-
-                                    <div className="flex gap-2 pt-2">
-                                        <button onClick={exportarReporteUsuariosCSV} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#112A20] transition">
-                                            📊 Exportar Excel (CSV)
-                                        </button>
-                                        <button onClick={exportarReporteUsuariosPDF} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold hover:bg-[#2D6A4F] transition">
-                                            📄 Exportar PDF
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* SECCIÓN LOGO GLOBAL */}
-                        <div className="space-y-3 pt-2">
-                            <h4 className="text-xs font-bold text-[#112A20]">{t.cargaLogo}</h4>
-                            <p className="text-[11px] text-slate-500">Sube una imagen (PNG o JPG). Se sincronizará automáticamente en la nube para reflejarse en todos los dispositivos y usuarios.</p>
-                            
-                            <div className="flex items-center gap-3 bg-[#F8FAF8] p-3 rounded-2xl border border-[#DCE5DB]">
-                                <div className="w-12 h-12 bg-[#112A20] rounded-xl flex items-center justify-center overflow-hidden border border-[#D4AF37]/40 shrink-0">
-                                    {logoGlobal ? (
-                                        <img src={logoGlobal} alt="Logo" className="w-full h-full object-contain" />
-                                    ) : (
-                                        <span className="text-xs text-[#D4AF37] font-bold">MIA</span>
-                                    )}
-                                </div>
-                                <div className="flex-1">
-                                    <input 
-                                        type="file" 
-                                        accept="image/*" 
-                                        onChange={manejarSubidaLogoGlobal} 
-                                        className="w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#205B43] file:text-white hover:file:bg-[#112A20] cursor-pointer"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="border-t pt-3">
-                            <h4 className="text-xs font-bold text-[#112A20] mb-1">Módulos Comerciales a Futuro (SaaS):</h4>
-                            <p className="text-[11px] text-slate-500">Gestión centralizada de licencias, identidad institucional fija y activación de módulos para clientes corporativos.</p>
-                        </div>
-                    </div>
-                )}
               </div>
 
-              {modalEditarMovimiento && (
-                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
-                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-3">
-                    <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-1">Editar Movimiento</h3>
-                    
-                    <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Tipo:</label>
-                      <select value={editTipo} onChange={(e) => { setEditTipo(e.target.value); setEditCategoria(e.target.value === 'Gasto' ? categoriasGasto[0] : categoriasIngreso[0]); }} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs font-bold outline-none">
-                        <option value="Gasto">Gasto</option>
-                        <option value="Ingreso">Ingreso</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Cuenta:</label>
-                      <select value={editCuentaId} onChange={(e) => setEditCuentaId(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none">
-                        {cuentas.map(c => <option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>)}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Fecha:</label>
-                      <input type="text" value={editFecha} onChange={(e) => setEditFecha(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none" />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Rubro / Categoría:</label>
-                      <select value={editCategoria} onChange={(e) => setEditCategoria(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none font-medium">
-                        {(editTipo === 'Gasto' ? categoriasGasto : categoriasIngreso).map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Concepto:</label>
-                      <input type="text" value={editConcepto} onChange={(e) => setEditConcepto(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border border-[#DCE5DB] text-xs outline-none" />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Valor:</label>
-                      <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none" />
-                    </div>
-
-                    <div className="flex gap-2 pt-2">
-                      <button onClick={() => setModalEditarMovimiento(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-slate-500 transition">Cancelar</button>
-                      <button onClick={guardarEdicionMovimiento} className="flex-1 bg-[#205B43] text-white font-bold py-2.5 rounded-xl text-xs hover:bg-[#112A20] transition">Guardar Cambios</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
+              {/* MODAL EDITAR SALDO INICIAL CON FECHA */}
               {modalEditarSaldo && (
                 <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
-                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl">
-                    <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-2">Modificar Saldo Inicial</h3>
-                    <p className="text-xs text-[#52725F] mb-3 text-center">Cuenta: <span className="font-bold">{cuentaAEditar?.nombre}</span></p>
+                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-3">
+                    <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-1">Modificar Saldo Inicial</h3>
+                    <p className="text-xs text-[#52725F] mb-2 text-center">Cuenta: <span className="font-bold">{cuentaAEditar?.nombre}</span></p>
 
-                    <label className="text-xs font-semibold text-[#52725F] block mb-1">Nuevo saldo de arranque:</label>
-                    <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3" />
+                    <div>
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">📅 Fecha de corte del saldo inicial:</label>
+                      <input 
+                        type="date" 
+                        value={fechaSaldoEditado} 
+                        onChange={(e) => setFechaSaldoEditado(e.target.value)} 
+                        className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none font-semibold mb-2" 
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">Nuevo saldo de arranque:</label>
+                      <input 
+                        type="text" 
+                        value={saldoEditadoValorDisplay} 
+                        onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} 
+                        className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3 font-bold" 
+                      />
+                    </div>
 
                     <div className="flex gap-2">
-                      <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-sm hover:bg-slate-500 transition">Cancelar</button>
-                      <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-sm hover:bg-[#112A20] transition">Guardar Saldo</button>
+                      <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-xs hover:bg-slate-500 transition">Cancelar</button>
+                      <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-xs hover:bg-[#112A20] transition">Guardar Saldo</button>
                     </div>
                   </div>
                 </div>
