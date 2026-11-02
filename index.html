@@ -208,13 +208,7 @@
               const rows = await res.json();
               if (rows && rows.length > 0) {
                 let rawData = rows[0].data;
-                let cuentasExtraidas = CUENTAS_BASE;
-                if (Array.isArray(rawData)) {
-                  cuentasExtraidas = rawData;
-                } else if (rawData && Array.isArray(rawData.cuentas)) {
-                  cuentasExtraidas = rawData.cuentas;
-                }
-
+                let cuentasExtraidas = rawData?.cuentas || CUENTAS_BASE;
                 cuentasExtraidas = cuentasExtraidas.map(c => ({
                   ...c,
                   saldoInicial: Number(c.saldoInicial !== undefined ? c.saldoInicial : (c.saldoinicial !== undefined ? c.saldoinicial : 0)),
@@ -238,7 +232,6 @@
           },
           async guardarDatosNube(token, userId, jsonData) {
             try {
-              // Guardado exacto mapeando únicamente a la columna 'data' que existe en tu tabla
               const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}`, {
                 method: 'PATCH',
                 headers: {
@@ -423,16 +416,11 @@
 
           useEffect(() => {
             if (sesion && sesion.access_token && datosCargados) {
-              const jsonData = {
+              const payload = {
                 correo: sesion.user?.email || emailInput,
-                cuentas,
-                movimientos,
-                cuentasPorCobrar,
-                cuentasPorPagar,
-                moneda: monedaSeleccionada,
-                idioma: idiomaSeleccionado
+                data: { cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, moneda: monedaSeleccionada, idioma: idiomaSeleccionado }
               };
-              supabaseApi.guardarDatosNube(sesion.access_token, sesion.user_id, jsonData);
+              supabaseApi.guardarDatosNube(sesion.access_token, sesion.user_id, payload.data);
             }
           }, [cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, monedaSeleccionada, idiomaSeleccionado, datosCargados, sesion]);
 
@@ -718,6 +706,32 @@
             notificar('Cuenta por Pagar', 'Registrada correctamente.');
           };
 
+          const procesarCobroUnificado = () => {
+            const item = cuentasPorCobrar.find(c => c.id.toString() === pagoIdCxC);
+            const abono = obtenerNumeroLimpio(montoPagoCxCDisplay);
+            if (!item || isNaN(abono) || abono <= 0 || abono > item.saldoPendiente) {
+              notificar('Datos inválidos', 'Verifica el monto o el tercero seleccionado.');
+              return;
+            }
+            const nuevoSaldo = item.saldoPendiente - abono;
+            setCuentasPorCobrar(prev => prev.map(c => c.id === item.id ? { ...c, saldoPendiente: nuevoSaldo, estado: nuevoSaldo === 0 ? 'Pagado' : 'Parcial' } : c));
+            setPagoIdCxC(''); setMontoPagoCxCDisplay('');
+            notificar('Pago Recibido', 'Abono registrado con éxito.');
+          };
+
+          const procesarPagoUnificado = () => {
+            const item = cuentasPorPagar.find(c => c.id.toString() === pagoIdCxP);
+            const abono = obtenerNumeroLimpio(montoPagoCxPDisplay);
+            if (!item || isNaN(abono) || abono <= 0 || abono > item.saldoPendiente) {
+              notificar('Datos inválidos', 'Verifica el monto o el tercero seleccionado.');
+              return;
+            }
+            const nuevoSaldo = item.saldoPendiente - abono;
+            setCuentasPorPagar(prev => prev.map(c => c.id === item.id ? { ...c, saldoPendiente: nuevoSaldo, estado: nuevoSaldo === 0 ? 'Pagado' : 'Parcial' } : c));
+            setPagoIdCxP(''); setMontoPagoCxPDisplay('');
+            notificar('Pago Realizado', 'Abono registrado con éxito.');
+          };
+
           const movimientosReporte = movimientos.filter((m) => {
             if (!fechaDesde && !fechaHasta) return true;
             if (fechaDesde && m.fecha < fechaDesde) return false;
@@ -746,6 +760,89 @@
             if (tipoBusqueda === 'moneda' && filtroMoneda !== 'Todas' && !monedaUsr.includes(filtroMoneda)) return false;
             return true;
           });
+
+          const exportarReporteUsuariosCSV = () => {
+            let csvContent = "\uFEFFCorreo Electrónico,Idioma,Moneda,Última Actualización\n";
+            usuariosFiltrados.forEach(u => {
+              const mail = u.correo || u.data?.correo || u.user_id || 'N/A';
+              csvContent += `${mail},${u.data?.idioma || 'Español'},${u.data?.moneda || 'COP'},${u.updated_at}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `reporte_usuarios_mia.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+
+          const exportarReporteUsuariosPDF = () => {
+            const contenidoHtml = `
+              <html>
+                <head>
+                  <meta charset="UTF-8">
+                  <title>Reporte de Usuarios - MIA</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+                    th { background-color: #205B43; color: white; }
+                    .btn-volver { display: block; width: 100%; padding: 12px; background: #205B43; color: white; text-align: center; text-decoration: none; font-weight: bold; border-radius: 8px; margin-top: 20px; }
+                  </style>
+                </head>
+                <body>
+                  <h2>MIA - Reporte Ejecutivo de Usuarios Registrados</h2>
+                  <p><strong>Total de usuarios encontrados:</strong> ${usuariosFiltrados.length}</p>
+                  <hr/>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Correo Electrónico</th>
+                        <th>Idioma</th>
+                        <th>Moneda</th>
+                        <th>Última Actualización</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${usuariosFiltrados.map(u => {
+                        const mail = u.correo || u.data?.correo || u.user_id || 'N/A';
+                        return `
+                          <tr>
+                            <td>${mail}</td>
+                            <td>${u.data?.idioma || 'Español'}</td>
+                            <td>${u.data?.moneda || 'COP'}</td>
+                            <td>${new Date(u.updated_at).toLocaleString()}</td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                  <br/><hr/>
+                  <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
+                  <a href="javascript:window.close();" class="btn-volver">Cerrar y Volver a la App</a>
+                </body>
+              </html>
+            `;
+            const blob = new Blob([contenidoHtml], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+          };
+
+          const manejarSubidaLogoGlobalLocal = (e) => {
+            const archivo = e.target.files[0];
+            if (!archivo) return;
+            const lector = new FileReader();
+            lector.onloadend = async () => {
+              const base64String = lector.result;
+              setLogoGlobal(base64String);
+              if (sesion && sesion.access_token) {
+                await supabaseApi.guardarLogoGlobal(sesion.access_token, base64String);
+                notificar('¡Logotipo Global Actualizado!', 'Guardado en la nube para todos los usuarios.');
+              }
+            };
+            lector.readAsDataURL(archivo);
+          };
 
           if (!sesion) {
             return (
@@ -981,9 +1078,38 @@
                 {tab === 'admin' && esSuperAdmin && (
                   <div className="bg-white rounded-3xl p-5 shadow-lg border border-[#D4AF37]/30 space-y-4">
                     <h3 className="text-lg font-extrabold text-[#112A20] border-b pb-2">{t.adminPanel}</h3>
-                    <div className="bg-[#112A20] text-white p-3 rounded-xl">
-                      <p className="text-[10px] text-[#B7E4C7] font-bold uppercase">Total Usuarios</p>
-                      <h3 className="text-2xl font-extrabold">{usuariosFiltrados.length}</h3>
+                    
+                    <div className="space-y-3 bg-[#F8FAF8] p-4 rounded-2xl border">
+                      <h4 className="text-xs font-bold text-[#112A20]">📊 Reporte Ejecutivo de Usuarios</h4>
+                      <select value={tipoBusqueda} onChange={(e) => setTipoBusqueda(e.target.value)} className="w-full bg-white rounded-lg p-2 border text-xs">
+                        <option value="correo">Buscar por Correo</option>
+                        <option value="idioma">Buscar por Idioma</option>
+                        <option value="moneda">Buscar por Moneda</option>
+                      </select>
+                      <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#205B43] text-white font-bold py-2 rounded-xl text-xs">🔍 Mostrar Reporte</button>
+                    </div>
+
+                    {reporteGenerado && (
+                      <div className="space-y-3 pt-3 border-t">
+                        <div className="bg-[#112A20] text-white p-3 rounded-xl">
+                          <p className="text-[10px] text-[#B7E4C7] font-bold uppercase">Total Usuarios</p>
+                          <h3 className="text-2xl font-extrabold">{usuariosFiltrados.length}</h3>
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={exportarReporteUsuariosCSV} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold">📊 Excel (CSV)</button>
+                          <button onClick={exportarReporteUsuariosPDF} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold">📄 PDF</button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-3 pt-2">
+                      <h4 className="text-xs font-bold text-[#112A20]">{t.cargaLogo}</h4>
+                      <div className="flex items-center gap-3 bg-[#F8FAF8] p-3 rounded-2xl border">
+                        <div className="w-12 h-12 bg-[#112A20] rounded-xl flex items-center justify-center overflow-hidden border">
+                          {logoGlobal ? <img src={logoGlobal} alt="Logo" className="w-full h-full object-contain" /> : <span className="text-xs text-[#D4AF37] font-bold">MIA</span>}
+                        </div>
+                        <input type="file" accept="image/*" onChange={manejarSubidaLogoGlobalLocal} className="w-full text-xs text-slate-500 cursor-pointer" />
+                      </div>
                     </div>
                   </div>
                 )}
