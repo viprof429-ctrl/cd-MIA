@@ -479,7 +479,7 @@
           const [valorDisplay, setValorDisplay] = useState('');
           const [fechaMovimiento, setFechaMovimiento] = useState(fechaHoy());
 
-          // CAMPOS PARA TERCEROS (CC/NIT y Nombre)
+          // CAMPOS DE IDENTIFICACIÓN DE TERCEROS (CC/NIT y Nombre)
           const [terceroCC, setTerceroCC] = useState('');
           const [terceroNombre, setTerceroNombre] = useState('');
 
@@ -492,9 +492,11 @@
           const [editCuentaId, setEditCuentaId] = useState('');
           const [editCategoria, setEditCategoria] = useState('');
 
+          // GESTIÓN DE TERCEROS (CxC / CxP) CON CC/NIT
           const [tipoCxUnified, setTipoCxUnified] = useState('CxC');
           const [fechaGeneralReg, setFechaGeneralReg] = useState(fechaHoy());
-          const [terceroCxC, setTerceroCxC] = useState('');
+          const [terceroCCReg, setTerceroCCReg] = useState('');
+          const [terceroNombreReg, setTerceroNombreReg] = useState('');
           const [conceptoCxC, setConceptoCxC] = useState(conceptosDeuda[0]);
           const [nuevoConceptoCxC, setNuevoConceptoCxC] = useState('');
           const [usarNuevoConceptoCxC, setUsarNuevoConceptoCxC] = useState(false);
@@ -503,7 +505,8 @@
           const [cuentaCxC, setCuentaCxC] = useState(cuentas[0]?.id || '1');
           const [obsCxC, setObsCxC] = useState('');
 
-          const [terceroCxP, setTerceroCxP] = useState('');
+          const [terceroCCRegP, setTerceroCCRegP] = useState('');
+          const [terceroNombreRegP, setTerceroNombreRegP] = useState('');
           const [conceptoCxP, setConceptoCxP] = useState(conceptosDeuda[0]);
           const [nuevoConceptoCxP, setNuevoConceptoCxP] = useState('');
           const [usarNuevoConceptoCxP, setUsarNuevoConceptoCxP] = useState(false);
@@ -547,6 +550,7 @@
 
           const guardarMovimiento = () => {
             const num = obtenerNumeroLimpio(valorDisplay);
+            const nombreTerceroCompleto = terceroNombre.trim() ? `${terceroNombre.trim()} (${terceroCC.trim() || 'NIT/CC N/A'})` : '';
 
             // 1. INGRESO: ABONO DE TERCEROS (Disminuye CxC y Aumenta Cuenta)
             if (tipoMovimiento === 'Ingreso' && categoriaSeleccionada === 'Abono de Terceros') {
@@ -554,25 +558,8 @@
                 notificar('Datos incompletos', 'Ingresa el nombre del tercero y un valor válido.');
                 return;
               }
-              // Buscamos si existe una CxC para este tercero, o creamos/afectamos la coincidente
               let itemCxC = cuentasPorCobrar.find(c => c.tercero.toLowerCase().includes(terceroNombre.trim().toLowerCase()));
-              
-              if (!itemCxC) {
-                // Si no existe, la creamos automáticamente
-                itemCxC = {
-                  id: Date.now(),
-                  tercero: `${terceroNombre.trim()} (${terceroCC || 'NIT/CC N/A'})`,
-                  concepto: 'Abono Directo',
-                  valorTotal: num,
-                  saldoPendiente: 0,
-                  fechaInicial: fechaMovimiento.trim() || fechaHoy(),
-                  vencimiento: fechaMovimiento.trim() || fechaHoy(),
-                  cuentaId: cuentaSeleccionada,
-                  estado: 'Pagado',
-                  historialPagos: []
-                };
-                setCuentasPorCobrar(prev => [itemCxC, ...prev]);
-              } else {
+              if (itemCxC) {
                 const nuevoSaldo = Math.max(0, itemCxC.saldoPendiente - num);
                 setCuentasPorCobrar(prev => prev.map(c => c.id === itemCxC.id ? {
                   ...c,
@@ -586,14 +573,14 @@
                 id: Date.now(),
                 cuentaId: cuentaSeleccionada,
                 categoria: 'Abono de Terceros',
-                concepto: `Abono de ${terceroNombre.trim()} [CC/NIT: ${terceroCC || 'N/A'}]`,
+                concepto: `Abono de ${nombreTerceroCompleto}`,
                 valor: num,
                 tipo: 'Ingreso',
                 fecha: fechaMovimiento.trim() || fechaHoy(),
               };
               setMovimientos(prev => [nuevoIngreso, ...prev]);
               setTerceroCC(''); setTerceroNombre(''); setValorDisplay('');
-              notificar('¡Abono Registrado!', `Se descontó de la CxC y se sumó el dinero a la cuenta.`);
+              notificar('¡Abono Registrado!', 'Se descontó de la CxC y se sumó el dinero a la cuenta.');
               return;
             }
 
@@ -603,13 +590,11 @@
                 notificar('Datos incompletos', 'Ingresa el nombre del prestamista y un valor válido.');
                 return;
               }
-              const nombreTerceroFull = `${terceroNombre.trim()} (${terceroCC || 'NIT/CC N/A'})`;
               let itemCxP = cuentasPorPagar.find(c => c.tercero.toLowerCase().includes(terceroNombre.trim().toLowerCase()));
-
               if (!itemCxP) {
                 itemCxP = {
                   id: Date.now(),
-                  tercero: nombreTerceroFull,
+                  tercero: nombreTerceroCompleto,
                   concepto: 'Préstamo Recibido',
                   valorTotal: num,
                   saldoPendiente: num,
@@ -633,14 +618,14 @@
                 id: Date.now(),
                 cuentaId: cuentaSeleccionada,
                 categoria: 'Préstamo de Terceros',
-                concepto: `Préstamo de ${terceroNombre.trim()} [CC/NIT: ${terceroCC || 'N/A'}]`,
+                concepto: `Préstamo de ${nombreTerceroCompleto}`,
                 valor: num,
                 tipo: 'Ingreso',
                 fecha: fechaMovimiento.trim() || fechaHoy(),
               };
               setMovimientos(prev => [nuevoIngreso, ...prev]);
               setTerceroCC(''); setTerceroNombre(''); setValorDisplay('');
-              notificar('¡Préstamo Registrado!', `Se registró la obligación en CxP y el dinero ingresó a la cuenta.`);
+              notificar('¡Préstamo Registrado!', 'Se registró la obligación en CxP y el dinero ingresó a la cuenta.');
               return;
             }
 
@@ -650,13 +635,11 @@
                 notificar('Datos incompletos', 'Ingresa el nombre del cliente y un valor válido.');
                 return;
               }
-              const nombreTerceroFull = `${terceroNombre.trim()} (${terceroCC || 'NIT/CC N/A'})`;
               let itemCxC = cuentasPorCobrar.find(c => c.tercero.toLowerCase().includes(terceroNombre.trim().toLowerCase()));
-
               if (!itemCxC) {
                 itemCxC = {
                   id: Date.now(),
-                  tercero: nombreTerceroFull,
+                  tercero: nombreTerceroCompleto,
                   concepto: 'Préstamo Otorgado',
                   valorTotal: num,
                   saldoPendiente: num,
@@ -680,14 +663,14 @@
                 id: Date.now(),
                 cuentaId: cuentaSeleccionada,
                 categoria: 'Préstamos a Clientes',
-                concepto: `Préstamo a ${terceroNombre.trim()} [CC/NIT: ${terceroCC || 'N/A'}]`,
+                concepto: `Préstamo a ${nombreTerceroCompleto}`,
                 valor: num,
                 tipo: 'Gasto',
                 fecha: fechaMovimiento.trim() || fechaHoy(),
               };
               setMovimientos(prev => [nuevoGasto, ...prev]);
               setTerceroCC(''); setTerceroNombre(''); setValorDisplay('');
-              notificar('¡Préstamo Otorgado!', `Se registró en CxC y se descontó el dinero de la cuenta.`);
+              notificar('¡Préstamo Otorgado!', 'Se registró en CxC y se descontó el dinero de la cuenta.');
               return;
             }
 
@@ -698,7 +681,6 @@
                 return;
               }
               let itemCxP = cuentasPorPagar.find(c => c.tercero.toLowerCase().includes(terceroNombre.trim().toLowerCase()));
-
               if (!itemCxP) {
                 notificar('Aviso', 'No se encontró una CxP activa con ese nombre de tercero.');
                 return;
@@ -716,14 +698,14 @@
                 id: Date.now(),
                 cuentaId: cuentaSeleccionada,
                 categoria: 'Pago a Terceros',
-                concepto: `Pago a ${terceroNombre.trim()} [CC/NIT: ${terceroCC || 'N/A'}]`,
+                concepto: `Pago a ${nombreTerceroCompleto}`,
                 valor: num,
                 tipo: 'Gasto',
                 fecha: fechaMovimiento.trim() || fechaHoy(),
               };
               setMovimientos(prev => [nuevoGasto, ...prev]);
               setTerceroCC(''); setTerceroNombre(''); setValorDisplay('');
-              notificar('¡Pago a Tercero Registrado!', `Se descontó de la CxP y de la cuenta.`);
+              notificar('¡Pago a Tercero Registrado!', 'Se descontó de la CxP y de la cuenta.');
               return;
             }
 
@@ -828,16 +810,18 @@
             }
           };
 
+          // GUARDAR DESDE EL MÓDULO CXC / CXP CON CC/NIT Y NOMBRE
           const guardarCxC = () => {
             const num = obtenerNumeroLimpio(saldoInicialCxCDisplay);
             const conceptoFinal = usarNuevoConceptoCxC ? nuevoConceptoCxC.trim() : conceptoCxC;
-            if (!terceroCxC.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
-              notificar('Datos incompletos', 'Ingresa el tercero, concepto y un saldo válido.');
+            const terceroCompleto = `${terceroNombreReg.trim()} (${terceroCCReg.trim() || 'NIT/CC N/A'})`;
+            if (!terceroNombreReg.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
+              notificar('Datos incompletos', 'Ingresa el nombre del tercero, concepto y un saldo válido.');
               return;
             }
             const nuevaCxC = {
               id: Date.now(),
-              tercero: terceroCxC.trim(),
+              tercero: terceroCompleto,
               concepto: conceptoFinal,
               valorTotal: num,
               saldoPendiente: num,
@@ -849,20 +833,21 @@
               historialPagos: []
             };
             setCuentasPorCobrar(prev => [nuevaCxC, ...prev]);
-            setTerceroCxC(''); setSaldoInicialCxCDisplay(''); setObsCxC('');
+            setTerceroCCReg(''); setTerceroNombreReg(''); setSaldoInicialCxCDisplay(''); setObsCxC('');
             notificar('Cuenta por Cobrar', 'Registrada correctamente.');
           };
 
           const guardarCxP = () => {
             const num = obtenerNumeroLimpio(saldoInicialCxPDisplay);
             const conceptoFinal = usarNuevoConceptoCxP ? nuevoConceptoCxP.trim() : conceptoCxP;
-            if (!terceroCxP.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
-              notificar('Datos incompletos', 'Ingresa el tercero, concepto y un saldo válido.');
+            const terceroCompleto = `${terceroNombreRegP.trim()} (${terceroCCRegP.trim() || 'NIT/CC N/A'})`;
+            if (!terceroNombreRegP.trim() || !conceptoFinal || isNaN(num) || num <= 0) {
+              notificar('Datos incompletos', 'Ingresa el nombre del tercero, concepto y un saldo válido.');
               return;
             }
             const nuevaCxP = {
               id: Date.now(),
-              tercero: terceroCxP.trim(),
+              tercero: terceroCompleto,
               concepto: conceptoFinal,
               valorTotal: num,
               saldoPendiente: num,
@@ -874,7 +859,7 @@
               historialPagos: []
             };
             setCuentasPorPagar(prev => [nuevaCxP, ...prev]);
-            setTerceroCxP(''); setSaldoInicialCxPDisplay(''); setObsCxP('');
+            setTerceroCCRegP(''); setTerceroNombreRegP(''); setSaldoInicialCxPDisplay(''); setObsCxP('');
             notificar('Cuenta por Pagar', 'Registrada correctamente.');
           };
 
@@ -1120,13 +1105,13 @@
                         </select>
                       </div>
 
-                      {/* CAMPOS PARA TERCEROS (CC/NIT y Nombre) CUANDO APLICA */}
+                      {/* CAMPOS DE IDENTIFICACIÓN DE TERCEROS (CC/NIT y Nombre) */}
                       {((tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) || 
                         (tipoMovimiento === 'Gasto' && (categoriaSeleccionada === 'Préstamos a Clientes' || categoriaSeleccionada === 'Pago a Terceros'))) && (
                         <div className="bg-[#E8EFE9] p-3 rounded-xl border border-[#D2E2D5] space-y-2">
-                          <label className="text-xs font-bold text-[#205B43] block">Datos del Tercero:</label>
-                          <input type="text" placeholder="Cédula o NIT" value={terceroCC} onChange={(e) => setTerceroCC(e.target.value)} className="w-full bg-white rounded-lg p-2 border text-xs outline-none" />
-                          <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombre} onChange={(e) => setTerceroNombre(e.target.value)} className="w-full bg-white rounded-lg p-2 border text-xs outline-none" />
+                          <label className="text-xs font-bold text-[#205B43] block">Identificación del Tercero:</label>
+                          <input type="text" placeholder="Cédula o NIT" value={terceroCC} onChange={(e) => setTerceroCC(e.target.value)} className="w-full bg-white rounded-lg p-2.5 border text-xs outline-none font-medium" />
+                          <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombre} onChange={(e) => setTerceroNombre(e.target.value)} className="w-full bg-white rounded-lg p-2.5 border text-xs outline-none font-medium" />
                         </div>
                       )}
 
@@ -1212,15 +1197,20 @@
                           <option value="CxP">{t.cxpOption}</option>
                         </select>
                       </div>
+
                       {tipoCxUnified === 'CxC' ? (
                         <div className="space-y-2">
-                          <input type="text" placeholder={t.terceroClientePlaceholder} value={terceroCxC} onChange={(e) => setTerceroCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
+                          <label className="text-[11px] font-bold text-[#2D6A4F] block">Registrar Tercero (Cliente / Deudor):</label>
+                          <input type="text" placeholder="Cédula o NIT" value={terceroCCReg} onChange={(e) => setTerceroCCReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
+                          <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreReg} onChange={(e) => setTerceroNombreReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
                           <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
                           <button onClick={guardarCxC} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-xl text-xs">{t.guardarCxCBtn}</button>
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <input type="text" placeholder={t.terceroProveedorPlaceholder} value={terceroCxP} onChange={(e) => setTerceroCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
+                          <label className="text-[11px] font-bold text-[#C94A4A] block">Registrar Tercero (Proveedor / Acreedor):</label>
+                          <input type="text" placeholder="Cédula o NIT" value={terceroCCRegP} onChange={(e) => setTerceroCCRegP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
+                          <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreRegP} onChange={(e) => setTerceroNombreRegP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
                           <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
                           <button onClick={guardarCxP} className="w-full bg-[#C94A4A] text-white font-bold py-2 rounded-xl text-xs">{t.guardarCxPBtn}</button>
                         </div>
