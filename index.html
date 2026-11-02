@@ -492,7 +492,7 @@
           const [editCategoria, setEditCategoria] = useState('');
 
           const [tipoCxUnified, setTipoCxUnified] = useState('CxC');
-          const [fechaGeneralReg, setFechaGeneralReg] = useState(fechaHoy()); // FECHA INICIAL DEL SALDO INICIAL
+          const [fechaGeneralReg, setFechaGeneralReg] = useState(fechaHoy());
           const [terceroCCReg, setTerceroCCReg] = useState('');
           const [terceroNombreReg, setTerceroNombreReg] = useState('');
           const [conceptoCxC, setConceptoCxC] = useState(conceptosDeuda[0]);
@@ -523,6 +523,12 @@
           const [saldoEditadoValorDisplay, setSaldoEditadoValorDisplay] = useState('');
           const [fechaSaldoEditado, setFechaSaldoEditado] = useState(fechaHoy());
 
+          // ESTADOS PARA REPORTES AVANZADOS Y EDADES DE CARTERA
+          const [repTipoCartera, setRepTipoCartera] = useState('CxC');
+          const [repFechaDesde, setRepFechaDesde] = useState('');
+          const [repFechaHasta, setRepFechaHasta] = useState('');
+          const [repTerceroBusqueda, setRepTerceroBusqueda] = useState('Todos');
+
           const [fechaDesde, setFechaDesde] = useState('');
           const [fechaHasta, setFechaHasta] = useState('');
           const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
@@ -545,6 +551,41 @@
           const totalCxCPendiente = cuentasPorCobrar.reduce((acc, item) => acc + item.saldoPendiente, 0);
           const totalCxPPendiente = cuentasPorPagar.reduce((acc, item) => acc + item.saldoPendiente, 0);
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0 || c.saldoInicial !== 0);
+
+          // CÁLCULO DE EDADES DE CARTERA (1-30, 31-60, >60 días)
+          const calcularEdadesCartera = (listaDeudas) => {
+            const hoy = new Date();
+            let d1_30 = 0, d31_60 = 0, dMas60 = 0;
+
+            listaDeudas.forEach(item => {
+              if (item.saldoPendiente <= 0) return;
+              const fechaRef = new Date(item.vencimiento || item.fechaInicial || hoy);
+              const diffTime = hoy - fechaRef;
+              const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+              if (diffDays <= 30) {
+                d1_30 += item.saldoPendiente;
+              } else if (diffDays <= 60) {
+                d31_60 += item.saldoPendiente;
+              } else {
+                dMas60 += item.saldoPendiente;
+              }
+            });
+
+            const total = d1_30 + d31_60 + dMas60;
+            return {
+              p1_30: total > 0 ? Math.round((d1_30 / total) * 100) : 0,
+              p31_60: total > 0 ? Math.round((d31_60 / total) * 100) : 0,
+              pMas60: total > 0 ? Math.round((dMas60 / total) * 100) : 0,
+              v1_30: d1_30,
+              v31_60: d31_60,
+              vMas60: dMas60,
+              total
+            };
+          };
+
+          const edadesCxC = calcularEdadesCartera(cuentasPorCobrar);
+          const edadesCxP = calcularEdadesCartera(cuentasPorPagar);
 
           const guardarMovimiento = () => {
             const num = obtenerNumeroLimpio(valorDisplay);
@@ -803,7 +844,6 @@
             }
           };
 
-          // GUARDAR CXC / CXP CON FECHA DE SALDO INICIAL Y CC/NIT
           const guardarCxC = () => {
             const num = obtenerNumeroLimpio(saldoInicialCxCDisplay);
             const conceptoFinal = usarNuevoConceptoCxC ? nuevoConceptoCxC.trim() : conceptoCxC;
@@ -818,7 +858,7 @@
               concepto: conceptoFinal,
               valorTotal: num,
               saldoPendiente: num,
-              fechaInicial: fechaGeneralReg, // Fecha inicial del saldo inicial
+              fechaInicial: fechaGeneralReg,
               vencimiento: vencimientoCxC,
               cuentaId: cuentaCxC,
               observacion: obsCxC.trim(),
@@ -844,7 +884,7 @@
               concepto: conceptoFinal,
               valorTotal: num,
               saldoPendiente: num,
-              fechaInicial: fechaGeneralReg, // Fecha inicial del saldo inicial
+              fechaInicial: fechaGeneralReg,
               vencimiento: vencimientoCxP,
               cuentaId: cuentaCxP,
               observacion: obsCxP.trim(),
@@ -856,15 +896,82 @@
             notificar('Cuenta por Pagar', 'Registrada correctamente.');
           };
 
-          const movimientosReporte = movimientos.filter((m) => {
-            if (!fechaDesde && !fechaHasta) return true;
-            if (fechaDesde && m.fecha < fechaDesde) return false;
-            if (fechaHasta && m.fecha > fechaHasta) return false;
+          // FILTRADO DE CARTERA PARA REPORTES DE TERCEROS
+          const listaDeudasReporte = (repTipoCartera === 'CxC' ? cuentasPorCobrar : cuentasPorPagar).filter(item => {
+            if (repTerceroBusqueda !== 'Todos' && !item.tercero.toLowerCase().includes(repTerceroBusqueda.toLowerCase())) return false;
+            const fechaItem = item.fechaInicial || fechaHoy();
+            if (repFechaDesde && fechaItem < repFechaDesde) return false;
+            if (repFechaHasta && fechaItem > repFechaHasta) return false;
             return true;
           });
 
-          const totalGastosReporte = movimientosReporte.filter((m) => m.tipo === 'Gasto').reduce((acc, m) => acc + m.valor, 0);
-          const totalIngresosReporte = movimientosReporte.filter((m) => m.tipo === 'Ingreso').reduce((acc, m) => acc + m.valor, 0);
+          const exportarReporteCarteraCSV = () => {
+            let csvContent = "\uFEFFTercero,Concepto,Valor Total,Saldo Pendiente,Fecha Inicial,Vencimiento,Estado\n";
+            listaDeudasReporte.forEach(i => {
+              csvContent += `${i.tercero},${i.concepto},${i.valorTotal},${i.saldoPendiente},${i.fechaInicial || ''},${i.vencimiento},${i.estado}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `reporte_cartera_${repTipoCartera}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+
+          const exportarReporteCarteraPDF = () => {
+            const contenidoHtml = `
+              <html>
+                <head>
+                  <meta charset="UTF-8">
+                  <title>Reporte de Cartera - MIA</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+                    th { background-color: #205B43; color: white; }
+                    .btn-volver { display: block; width: 100%; padding: 12px; background: #205B43; color: white; text-align: center; text-decoration: none; font-weight: bold; border-radius: 8px; margin-top: 20px; }
+                  </style>
+                </head>
+                <body>
+                  <h2>MIA - Reporte de ${repTipoCartera === 'CxC' ? 'Cuentas por Cobrar (CxC)' : 'Cuentas por Pagar (CxP)'}</h2>
+                  <p><strong>Total Registros:</strong> ${listaDeudasReporte.length}</p>
+                  <hr/>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Tercero</th>
+                        <th>Concepto</th>
+                        <th>Valor Total</th>
+                        <th>Saldo Pendiente</th>
+                        <th>Vencimiento</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${listaDeudasReporte.map(i => `
+                        <tr>
+                          <td>${i.tercero}</td>
+                          <td>${i.concepto}</td>
+                          <td>${formatoCOP(i.valorTotal, simboloMoneda)}</td>
+                          <td>${formatoCOP(i.saldoPendiente, simboloMoneda)}</td>
+                          <td>${i.vencimiento}</td>
+                          <td>${i.estado}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                  <br/><hr/>
+                  <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
+                  <a href="javascript:window.close();" class="btn-volver">Cerrar y Volver a la App</a>
+                </body>
+              </html>
+            `;
+            const blob = new Blob([contenidoHtml], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+          };
 
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
             const correoUsr = usr.correo || usr.data?.correo || usr.user_id || '';
@@ -1098,7 +1205,6 @@
                         </select>
                       </div>
 
-                      {/* CAMPOS DE IDENTIFICACIÓN DE TERCEROS (CC/NIT y Nombre) */}
                       {((tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) || 
                         (tipoMovimiento === 'Gasto' && (categoriaSeleccionada === 'Préstamos a Clientes' || categoriaSeleccionada === 'Pago a Terceros'))) && (
                         <div className="bg-[#E8EFE9] p-3 rounded-xl border border-[#D2E2D5] space-y-2">
@@ -1182,6 +1288,36 @@
                 {tab === 'deudas' && (
                   <div>
                     <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.deudasTitulo}</h3>
+                    
+                    {/* GRÁFICO TIPO TORTA - EDADES DE VENCIMIENTO CARTERA */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-xs font-bold text-[#112A20]">📊 Análisis de Cartera por Edades de Vencimiento</h4>
+                        <select value={tipoCxUnified} onChange={(e) => setTipoCxUnified(e.target.value)} className="bg-[#E8EFE9] text-[#205B43] font-bold text-xs rounded-lg p-1 outline-none">
+                          <option value="CxC">CxC (Cobrar)</option>
+                          <option value="CxP">CxP (Pagar)</option>
+                        </select>
+                      </div>
+
+                      {(() => {
+                        const edades = tipoCxUnified === 'CxC' ? edadesCxC : edadesCxP;
+                        return (
+                          <div className="space-y-2">
+                            <div className="h-4 flex rounded-lg overflow-hidden bg-[#E2E8F0]">
+                              <div style={{ width: `${edades.p1_30}%`, backgroundColor: '#2D6A4F' }} className="h-full" title="1 a 30 días"></div>
+                              <div style={{ width: `${edades.p31_60}%`, backgroundColor: '#D4AF37' }} className="h-full" title="31 a 60 días"></div>
+                              <div style={{ width: `${edades.pMas60}%`, backgroundColor: '#C94A4A' }} className="h-full" title="Más de 60 días"></div>
+                            </div>
+                            <div className="grid grid-cols-3 text-[11px] font-semibold text-center pt-1">
+                              <span className="text-[#2D6A4F]">1-30 días: {edades.p1_30}% ({formatoCOP(edades.v1_30, simboloMoneda)})</span>
+                              <span className="text-[#B8860B]">31-60 días: {edades.p31_60}% ({formatoCOP(edades.v31_60, simboloMoneda)})</span>
+                              <span className="text-[#C94A4A]">&gt;60 días: {edades.pMas60}% ({formatoCOP(edades.vMas60, simboloMoneda)})</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
                       <div>
                         <label className="text-xs font-bold text-[#112A20] block mb-1">{t.tipoOp}</label>
@@ -1191,7 +1327,6 @@
                         </select>
                       </div>
 
-                      {/* SELECTOR DE FECHA INICIAL DEL SALDO INICIAL */}
                       <div>
                         <label className="text-[11px] font-bold text-[#52725F] block mb-1">📅 Fecha inicial del saldo inicial:</label>
                         <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs font-semibold" />
@@ -1221,6 +1356,41 @@
                 {tab === 'reportes' && (
                   <div>
                     <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.reportesTitulo}</h3>
+                    
+                    {/* MÓDULO DE REPORTE AVANZADO DE CARTERA (CXC / CXP) */}
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
+                      <h4 className="text-xs font-bold text-[#112A20]">📑 Reporte Avanzado de Cartera</h4>
+                      
+                      <select value={repTipoCartera} onChange={(e) => setRepTipoCartera(e.target.value)} className="w-full bg-[#F8FAF8] rounded-lg p-2 border text-xs font-semibold">
+                        <option value="CxC">Cuentas por Cobrar (CxC)</option>
+                        <option value="CxP">Cuentas por Pagar (CxP)</option>
+                      </select>
+
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Desde:</label>
+                          <input type="date" value={repFechaDesde} onChange={(e) => setRepFechaDesde(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border text-[11px]" />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Hasta:</label>
+                          <input type="date" value={repFechaHasta} onChange={(e) => setRepFechaHasta(e.target.value)} className="w-full bg-white rounded-lg p-1.5 border text-[11px]" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-600 block mb-0.5">Filtrar por Tercero (NIT, Cédula o Nombre):</label>
+                        <input type="text" placeholder="Escribe para buscar (ej. 1104 o Elvira)..." value={repTerceroBusqueda} onChange={(e) => setRepTerceroBusqueda(e.target.value)} className="w-full bg-white rounded-lg p-2 border text-xs" />
+                      </div>
+
+                      <div className="pt-2 border-t space-y-2">
+                        <p className="text-xs font-bold text-[#205B43]">Registros encontrados: {listaDeudasReporte.length}</p>
+                        <div className="flex gap-2">
+                          <button onClick={exportarReporteCarteraCSV} className="flex-1 bg-[#205B43] text-white py-2 rounded-lg text-xs font-bold">📊 Exportar Excel</button>
+                          <button onClick={exportarReporteCarteraPDF} className="flex-1 bg-[#40916C] text-white py-2 rounded-lg text-xs font-bold">📄 Exportar PDF</button>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3 space-y-2">
                       <span className="text-[11px] font-bold text-[#718078]">{t.gastosPeriodo}</span>
                       <h2 className="text-2xl font-extrabold text-[#C94A4A]">{formatoCOP(totalGastosReporte, simboloMoneda)}</h2>
