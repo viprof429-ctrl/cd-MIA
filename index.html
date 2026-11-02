@@ -171,7 +171,6 @@
                   },
                   body: JSON.stringify({
                     user_id: uid,
-                    correo: email,
                     data: { cuentas: CUENTAS_BASE, movimientos: [], cuentasPorCobrar: [], cuentasPorPagar: [], moneda: extraData?.moneda || 'COP ($)', idioma: extraData?.idioma || 'Español', correo: email }
                   })
                 });
@@ -209,7 +208,13 @@
               const rows = await res.json();
               if (rows && rows.length > 0) {
                 let rawData = rows[0].data;
-                let cuentasExtraidas = rawData?.cuentas || CUENTAS_BASE;
+                let cuentasExtraidas = CUENTAS_BASE;
+                if (Array.isArray(rawData)) {
+                  cuentasExtraidas = rawData;
+                } else if (rawData && Array.isArray(rawData.cuentas)) {
+                  cuentasExtraidas = rawData.cuentas;
+                }
+
                 cuentasExtraidas = cuentasExtraidas.map(c => ({
                   ...c,
                   saldoInicial: Number(c.saldoInicial !== undefined ? c.saldoInicial : (c.saldoinicial !== undefined ? c.saldoinicial : 0)),
@@ -231,8 +236,9 @@
               return null;
             }
           },
-          async guardarDatosNube(token, userId, payload) {
+          async guardarDatosNube(token, userId, jsonData) {
             try {
+              // Guardado exacto mapeando únicamente a la columna 'data' que existe en tu tabla
               const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}`, {
                 method: 'PATCH',
                 headers: {
@@ -242,8 +248,7 @@
                   'Prefer': 'return=minimal'
                 },
                 body: JSON.stringify({
-                  correo: payload.correo,
-                  data: payload.data
+                  data: jsonData
                 })
               });
 
@@ -258,8 +263,7 @@
                   },
                   body: JSON.stringify({
                     user_id: userId,
-                    correo: payload.correo,
-                    data: payload.data
+                    data: jsonData
                   })
                 });
               }
@@ -419,11 +423,16 @@
 
           useEffect(() => {
             if (sesion && sesion.access_token && datosCargados) {
-              const payload = {
+              const jsonData = {
                 correo: sesion.user?.email || emailInput,
-                data: { cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, moneda: monedaSeleccionada, idioma: idiomaSeleccionado }
+                cuentas,
+                movimientos,
+                cuentasPorCobrar,
+                cuentasPorPagar,
+                moneda: monedaSeleccionada,
+                idioma: idiomaSeleccionado
               };
-              supabaseApi.guardarDatosNube(sesion.access_token, sesion.user_id, payload);
+              supabaseApi.guardarDatosNube(sesion.access_token, sesion.user_id, jsonData);
             }
           }, [cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, monedaSeleccionada, idiomaSeleccionado, datosCargados, sesion]);
 
@@ -709,32 +718,6 @@
             notificar('Cuenta por Pagar', 'Registrada correctamente.');
           };
 
-          const procesarCobroUnificado = () => {
-            const item = cuentasPorCobrar.find(c => c.id.toString() === pagoIdCxC);
-            const abono = obtenerNumeroLimpio(montoPagoCxCDisplay);
-            if (!item || isNaN(abono) || abono <= 0 || abono > item.saldoPendiente) {
-              notificar('Datos inválidos', 'Verifica el monto o el tercero seleccionado.');
-              return;
-            }
-            const nuevoSaldo = item.saldoPendiente - abono;
-            setCuentasPorCobrar(prev => prev.map(c => c.id === item.id ? { ...c, saldoPendiente: nuevoSaldo, estado: nuevoSaldo === 0 ? 'Pagado' : 'Parcial' } : c));
-            setPagoIdCxC(''); setMontoPagoCxCDisplay('');
-            notificar('Pago Recibido', 'Abono registrado con éxito.');
-          };
-
-          const procesarPagoUnificado = () => {
-            const item = cuentasPorPagar.find(c => c.id.toString() === pagoIdCxP);
-            const abono = obtenerNumeroLimpio(montoPagoCxPDisplay);
-            if (!item || isNaN(abono) || abono <= 0 || abono > item.saldoPendiente) {
-              notificar('Datos inválidos', 'Verifica el monto o el tercero seleccionado.');
-              return;
-            }
-            const nuevoSaldo = item.saldoPendiente - abono;
-            setCuentasPorPagar(prev => prev.map(c => c.id === item.id ? { ...c, saldoPendiente: nuevoSaldo, estado: nuevoSaldo === 0 ? 'Pagado' : 'Parcial' } : c));
-            setPagoIdCxP(''); setMontoPagoCxPDisplay('');
-            notificar('Pago Realizado', 'Abono registrado con éxito.');
-          };
-
           const movimientosReporte = movimientos.filter((m) => {
             if (!fechaDesde && !fechaHasta) return true;
             if (fechaDesde && m.fecha < fechaDesde) return false;
@@ -759,7 +742,7 @@
             const idiomaUsr = usr.data?.idioma || 'Español';
             const monedaUsr = usr.data?.moneda || 'COP';
             if (tipoBusqueda === 'correo' && filtroCorreo !== 'Todos' && correoUsr !== filtroCorreo) return false;
-            if (tipoBusqueda === 'idioma' && filtroIdioma !== 'Todos' && idiomaUsr !== filtroIdioma) return false;
+            if (tipoBusqueda === 'idioma' && filtroIdioma !== 'Todos' && idiomaUsr !== idiomaUsr) return false;
             if (tipoBusqueda === 'moneda' && filtroMoneda !== 'Todas' && !monedaUsr.includes(filtroMoneda)) return false;
             return true;
           });
@@ -1005,6 +988,20 @@
                   </div>
                 )}
               </div>
+
+              {modalEditarMovimiento && (
+                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
+                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-3">
+                    <h3 className="text-lg font-extrabold text-[#112A20] text-center">Editar Movimiento</h3>
+                    <input type="text" value={editConcepto} onChange={(e) => setEditConcepto(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm" />
+                    <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm font-bold" />
+                    <div className="flex gap-2">
+                      <button onClick={() => setModalEditarMovimiento(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-xs">Cancelar</button>
+                      <button onClick={guardarEdicionMovimiento} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-xs">Guardar</button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {modalEditarSaldo && (
                 <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
