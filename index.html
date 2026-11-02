@@ -31,6 +31,8 @@
             fondosActivos: "Tus Fondos y Deudas Activas",
             verCuentas: "Ver cuentas ›",
             sinCuentas: "No hay cuentas ni deudas con saldo activo en este momento.",
+            totalCxCPend: "Total CxC Pend",
+            totalCxPPend: "Total CxP Pend",
             registrarMov: "Registrar Movimiento General",
             gasto: "Gasto",
             ingreso: "Ingreso",
@@ -100,6 +102,13 @@
           return `${y}-${m}-${dia}`;
         };
 
+        const primerDiaMes = () => {
+          const d = new Date();
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          return `${y}-${m}-01`;
+        };
+
         const CUENTAS_BASE = [
           { id: '1', nombre: 'Efectivo en Mano', tipo: 'Efectivo', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '💵' },
           { id: '2', nombre: 'Bancolombia', tipo: 'Banco', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '🏦' },
@@ -141,6 +150,38 @@
         };
 
         const supabaseApi = {
+          async signUp(email, password, extraData) {
+            try {
+              const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+                body: JSON.stringify({ email, password, data: extraData })
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.msg || data.error_description || 'Error en el registro');
+              
+              if (data.id || data.user?.id) {
+                const uid = data.id || data.user.id;
+                await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Prefer': 'return=minimal'
+                  },
+                  body: JSON.stringify({
+                    user_id: uid,
+                    correo: email,
+                    data: { cuentas: CUENTAS_BASE, movimientos: [], cuentasPorCobrar: [], cuentasPorPagar: [], moneda: extraData?.moneda || 'COP ($)', idioma: extraData?.idioma || 'Español', correo: email }
+                  })
+                });
+              }
+
+              return { data, error: null };
+            } catch (err) {
+              return { data: null, error: err };
+            }
+          },
           async signIn(email, password) {
             try {
               const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
@@ -192,7 +233,7 @@
           },
           async guardarDatosNube(token, userId, payload) {
             try {
-              await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}`, {
+              const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}`, {
                 method: 'PATCH',
                 headers: {
                   'Content-Type': 'application/json',
@@ -205,6 +246,23 @@
                   data: payload.data
                 })
               });
+
+              if (!res.ok) {
+                await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${token}`,
+                    'Prefer': 'return=minimal'
+                  },
+                  body: JSON.stringify({
+                    user_id: userId,
+                    correo: payload.correo,
+                    data: payload.data
+                  })
+                });
+              }
             } catch (err) {
               console.error("Error guardando en la nube:", err);
             }
@@ -222,6 +280,72 @@
               console.error("Error cargando logo global:", err);
             }
             return null;
+          },
+          async guardarLogoGlobal(token, logoBase64) {
+            try {
+              const resPatch = await fetch(`${SUPABASE_URL}/rest/v1/mia_configuracion?clave=eq.logo_global`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'apikey': SUPABASE_ANON_KEY,
+                  'Authorization': `Bearer ${token}`,
+                  'Prefer': 'return=representation'
+                },
+                body: JSON.stringify({ valor: logoBase64 })
+              });
+              const updatedRows = await resPatch.json();
+              if (updatedRows && updatedRows.length > 0) return true;
+
+              const resPost = await fetch(`${SUPABASE_URL}/rest/v1/mia_configuracion`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'apikey': SUPABASE_ANON_KEY,
+                  'Authorization': `Bearer ${token}`,
+                  'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({ clave: 'logo_global', valor: logoBase64 })
+              });
+              return resPost.ok;
+            } catch (err) {
+              console.error("Error guardando logo global en nube:", err);
+              return false;
+            }
+          },
+          async obtenerUsuariosRegistrados(token) {
+            try {
+              const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?select=*`, {
+                method: 'GET',
+                headers: {
+                  'apikey': SUPABASE_ANON_KEY,
+                  'Authorization': `Bearer ${token}`,
+                  'Range': '0-999'
+                }
+              });
+              if (!res.ok) return [];
+              const rawData = await res.json();
+
+              return rawData.map(usr => {
+                let correoDetectado = usr.correo || usr.data?.correo;
+                if (!correoDetectado || !correoDetectado.includes('@')) {
+                  if (usr.user_id === '86cd0012-58c7-489d-b03d-36349412aa25') {
+                    correoDetectado = 'viprof429@gmail.com';
+                  } else if (usr.user_id === 'cdc21ebb-372d-48f8-b94e-b303f9dcf140') {
+                    correoDetectado = 'alvaroluis29@hotmail.com';
+                  } else {
+                    correoDetectado = `usuario_${usr.user_id.substring(0, 6)}@mia.app`;
+                  }
+                }
+                return {
+                  ...usr,
+                  correo: correoDetectado,
+                  data: { ...usr.data, correo: correoDetectado }
+                };
+              });
+            } catch (err) {
+              console.error("Error obteniendo usuarios:", err);
+              return [];
+            }
           }
         };
 
@@ -245,16 +369,22 @@
           });
           const [emailInput, setEmailInput] = useState('');
           const [passInput, setPassInput] = useState('');
+          const [modoRegistro, setModoRegistro] = useState(false);
           const [idiomaSeleccionado, setIdiomaSeleccionado] = useState('Español');
           const [monedaSeleccionada, setMonedaSeleccionada] = useState('COP ($)');
           const [tab, setTab] = useState('inicio');
           const [logoGlobal, setLogoGlobal] = useState(null);
+          const [listaUsuariosCloud, setListaUsuariosCloud] = useState([]);
 
           const [cuentas, setCuentas] = useState(CUENTAS_BASE);
           const [movimientos, setMovimientos] = useState([]);
           const [cuentasPorCobrar, setCuentasPorCobrar] = useState([]);
           const [cuentasPorPagar, setCuentasPorPagar] = useState([]);
 
+          const [categoriasGasto] = useState(CATEGORIAS_GASTO_BASE);
+          const [categoriasIngreso] = useState(CATEGORIAS_INGRESO_BASE);
+          const [conceptosDeuda, setConceptosDeuda] = useState([...CATEGORIAS_GASTO_BASE, ...CATEGORIAS_INGRESO_BASE, 'Préstamo Personal', 'Inversión']);
+          
           const [datosCargados, setDatosCargados] = useState(false);
           const datosCargadosRef = useRef(false);
 
@@ -278,6 +408,12 @@
                 datosCargadosRef.current = true;
                 setDatosCargados(true);
               });
+
+              if (sesion.user?.email?.trim().toLowerCase() === 'viprof429@gmail.com') {
+                supabaseApi.obtenerUsuariosRegistrados(sesion.access_token).then(usuarios => {
+                  setListaUsuariosCloud(usuarios);
+                });
+              }
             }
           }, [sesion]);
 
@@ -311,6 +447,21 @@
             }
           };
 
+          const manejarRegistro = async () => {
+            if (!emailInput || !passInput) {
+              notificar('Datos incompletos', 'Ingresa un correo y contraseña válidos.');
+              return;
+            }
+            const extraData = { idioma: idiomaSeleccionado, moneda: monedaSeleccionada, correo: emailInput };
+            const { error } = await supabaseApi.signUp(emailInput, passInput, extraData);
+            if (error) {
+              notificar('Error de Registro', error.message);
+            } else {
+              notificar('¡Registro exitoso!', 'Ya puedes iniciar sesión con tus datos.');
+              setModoRegistro(false);
+            }
+          };
+
           const cerrarSesion = () => {
             localStorage.clear();
             datosCargadosRef.current = false;
@@ -318,21 +469,80 @@
             setDatosCargados(false);
             setCuentas(CUENTAS_BASE);
             setMovimientos([]);
+            setCuentasPorCobrar([]);
+            setCuentasPorPagar([]);
           };
 
           const simboloMoneda = monedaSeleccionada.includes('USD') ? '$' : monedaSeleccionada.includes('EUR') ? '€' : '$';
 
           const [tipoMovimiento, setTipoMovimiento] = useState('Gasto');
           const [cuentaSeleccionada, setCuentaSeleccionada] = useState(cuentas[0]?.id || '1');
-          const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(CATEGORIAS_GASTO_BASE[0]);
+          const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(categoriasGasto[0]);
           const [concepto, setConcepto] = useState('');
           const [valorDisplay, setValorDisplay] = useState('');
           const [fechaMovimiento, setFechaMovimiento] = useState(fechaHoy());
+
+          const [modalEditarMovimiento, setModalEditarMovimiento] = useState(false);
+          const [movimientoAEditar, setMovimientoAEditar] = useState(null);
+          const [editConcepto, setEditConcepto] = useState('');
+          const [editValorDisplay, setEditValorDisplay] = useState('');
+          const [editFecha, setEditFecha] = useState('');
+          const [editTipo, setEditTipo] = useState('Gasto');
+          const [editCuentaId, setEditCuentaId] = useState('');
+          const [editCategoria, setEditCategoria] = useState('');
+
+          const [tipoCxUnified, setTipoCxUnified] = useState('CxC');
+          const [fechaGeneralReg, setFechaGeneralReg] = useState(fechaHoy());
+          const [terceroCxC, setTerceroCxC] = useState('');
+          const [conceptoCxC, setConceptoCxC] = useState(conceptosDeuda[0]);
+          const [nuevoConceptoCxC, setNuevoConceptoCxC] = useState('');
+          const [usarNuevoConceptoCxC, setUsarNuevoConceptoCxC] = useState(false);
+          const [saldoInicialCxCDisplay, setSaldoInicialCxCDisplay] = useState('');
+          const [vencimientoCxC, setVencimientoCxC] = useState(fechaHoy());
+          const [cuentaCxC, setCuentaCxC] = useState(cuentas[0]?.id || '1');
+          const [obsCxC, setObsCxC] = useState('');
+
+          const [terceroCxP, setTerceroCxP] = useState('');
+          const [conceptoCxP, setConceptoCxP] = useState(conceptosDeuda[0]);
+          const [nuevoConceptoCxP, setNuevoConceptoCxP] = useState('');
+          const [usarNuevoConceptoCxP, setUsarNuevoConceptoCxP] = useState(false);
+          const [saldoInicialCxPDisplay, setSaldoInicialCxPDisplay] = useState('');
+          const [vencimientoCxP, setVencimientoCxP] = useState(fechaHoy());
+          const [cuentaCxP, setCuentaCxP] = useState(cuentas[0]?.id || '1');
+          const [obsCxP, setObsCxP] = useState('');
+
+          const [tipoAbonoUnified, setTipoAbonoUnified] = useState('CxC');
+          const [fechaAbonoUnified, setFechaAbonoUnified] = useState(fechaHoy());
+          const [pagoIdCxC, setPagoIdCxC] = useState('');
+          const [montoPagoCxCDisplay, setMontoPagoCxCDisplay] = useState('');
+          const [cuentaPagoCxC, setCuentaPagoCxC] = useState(cuentas[0]?.id || '1');
+          const [pagoIdCxP, setPagoIdCxP] = useState('');
+          const [montoPagoCxPDisplay, setMontoPagoCxPDisplay] = useState('');
+          const [cuentaPagoCxP, setCuentaPagoCxP] = useState(cuentas[0]?.id || '1');
+
+          const [tipoReporteTercero, setTipoReporteTercero] = useState('CxC');
+          const [terceroSeleccionadoId, setTerceroSeleccionadoId] = useState('');
+          const [cuentaReporteId, setCuentaReporteId] = useState('');
+
+          const [modalNuevaCuenta, setModalNuevaCuenta] = useState(false);
+          const [nuevoNombre, setNuevoNombre] = useState('');
+          const [nuevoTipo, setNuevoTipo] = useState('Banco');
+          const [nuevoSaldoInitDisplay, setNuevoSaldoInitDisplay] = useState('');
 
           const [modalEditarSaldo, setModalEditarSaldo] = useState(false);
           const [cuentaAEditar, setCuentaAEditar] = useState(null);
           const [saldoEditadoValorDisplay, setSaldoEditadoValorDisplay] = useState('');
           const [fechaSaldoEditado, setFechaSaldoEditado] = useState(fechaHoy());
+
+          const [fechaDesde, setFechaDesde] = useState('');
+          const [fechaHasta, setFechaHasta] = useState('');
+          const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
+          const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
+          const [tipoBusqueda, setTipoBusqueda] = useState('correo');
+          const [filtroCorreo, setFiltroCorreo] = useState('Todos');
+          const [filtroIdioma, setFiltroIdioma] = useState('Todos');
+          const [filtroMoneda, setFiltroMoneda] = useState('Todas');
+          const [reporteGenerado, setReporteGenerado] = useState(false);
 
           const obtenerSaldoCuenta = (cuentaId) => {
             const c = cuentas.find((item) => item.id === cuentaId);
@@ -343,6 +553,8 @@
           };
 
           const patrimonioTotal = cuentas.reduce((acc, c) => acc + obtenerSaldoCuenta(c.id), 0);
+          const totalCxCPendiente = cuentasPorCobrar.reduce((acc, item) => acc + item.saldoPendiente, 0);
+          const totalCxPPendiente = cuentasPorPagar.reduce((acc, item) => acc + item.saldoPendiente, 0);
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0 || c.saldoInicial !== 0);
 
           const guardarMovimiento = () => {
@@ -377,12 +589,76 @@
             notificar('Saldo Actualizado', 'El saldo inicial y su fecha han sido modificados.');
           };
 
+          const guardarNuevaCuenta = () => {
+            const saldo = obtenerNumeroLimpio(nuevoSaldoInitDisplay);
+            if (!nuevoNombre.trim()) {
+              notificar('Falta el nombre', 'Ingresa el nombre del banco o cuenta.');
+              return;
+            }
+            const iconos = { Efectivo: '💵', Banco: '🏦', Billetera: '📱' };
+            const nueva = {
+              id: Date.now().toString(),
+              nombre: nuevoNombre.trim(),
+              tipo: nuevoTipo,
+              saldoInicial: saldo,
+              fechaSaldoInicial: fechaHoy(),
+              icono: iconos[nuevoTipo],
+            };
+            setCuentas((prev) => [...prev, nueva]);
+            setNuevoNombre('');
+            setNuevoSaldoInitDisplay('');
+            setModalNuevaCuenta(false);
+          };
+
+          const reiniciarTodo = () => {
+            if (window.confirm('¿Deseas borrar todos tus movimientos y empezar en limpio?')) {
+              setCuentas(CUENTAS_BASE);
+              setMovimientos([]);
+              setCuentasPorCobrar([]);
+              setCuentasPorPagar([]);
+              notificar('Reinicio completo', 'Tus datos se han reiniciado.');
+            }
+          };
+
+          const movimientosReporte = movimientos.filter((m) => {
+            if (!fechaDesde && !fechaHasta) return true;
+            if (fechaDesde && m.fecha < fechaDesde) return false;
+            if (fechaHasta && m.fecha > fechaHasta) return false;
+            return true;
+          });
+
+          const totalGastosReporte = movimientosReporte.filter((m) => m.tipo === 'Gasto').reduce((acc, m) => acc + m.valor, 0);
+          const totalIngresosReporte = movimientosReporte.filter((m) => m.tipo === 'Ingreso').reduce((acc, m) => acc + m.valor, 0);
+          const rubrosAgrupados = movimientosReporte.filter((m) => m.tipo === 'Gasto').reduce((acc, m) => {
+            acc[m.categoria] = (acc[m.categoria] || 0) + m.valor;
+            return acc;
+          }, {});
+          const listaRubros = Object.entries(rubrosAgrupados).sort((a, b) => b[1] - a[1]);
+
+          const totalDeudasGrafico = totalCxCPendiente + totalCxPPendiente;
+          const pctCxC = totalDeudasGrafico > 0 ? Math.round((totalCxCPendiente / totalDeudasGrafico) * 100) : 50;
+          const pctCxP = totalDeudasGrafico > 0 ? Math.round((totalCxPPendiente / totalDeudasGrafico) * 100) : 50;
+
+          const correosUnicos = [...new Set(listaUsuariosCloud.map(u => u.correo || u.data?.correo || u.user_id).filter(Boolean))];
+          const idiomasUnicos = [...new Set(listaUsuariosCloud.map(u => u.data?.idioma || 'Español').filter(Boolean))];
+          const monedasUnicas = [...new Set(listaUsuariosCloud.map(u => u.data?.moneda || 'COP').filter(Boolean))];
+
+          const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
+            const correoUsr = usr.correo || usr.data?.correo || usr.user_id || '';
+            const idiomaUsr = usr.data?.idioma || 'Español';
+            const monedaUsr = usr.data?.moneda || 'COP';
+            if (tipoBusqueda === 'correo' && filtroCorreo !== 'Todos' && correoUsr !== filtroCorreo) return false;
+            if (tipoBusqueda === 'idioma' && filtroIdioma !== 'Todos' && idiomaUsr !== filtroIdioma) return false;
+            if (tipoBusqueda === 'moneda' && filtroMoneda !== 'Todas' && !monedaUsr.includes(filtroMoneda)) return false;
+            return true;
+          });
+
           if (!sesion) {
             return (
               <div className="flex flex-col h-full bg-[#112A20] justify-center items-center p-3 w-full text-white overflow-y-auto">
                 <LogoOficialMIA logoCustom={logoGlobal} />
                 <div className="bg-white text-slate-800 rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 shrink-0 mt-3">
-                  <h2 className="text-lg font-bold text-center text-[#112A20]">Iniciar Sesión</h2>
+                  <h2 className="text-lg font-bold text-center text-[#112A20]">{modoRegistro ? 'Crea tu cuenta' : 'Iniciar Sesión'}</h2>
                   <div>
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Correo electrónico:</label>
                     <input type="email" placeholder="tucorreo@email.com" value={emailInput} onChange={(e) => setEmailInput(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none" />
@@ -391,82 +667,255 @@
                     <label className="text-xs font-semibold text-[#52725F] block mb-1">Contraseña:</label>
                     <input type="password" placeholder="••••••••" value={passInput} onChange={(e) => setPassInput(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none" />
                   </div>
-                  <button onClick={manejarLogin} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition mt-2">Ingresar</button>
+                  {modoRegistro && (
+                    <div className="space-y-3 pt-1 border-t border-slate-100">
+                      <div>
+                        <label className="text-xs font-semibold text-[#52725F] block mb-1">🌐 Idioma:</label>
+                        <select value={idiomaSeleccionado} onChange={(e) => setIdiomaSeleccionado(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none font-medium">
+                          <option value="Español">🇪🇸 Español</option>
+                          <option value="Inglés">🇺🇸 English</option>
+                          <option value="Portugués">🇧🇷 Português</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-[#52725F] block mb-1">💱 Moneda:</label>
+                        <select value={monedaSeleccionada} onChange={(e) => setMonedaSeleccionada(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm outline-none font-medium">
+                          <option value="COP ($)">COP ($)</option>
+                          <option value="USD ($)">USD ($)</option>
+                          <option value="EUR (€)">EUR (€)</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                  {modoRegistro ? (
+                    <button onClick={manejarRegistro} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition mt-2">Registrarse</button>
+                  ) : (
+                    <button onClick={manejarLogin} className="w-full bg-[#205B43] text-white font-bold py-3 rounded-xl shadow hover:bg-[#112A20] transition mt-2">Ingresar</button>
+                  )}
+                  <button onClick={() => setModoRegistro(!modoRegistro)} className="w-full text-center text-xs text-[#2D6A4F] font-bold hover:underline pt-1">
+                    {modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí'}
+                  </button>
                 </div>
               </div>
             );
           }
 
+          const esSuperAdmin = sesion?.user?.email?.trim().toLowerCase() === 'viprof429@gmail.com';
+
           return (
             <div className="flex flex-col h-full bg-[#F3F7F2] relative w-full">
               <div className="p-2 px-4 flex justify-between items-center bg-white border-b border-slate-100 shadow-sm">
                 <LogoHeaderMIA logoCustom={logoGlobal} />
-                <button onClick={cerrarSesion} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200 hover:bg-red-100 transition">Salir</button>
+                <div className="flex items-center gap-2">
+                  {esSuperAdmin && (
+                    <button onClick={() => setTab('admin')} className="bg-[#D4AF37]/20 text-[#B8860B] px-3 py-1.5 rounded-xl text-xs font-bold border border-[#D4AF37]/50">Admin</button>
+                  )}
+                  <button onClick={cerrarSesion} className="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-200">Salir</button>
+                </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 pb-24">
                 {tab === 'inicio' && (
                   <div>
                     <div className="bg-[#112A20] rounded-2xl p-5 mb-4 shadow-md text-white">
-                      <span className="text-[11px] font-bold text-[#B7E4C7] tracking-wider">{t.patrimonio} ({monedaSeleccionada})</span>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[11px] font-bold text-[#B7E4C7] tracking-wider">{t.patrimonio} ({monedaSeleccionada})</span>
+                        <button onClick={() => setTab('cuentas')} className="text-[#B7E4C7] text-xs font-bold hover:underline">{t.ajustarSaldos}</button>
+                      </div>
                       <h2 className="text-3xl font-extrabold my-2">{formatoCOP(patrimonioTotal, simboloMoneda)}</h2>
                       <p className="text-[11px] text-[#D8F3DC]">{t.subPatrimonio}</p>
+                    </div>
+
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-[17px] font-bold text-[#112A20]">{t.fondosActivos}</h3>
+                      <button onClick={() => setTab('cuentas')} className="text-xs text-[#2D6A4F] font-bold hover:underline">{t.verCuentas}</button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {cuentasConSaldo.length === 0 && totalCxCPendiente === 0 && totalCxPPendiente === 0 ? (
+                        <p className="col-span-2 text-center text-xs text-[#718078] italic py-2">{t.sinCuentas}</p>
+                      ) : (
+                        <>
+                          {cuentasConSaldo.map((c) => (
+                            <div key={c.id} className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xl">{c.icono}</span>
+                                <p className="text-xs font-semibold text-slate-700 truncate">{c.nombre}</p>
+                              </div>
+                              <p className="text-[14px] font-bold text-[#205B43] mt-2">{formatoCOP(obtenerSaldoCuenta(c.id), simboloMoneda)}</p>
+                            </div>
+                          ))}
+                          {totalCxCPendiente > 0 && (
+                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-emerald-100 flex flex-col justify-between">
+                              <div className="flex items-center gap-1.5"><span className="text-xl">📥</span><p className="text-xs font-semibold text-slate-700 truncate">{t.totalCxCPend}</p></div>
+                              <p className="text-[14px] font-bold text-[#2D6A4F] mt-2">{formatoCOP(totalCxCPendiente, simboloMoneda)}</p>
+                            </div>
+                          )}
+                          {totalCxPPendiente > 0 && (
+                            <div className="bg-white p-3 rounded-2xl shadow-sm border border-red-100 flex flex-col justify-between">
+                              <div className="flex items-center gap-1.5"><span className="text-xl">📤</span><p className="text-xs font-semibold text-slate-700 truncate">{t.totalCxPPend}</p></div>
+                              <p className="text-[14px] font-bold text-[#C94A4A] mt-2">{formatoCOP(totalCxPPendiente, simboloMoneda)}</p>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
 
                     <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">{t.registrarMov}</h3>
                     <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
                       <div className="flex gap-2">
-                        <button onClick={() => setTipoMovimiento('Gasto')} className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Gasto' ? 'bg-[#C94A4A] text-white' : 'bg-[#E8EFE9] text-slate-700'}`}>{t.gasto}</button>
-                        <button onClick={() => setTipoMovimiento('Ingreso')} className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Ingreso' ? 'bg-[#2D6A4F] text-white' : 'bg-[#E8EFE9] text-slate-700'}`}>{t.ingreso}</button>
+                        <button onClick={() => { setTipoMovimiento('Gasto'); setCategoriaSeleccionada(categoriasGasto[0]); }} className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Gasto' ? 'bg-[#C94A4A] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}>{t.gasto}</button>
+                        <button onClick={() => { setTipoMovimiento('Ingreso'); setCategoriaSeleccionada(categoriasIngreso[0]); }} className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition ${tipoMovimiento === 'Ingreso' ? 'bg-[#2D6A4F] text-white shadow-md' : 'bg-[#E8EFE9] text-slate-700'}`}>{t.ingreso}</button>
                       </div>
 
-                      <select value={cuentaSeleccionada} onChange={(e) => setCuentaSeleccionada(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none">
+                      <select value={cuentaSeleccionada} onChange={(e) => setCuentaSeleccionada(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none font-medium">
                         {cuentas.map((c) => (<option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>))}
+                      </select>
+
+                      <input type="text" value={fechaMovimiento} onChange={(e) => setFechaMovimiento(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none" />
+
+                      <select value={categoriaSeleccionada} onChange={(e) => setCategoriaSeleccionada(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none font-medium">
+                        {(tipoMovimiento === 'Gasto' ? categoriasGasto : categoriasIngreso).map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
                       </select>
 
                       <input type="text" placeholder={t.conceptoPlaceholder} value={concepto} onChange={(e) => setConcepto(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none" />
                       <input type="text" placeholder={t.valorPlaceholder(monedaSeleccionada)} value={valorDisplay} onChange={(e) => setValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none" />
                       <button onClick={guardarMovimiento} className="w-full bg-[#205B43] text-white font-bold py-3.5 rounded-xl shadow-md mt-2">{t.guardarMovBtn}</button>
                     </div>
+
+                    <h3 className="text-[17px] font-bold text-[#112A20] mt-4 mb-2">{t.movRecientes}</h3>
+                    {movimientos.length === 0 ? (
+                      <p className="text-center text-[#718078] my-6 italic text-sm">{t.sinMovs}</p>
+                    ) : (
+                      movimientos.slice(0, 5).map((m) => {
+                        const cuentaAsociada = cuentas.find((c) => c.id === m.cuentaId);
+                        const esIngreso = m.tipo === 'Ingreso';
+                        return (
+                          <div key={m.id} className="bg-white rounded-xl p-3.5 my-1.5 flex justify-between items-center shadow-sm border border-slate-100">
+                            <div className="flex-1 pr-2">
+                              <p className="text-sm font-semibold text-[#1F2937]">{m.concepto}</p>
+                              <p className="text-[11px] text-[#718078] mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
+                            </div>
+                            <span className={`text-sm font-bold ${esIngreso ? 'text-[#2D6A4F]' : 'text-[#C94A4A]'}`}>{esIngreso ? '+ ' : '- '}{formatoCOP(m.valor, simboloMoneda)}</span>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 )}
 
                 {tab === 'cuentas' && (
                   <div>
-                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.cuentasTitulo}</h3>
-                    {cuentas.map((c) => (
-                      <div key={c.id} className="bg-white rounded-2xl p-4 my-3 shadow-sm border border-slate-100 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xl">{c.icono} <strong className="text-base text-slate-800">{c.nombre}</strong></span>
-                          <span className="text-base font-bold text-[#205B43]">{formatoCOP(obtenerSaldoCuenta(c.id), simboloMoneda)}</span>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-[17px] font-bold text-[#112A20]">{t.cuentasTitulo}</h3>
+                      <button onClick={() => setModalNuevaCuenta(true)} className="bg-[#2D6A4F] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow">{t.crearCuentaBtn}</button>
+                    </div>
+                    <p className="text-[13px] text-[#52725F] mb-4">{t.cuentasSub}</p>
+
+                    {cuentas.map((c) => {
+                      const saldoActual = obtenerSaldoCuenta(c.id);
+                      return (
+                        <div key={c.id} className="bg-white rounded-2xl p-4 my-3 shadow-sm border border-slate-100 space-y-3">
+                          <div className="flex items-center">
+                            <span className="text-3xl">{c.icono}</span>
+                            <div className="ml-3 flex-1">
+                              <h4 className="text-base font-bold text-[#1F2937]">{c.nombre}</h4>
+                              <p className="text-xs text-[#718078]">Tipo: {c.tipo}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[11px] text-[#718078]">{t.saldoActual}</span>
+                              <p className="text-base font-bold text-[#205B43]">{formatoCOP(saldoActual, simboloMoneda)}</p>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                            <div>
+                              <span className="text-[10px] font-bold text-[#718078]">{t.saldoInicialLabel} (Desde: {c.fechaSaldoInicial || fechaHoy()})</span>
+                              <p className="text-[14px] font-bold text-[#1F2937]">{formatoCOP(c.saldoInicial, simboloMoneda)}</p>
+                            </div>
+                            <button onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setFechaSaldoEditado(c.fechaSaldoInicial || fechaHoy()); setModalEditarSaldo(true); }} className="bg-[#E8EFE9] px-3 py-2 rounded-xl text-xs font-bold text-[#205B43]">{t.modificarBtn}</button>
+                          </div>
                         </div>
-                        <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                          <span className="text-xs text-slate-500">{t.saldoInicialLabel} (Fecha: {c.fechaSaldoInicial || fechaHoy()}): <strong>{formatoCOP(c.saldoInicial, simboloMoneda)}</strong></span>
-                          <button onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setFechaSaldoEditado(c.fechaSaldoInicial || fechaHoy()); setModalEditarSaldo(true); }} className="bg-[#E8EFE9] px-3 py-1.5 rounded-xl text-xs font-bold text-[#205B43]">{t.modificarBtn}</button>
-                        </div>
+                      );
+                    })}
+                    <button onClick={reiniciarTodo} className="w-full mt-4 p-3 bg-[#FDE8E8] rounded-xl text-[#9B1C1C] font-bold text-xs border border-[#F8B4B4]">{t.reiniciarCelularBtn}</button>
+                  </div>
+                )}
+
+                {tab === 'deudas' && (
+                  <div>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.deudasTitulo}</h3>
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-4 space-y-3">
+                      <div>
+                        <label className="text-xs font-bold text-[#112A20] block mb-1">{t.tipoOp}</label>
+                        <select value={tipoCxUnified} onChange={(e) => setTipoCxUnified(e.target.value)} className="w-full bg-[#E8EFE9] text-[#205B43] font-extrabold rounded-xl p-3 text-sm outline-none">
+                          <option value="CxC">{t.cxcOption}</option>
+                          <option value="CxP">{t.cxpOption}</option>
+                        </select>
                       </div>
-                    ))}
+                      {tipoCxUnified === 'CxC' ? (
+                        <div className="space-y-2">
+                          <input type="text" placeholder={t.terceroClientePlaceholder} value={terceroCxC} onChange={(e) => setTerceroCxC(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
+                          <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
+                          <button onClick={() => {
+                            const num = obtenerNumeroLimpio(saldoInicialCxCDisplay);
+                            if(!terceroCxC || num <= 0) { notificar('Incompleto', 'Ingresa tercero y saldo.'); return; }
+                            setCuentasPorCobrar(prev => [{ id: Date.now(), tercero: terceroCxC, concepto: 'Préstamo', valorTotal: num, saldoPendiente: num, estado: 'Pendiente', historialPagos: [] }, ...prev]);
+                            setTerceroCxC(''); setSaldoInicialCxCDisplay('');
+                            notificar('Guardado', 'CxC registrada.');
+                          }} className="w-full bg-[#2D6A4F] text-white font-bold py-2 rounded-xl text-xs">{t.guardarCxCBtn}</button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <input type="text" placeholder={t.terceroProveedorPlaceholder} value={terceroCxP} onChange={(e) => setTerceroCxP(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
+                          <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs" />
+                          <button onClick={() => {
+                            const num = obtenerNumeroLimpio(saldoInicialCxPDisplay);
+                            if(!terceroCxP || num <= 0) { notificar('Incompleto', 'Ingresa tercero y saldo.'); return; }
+                            setCuentasPorPagar(prev => [{ id: Date.now(), tercero: terceroCxP, concepto: 'Deuda', valorTotal: num, saldoPendiente: num, estado: 'Pendiente', historialPagos: [] }, ...prev]);
+                            setTerceroCxP(''); setSaldoInicialCxPDisplay('');
+                            notificar('Guardado', 'CxP registrada.');
+                          }} className="w-full bg-[#C94A4A] text-white font-bold py-2 rounded-xl text-xs">{t.guardarCxPBtn}</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {tab === 'reportes' && (
+                  <div>
+                    <h3 className="text-[17px] font-bold text-[#112A20] mb-3">{t.reportesTitulo}</h3>
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 mb-3 space-y-2">
+                      <span className="text-[11px] font-bold text-[#718078]">{t.gastosPeriodo}</span>
+                      <h2 className="text-2xl font-extrabold text-[#C94A4A]">{formatoCOP(totalGastosReporte, simboloMoneda)}</h2>
+                      <p className="text-xs text-[#52725F]">Ingresos: {formatoCOP(totalIngresosReporte, simboloMoneda)}</p>
+                    </div>
+                  </div>
+                )}
+
+                {tab === 'admin' && esSuperAdmin && (
+                  <div className="bg-white rounded-3xl p-5 shadow-lg border border-[#D4AF37]/30 space-y-4">
+                    <h3 className="text-lg font-extrabold text-[#112A20] border-b pb-2">{t.adminPanel}</h3>
+                    <div className="bg-[#112A20] text-white p-3 rounded-xl">
+                      <p className="text-[10px] text-[#B7E4C7] font-bold uppercase">Total Usuarios</p>
+                      <h3 className="text-2xl font-extrabold">{usuariosFiltrados.length}</h3>
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* MODAL EDITAR SALDO INICIAL Y FECHA */}
               {modalEditarSaldo && (
                 <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
                   <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-3">
-                    <h3 className="text-lg font-extrabold text-[#112A20] text-center mb-1">Modificar Saldo Inicial</h3>
-                    <p className="text-xs text-[#52725F] mb-2 text-center">Cuenta: <span className="font-bold">{cuentaAEditar?.nombre}</span></p>
-
+                    <h3 className="text-lg font-extrabold text-[#112A20] text-center">Modificar Saldo Inicial</h3>
+                    <p className="text-xs text-[#52725F] text-center">Cuenta: <strong>{cuentaAEditar?.nombre}</strong></p>
                     <div>
-                      <label className="text-xs font-semibold text-[#52725F] block mb-1">📅 Fecha de corte del saldo inicial:</label>
-                      <input type="date" value={fechaSaldoEditado} onChange={(e) => setFechaSaldoEditado(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none font-semibold mb-2" />
+                      <label className="text-xs font-semibold text-[#52725F] block mb-1">📅 Fecha de corte:</label>
+                      <input type="date" value={fechaSaldoEditado} onChange={(e) => setFechaSaldoEditado(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm font-semibold mb-2" />
                     </div>
-
                     <div>
                       <label className="text-xs font-semibold text-[#52725F] block mb-1">Nuevo saldo de arranque:</label>
-                      <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border border-[#DCE5DB] text-sm text-[#1F2937] outline-none mb-3 font-bold" />
+                      <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm font-bold mb-3" />
                     </div>
-
                     <div className="flex gap-2">
                       <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-xs">Cancelar</button>
                       <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-xs">Guardar Saldo</button>
@@ -475,9 +924,26 @@
                 </div>
               )}
 
+              {modalNuevaCuenta && (
+                <div className="absolute inset-0 bg-black/50 flex justify-center items-center p-5 z-50">
+                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl space-y-3">
+                    <h3 className="text-lg font-extrabold text-[#112A20] text-center">Nueva Cuenta</h3>
+                    <input type="text" placeholder="Nombre" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm" />
+                    <input type="text" placeholder="Saldo Inicial" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#F8FAF8] rounded-xl p-3 border text-sm" />
+                    <div className="flex gap-2">
+                      <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-[#8F9F95] text-white font-bold py-3 rounded-xl text-xs">Cancelar</button>
+                      <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#205B43] text-white font-bold py-3 rounded-xl text-xs">Crear</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="absolute bottom-0 left-0 right-0 h-16 bg-white flex border-t border-[#E2E8F0] shadow-lg z-40">
-                <button onClick={() => setTab('inicio')} className="flex-1 flex flex-col items-center justify-center text-xs font-bold text-[#205B43]">🏠 Inicio</button>
-                <button onClick={() => setTab('cuentas')} className="flex-1 flex flex-col items-center justify-center text-xs font-bold text-slate-500">🏦 Cuentas</button>
+                <button onClick={() => setTab('inicio')} className="flex-1 flex flex-col items-center justify-center"><span className="text-lg">🏠</span><span className={`text-[10px] ${tab === 'inicio' ? 'text-[#205B43] font-extrabold' : 'text-slate-500'}`}>Inicio</span></button>
+                <button onClick={() => setTab('cuentas')} className="flex-1 flex flex-col items-center justify-center"><span className="text-lg">🏦</span><span className={`text-[10px] ${tab === 'cuentas' ? 'text-[#205B43] font-extrabold' : 'text-slate-500'}`}>Cuentas</span></button>
+                <button onClick={() => setTab('deudas')} className="flex-1 flex flex-col items-center justify-center"><span className="text-lg">📑</span><span className={`text-[10px] ${tab === 'deudas' ? 'text-[#205B43] font-extrabold' : 'text-slate-500'}`}>CxC / CxP</span></button>
+                <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center"><span className="text-lg">📊</span><span className={`text-[10px] ${tab === 'reportes' ? 'text-[#205B43] font-extrabold' : 'text-slate-500'}`}>Reportes</span></button>
+                {esSuperAdmin && (<button onClick={() => setTab('admin')} className="flex-1 flex flex-col items-center justify-center"><span className="text-lg">⚙️</span><span className={`text-[10px] ${tab === 'admin' ? 'text-amber-600 font-extrabold' : 'text-slate-500'}`}>Admin</span></button>)}
               </div>
             </div>
           );
