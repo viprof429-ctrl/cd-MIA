@@ -11,7 +11,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="https://i.ibb.co/6P26q1s/logo.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="MIA App">
+    <meta name="apple-mobile-web-app-title" content="MIA">
     <meta name="mobile-web-app-capable" content="yes">
 
     <!-- MANIFIESTO PWA ESTÁTICO CON ENLACE DIRECTO AL LOGO -->
@@ -1134,11 +1134,10 @@
                   </button>
                 </div>
               </div>
-            </div>
-          );
-        }
+            );
+          }
 
-        const esSuperAdmin = sesion?.user?.email?.trim().toLowerCase() === 'viprof429@gmail.com';
+          const esSuperAdmin = sesion?.user?.email?.trim().toLowerCase() === 'viprof429@gmail.com';
 
           return (
             <div className="flex flex-col h-full bg-[#0D211A] relative w-full text-slate-100">
