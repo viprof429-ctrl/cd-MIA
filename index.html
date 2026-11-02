@@ -4,46 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MIA - Mi Inteligencia de Ahorro</title>
-    
-    <!-- METADATOS ESTRICTOS PARA iOS Y PWA MÓVIL -->
-    <link rel="icon" type="image/png" href="https://i.ibb.co/6P26q1s/logo.png">
-    <link rel="apple-touch-icon" href="https://i.ibb.co/6P26q1s/logo.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://i.ibb.co/6P26q1s/logo.png">
+
+    <!-- ÍCONOS Y ACCESO DIRECTO (archivos en la misma carpeta que este index.html) -->
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="mia-apple-touch-icon-180.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0D211A">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MIA">
-    <meta name="mobile-web-app-capable" content="yes">
-
-    <!-- MANIFIESTO DINÁMICO SEGURO EN LÍNEA -->
-    <script>
-      const manifestData = {
-        "name": "MIA - Mi Inteligencia de Ahorro",
-        "short_name": "MIA",
-        "start_url": "./",
-        "display": "standalone",
-        "background_color": "#0D211A",
-        "theme_color": "#0D211A",
-        "icons": [
-          {
-            "src": "https://i.ibb.co/6P26q1s/logo.png",
-            "sizes": "192x192",
-            "type": "image/png"
-          },
-          {
-            "src": "https://i.ibb.co/6P26q1s/logo.png",
-            "sizes": "512x512",
-            "type": "image/png"
-          }
-        ]
-      };
-      const stringManifest = JSON.stringify(manifestData);
-      const blob = new Blob([stringManifest], {type: 'application/json'});
-      const manifestURL = URL.createObjectURL(blob);
-      const link = document.createElement('link');
-      link.rel = 'manifest';
-      link.href = manifestURL;
-      document.head.appendChild(link);
-    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -53,14 +23,7 @@
         @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white !important; color: black !important; }
         }
-        html, body {
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            background-color: #0D211A;
-            overflow: hidden;
-        }
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; background-color: #0D211A; overflow: hidden; }
     </style>
 </head>
 <body class="flex justify-center items-center w-full h-full text-slate-100">
@@ -71,6 +34,13 @@
 
         const SUPABASE_URL = "https://qqcaufwuxfchsqrewhed.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxY2F1Znd1eGZjaHNxcmV3aGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMTQyNjksImV4cCI6MjEwODY5MDI2OX0.yDoOkXdDCR_9nZn5RAQ2SNFmdmYs1-_R0WFyyvKsiZs";
+
+        // ===== CONFIGURACIÓN =====
+        // Correo del administrador (solo muestra el botón Admin; la seguridad real debe estar en las políticas RLS de Supabase).
+        const ADMIN_EMAIL = 'viprof429@gmail.com';
+        // Ponlo en false cuando conectes Hotmart: así nadie podrá crear cuenta por su cuenta,
+        // solo entran los correos que habilite el webhook de compra.
+        const REGISTRO_PUBLICO = true;
 
         const T = {
           Español: {
@@ -114,10 +84,7 @@
 
         const fechaHoy = () => {
           const d = new Date();
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const dia = String(d.getDate()).padStart(2, '0');
-          return `${y}-${m}-${dia}`;
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         };
 
         const CUENTAS_BASE = [
@@ -126,20 +93,14 @@
           { id: '3', nombre: 'Nequi', tipo: 'Billetera', saldoInicial: 0, fechaSaldoInicial: fechaHoy(), icono: '📱' },
         ];
 
-        const CATEGORIAS_GASTO_BASE = [
-          'Alimentación', 'Transporte', 'Servicios / Hogar', 'Ocio / Salidas', 'Salud', 'Educación', 'Préstamos a Clientes', 'Pago a Terceros', 'Otros Gastos'
-        ];
-
-        const CATEGORIAS_INGRESO_BASE = [
-          'Salario / Nómina', 'Ventas / Negocio', 'Abono de Terceros', 'Préstamo de Terceros', 'Otros Ingresos'
-        ];
+        const CATEGORIAS_GASTO_BASE = ['Alimentación', 'Transporte', 'Servicios / Hogar', 'Ocio / Salidas', 'Salud', 'Educación', 'Préstamos a Clientes', 'Pago a Terceros', 'Otros Gastos'];
+        const CATEGORIAS_INGRESO_BASE = ['Salario / Nómina', 'Ventas / Negocio', 'Abono de Terceros', 'Préstamo de Terceros', 'Otros Ingresos'];
 
         const formatoCOP = (valor, monedaSimbolo = '$') => {
           if (isNaN(valor) || valor === null || valor === undefined) return `${monedaSimbolo} 0`;
           const signo = valor < 0 ? '-' : '';
           const valorAbs = Math.abs(Math.round(valor));
-          const partes = valorAbs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-          return `${signo}${monedaSimbolo} ${partes}`;
+          return `${signo}${monedaSimbolo} ${valorAbs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
         };
 
         const formatearInputEnVivo = (inputStr) => {
@@ -155,9 +116,7 @@
         };
 
         const notificar = (titulo, mensaje) => {
-          if (typeof window !== 'undefined') {
-            window.alert(`${titulo}\n\n${mensaje}`);
-          }
+          if (typeof window !== 'undefined') window.alert(`${titulo}\n\n${mensaje}`);
         };
 
         const supabaseApi = {
@@ -170,16 +129,12 @@
               });
               const data = await res.json();
               if (!res.ok) throw new Error(data.msg || data.error_description || 'Error en el registro');
-              
+
               if (data.id || data.user?.id) {
                 const uid = data.id || data.user.id;
                 await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
                   method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Prefer': 'return=minimal'
-                  },
+                  headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Prefer': 'return=minimal' },
                   body: JSON.stringify({
                     user_id: uid,
                     data: { cuentas: CUENTAS_BASE, movimientos: [], cuentasPorCobrar: [], cuentasPorPagar: [], moneda: extraData?.moneda || 'COP ($)', idioma: extraData?.idioma || 'Español', correo: email }
@@ -205,21 +160,34 @@
               return { data: null, error: err };
             }
           },
+          async recuperarClave(email) {
+            try {
+              const res = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+                body: JSON.stringify({ email })
+              });
+              if (!res.ok) {
+                const d = await res.json().catch(() => ({}));
+                throw new Error(d.msg || d.error_description || 'No se pudo enviar el correo');
+              }
+              return { error: null };
+            } catch (err) {
+              return { error: err };
+            }
+          },
           async cargarDatosNube(token, userId) {
             try {
               const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}&select=data`, {
                 method: 'GET',
-                headers: {
-                  'apikey': SUPABASE_ANON_KEY,
-                  'Authorization': `Bearer ${token}`
-                }
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
               });
               if (!res.ok) return null;
               const rows = await res.json();
               if (rows && rows.length > 0) {
                 let rawData = rows[0].data;
                 let cuentasExtraidas = rawData?.cuentas && rawData.cuentas.length > 0 ? rawData.cuentas : CUENTAS_BASE;
-                
+
                 cuentasExtraidas = cuentasExtraidas.map(c => {
                   const baseOriginal = CUENTAS_BASE.find(b => b.id === c.id) || {};
                   const saldoVal = Number(c.saldoInicial !== undefined ? c.saldoInicial : (c.saldoinicial !== undefined ? c.saldoinicial : baseOriginal.saldoInicial || 0));
@@ -250,24 +218,13 @@
             try {
               const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}`, {
                 method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'apikey': SUPABASE_ANON_KEY,
-                  'Authorization': `Bearer ${token}`,
-                  'Prefer': 'return=minimal'
-                },
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=minimal' },
                 body: JSON.stringify({ data: jsonData })
               });
-
               if (!res.ok) {
                 await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
                   method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${token}`,
-                    'Prefer': 'return=minimal'
-                  },
+                  headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=minimal' },
                   body: JSON.stringify({ user_id: userId, data: jsonData })
                 });
               }
@@ -293,12 +250,7 @@
             try {
               const resPatch = await fetch(`${SUPABASE_URL}/rest/v1/mia_configuracion?clave=eq.logo_global`, {
                 method: 'PATCH',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'apikey': SUPABASE_ANON_KEY,
-                  'Authorization': `Bearer ${token}`,
-                  'Prefer': 'return=representation'
-                },
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=representation' },
                 body: JSON.stringify({ valor: logoBase64 })
               });
               const updatedRows = await resPatch.json();
@@ -306,12 +258,7 @@
 
               const resPost = await fetch(`${SUPABASE_URL}/rest/v1/mia_configuracion`, {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'apikey': SUPABASE_ANON_KEY,
-                  'Authorization': `Bearer ${token}`,
-                  'Prefer': 'return=minimal'
-                },
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Prefer': 'return=minimal' },
                 body: JSON.stringify({ clave: 'logo_global', valor: logoBase64 })
               });
               return resPost.ok;
@@ -324,31 +271,17 @@
             try {
               const res = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?select=*`, {
                 method: 'GET',
-                headers: {
-                  'apikey': SUPABASE_ANON_KEY,
-                  'Authorization': `Bearer ${token}`,
-                  'Range': '0-999'
-                }
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Range': '0-999' }
               });
               if (!res.ok) return [];
               const rawData = await res.json();
-
+              // Ya no hay correos ni IDs fijos en el código: el correo sale del propio registro.
               return rawData.map(usr => {
                 let correoDetectado = usr.correo || usr.data?.correo;
                 if (!correoDetectado || !correoDetectado.includes('@')) {
-                  if (usr.user_id === '86cd0012-58c7-489d-b03d-36349412aa25') {
-                    correoDetectado = 'viprof429@gmail.com';
-                  } else if (usr.user_id === 'cdc21ebb-372d-48f8-b94e-b303f9dcf140') {
-                    correoDetectado = 'alvaroluis29@hotmail.com';
-                  } else {
-                    correoDetectado = `usuario_${usr.user_id.substring(0, 6)}@mia.app`;
-                  }
+                  correoDetectado = `usuario_${String(usr.user_id).substring(0, 6)}@mia.app`;
                 }
-                return {
-                  ...usr,
-                  correo: correoDetectado,
-                  data: { ...usr.data, correo: correoDetectado }
-                };
+                return { ...usr, correo: correoDetectado, data: { ...usr.data, correo: correoDetectado } };
               });
             } catch (err) {
               console.error("Error obteniendo usuarios:", err);
@@ -359,7 +292,7 @@
 
         const LogoOficialMIA = ({ logoCustom }) => (
           <div className="flex items-center justify-center overflow-hidden rounded-2xl shadow-xl bg-[#16382D] border border-[#D4AF37]/40 w-36 h-36">
-            {logoCustom ? <img src={logoCustom} alt="Logo" className="w-full h-full object-contain" /> : <span className="text-[#D4AF37] font-bold text-xl">MIA</span>}
+            {logoCustom ? <img src={logoCustom} alt="Logo" className="w-full h-full object-contain" /> : <img src="mia-apple-touch-icon-180.png" alt="MIA" className="w-full h-full object-contain" />}
           </div>
         );
 
@@ -391,11 +324,12 @@
 
           const [categoriasGasto] = useState(CATEGORIAS_GASTO_BASE);
           const [categoriasIngreso] = useState(CATEGORIAS_INGRESO_BASE);
-          
+
           const [datosCargados, setDatosCargados] = useState(false);
           const datosCargadosRef = useRef(false);
 
           const t = T[idiomaSeleccionado] || T['Español'];
+          const esSuperAdmin = sesion?.user?.email?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
           useEffect(() => {
             supabaseApi.cargarLogoGlobal().then(logo => { if (logo) setLogoGlobal(logo); });
@@ -416,21 +350,18 @@
                 setDatosCargados(true);
               });
 
-              if (sesion.user?.email?.trim().toLowerCase() === 'viprof429@gmail.com') {
-                supabaseApi.obtenerUsuariosRegistrados(sesion.access_token).then(usuarios => {
-                  setListaUsuariosCloud(usuarios);
-                });
+              if (esSuperAdmin) {
+                supabaseApi.obtenerUsuariosRegistrados(sesion.access_token).then(usuarios => setListaUsuariosCloud(usuarios));
               }
             }
           }, [sesion]);
 
           useEffect(() => {
             if (sesion && sesion.access_token && datosCargados) {
-              const payload = {
+              supabaseApi.guardarDatosNube(sesion.access_token, sesion.user_id, {
                 correo: sesion.user?.email || emailInput,
-                data: { cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, moneda: monedaSeleccionada, idioma: idiomaSeleccionado }
-              };
-              supabaseApi.guardarDatosNube(sesion.access_token, sesion.user_id, payload.data);
+                cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, moneda: monedaSeleccionada, idioma: idiomaSeleccionado
+              });
             }
           }, [cuentas, movimientos, cuentasPorCobrar, cuentasPorPagar, monedaSeleccionada, idiomaSeleccionado, datosCargados, sesion]);
 
@@ -439,13 +370,13 @@
               notificar('Datos incompletos', 'Ingresa tu correo y contraseña.');
               return;
             }
-            const { data, error } = await supabaseApi.signIn(emailInput, passInput);
+            const { data, error } = await supabaseApi.signIn(emailInput.trim(), passInput);
             if (error) {
               notificar('Error de Acceso', error.message);
             } else {
               const tokenValido = data.access_token || data.session?.access_token || data.token;
               const userIdValido = data.user?.id || data.session?.user?.id || data.id;
-              const userSession = { user: { email: emailInput }, user_id: userIdValido, access_token: tokenValido };
+              const userSession = { user: { email: emailInput.trim() }, user_id: userIdValido, access_token: tokenValido };
               localStorage.clear();
               datosCargadosRef.current = false;
               setSesion(userSession);
@@ -455,18 +386,32 @@
           };
 
           const manejarRegistro = async () => {
+            if (!REGISTRO_PUBLICO) {
+              notificar('Registro cerrado', 'Tu acceso se habilita con el correo de tu compra.');
+              return;
+            }
             if (!emailInput || !passInput) {
               notificar('Datos incompletos', 'Ingresa un correo y contraseña válidos.');
               return;
             }
-            const extraData = { idioma: idiomaSeleccionado, moneda: monedaSeleccionada, correo: emailInput };
-            const { error } = await supabaseApi.signUp(emailInput, passInput, extraData);
+            const extraData = { idioma: idiomaSeleccionado, moneda: monedaSeleccionada, correo: emailInput.trim() };
+            const { error } = await supabaseApi.signUp(emailInput.trim(), passInput, extraData);
             if (error) {
               notificar('Error de Registro', error.message);
             } else {
               notificar('¡Registro exitoso!', 'Ya puedes iniciar sesión con tus datos.');
               setModoRegistro(false);
             }
+          };
+
+          const manejarRecuperarClave = async () => {
+            if (!emailInput.trim()) {
+              notificar('Falta el correo', 'Escribe tu correo arriba y vuelve a pulsar esta opción.');
+              return;
+            }
+            const { error } = await supabaseApi.recuperarClave(emailInput.trim());
+            if (error) notificar('Error', error.message);
+            else notificar('Revisa tu correo', 'Si el correo está habilitado, recibirás un enlace para crear o cambiar tu contraseña.');
           };
 
           const cerrarSesion = () => {
@@ -496,16 +441,13 @@
             setTerceroCC(cc);
             const limpioCC = cc.trim();
             if (!limpioCC) return;
-            const listaBusqueda = (tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) || (tipoMovimiento === 'Gasto' && categoriaSeleccionada === 'Préstamos a Clientes') 
-              ? cuentasPorCobrar 
+            const listaBusqueda = (tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) || (tipoMovimiento === 'Gasto' && categoriaSeleccionada === 'Préstamos a Clientes')
+              ? cuentasPorCobrar
               : cuentasPorPagar;
-
             const encontrado = listaBusqueda.find(item => item.tercero && item.tercero.includes(limpioCC));
             if (encontrado) {
               const partes = encontrado.tercero.split('(');
-              if (partes.length > 0) {
-                setTerceroNombre(partes[0].trim());
-              }
+              if (partes.length > 0) setTerceroNombre(partes[0].trim());
             }
           };
 
@@ -546,7 +488,6 @@
           const [saldoEditadoValorDisplay, setSaldoEditadoValorDisplay] = useState('');
           const [fechaSaldoEditado, setFechaSaldoEditado] = useState(fechaHoy());
 
-          // REPORTES DE CARTERA
           const [repTipoCartera, setRepTipoCartera] = useState('CxC');
           const [repFechaDesde, setRepFechaDesde] = useState('');
           const [repFechaHasta, setRepFechaHasta] = useState('');
@@ -573,34 +514,23 @@
           const totalCxPPendiente = cuentasPorPagar.reduce((acc, item) => acc + item.saldoPendiente, 0);
           const cuentasConSaldo = cuentas.filter(c => obtenerSaldoCuenta(c.id) !== 0 || c.saldoInicial !== 0);
 
-          // CÁLCULO DE EDADES DE CARTERA
           const calcularEdadesCartera = (listaDeudas) => {
             const hoy = new Date();
             let d1_30 = 0, d31_60 = 0, dMas60 = 0;
-
             listaDeudas.forEach(item => {
               if (item.saldoPendiente <= 0) return;
               const fechaRef = new Date(item.vencimiento || item.fechaInicial || hoy);
-              const diffTime = hoy - fechaRef;
-              const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-              if (diffDays <= 30) {
-                d1_30 += item.saldoPendiente;
-              } else if (diffDays <= 60) {
-                d31_60 += item.saldoPendiente;
-              } else {
-                dMas60 += item.saldoPendiente;
-              }
+              const diffDays = Math.floor((hoy - fechaRef) / (1000 * 60 * 60 * 24));
+              if (diffDays <= 30) d1_30 += item.saldoPendiente;
+              else if (diffDays <= 60) d31_60 += item.saldoPendiente;
+              else dMas60 += item.saldoPendiente;
             });
-
             const maxVal = Math.max(d1_30, d31_60, dMas60, 1);
             return {
               h1_30: Math.round((d1_30 / maxVal) * 100),
               h31_60: Math.round((d31_60 / maxVal) * 100),
               hMas60: Math.round((dMas60 / maxVal) * 100),
-              v1_30: d1_30,
-              v31_60: d31_60,
-              vMas60: dMas60,
+              v1_30: d1_30, v31_60: d31_60, vMas60: dMas60,
               total: d1_30 + d31_60 + dMas60
             };
           };
@@ -611,6 +541,7 @@
           const guardarMovimiento = () => {
             const num = obtenerNumeroLimpio(valorDisplay);
             const nombreTerceroCompleto = terceroNombre.trim() ? `${terceroNombre.trim()} (${terceroCC.trim() || 'NIT/CC N/A'})` : '';
+            const fechaMov = fechaMovimiento.trim() || fechaHoy();
 
             if (tipoMovimiento === 'Ingreso' && categoriaSeleccionada === 'Abono de Terceros') {
               if (!terceroCC.trim() || isNaN(num) || num <= 0) {
@@ -624,20 +555,10 @@
                   ...c,
                   saldoPendiente: nuevoSaldo,
                   estado: nuevoSaldo === 0 ? 'Pagado' : 'Parcial',
-                  historialPagos: [...(c.historialPagos || []), { fecha: fechaMovimiento.trim() || fechaHoy(), monto: num, cuentaName: cuentas.find(acc => acc.id === cuentaSeleccionada)?.nombre || 'Cuenta' }]
+                  historialPagos: [...(c.historialPagos || []), { fecha: fechaMov, monto: num, cuentaName: cuentas.find(acc => acc.id === cuentaSeleccionada)?.nombre || 'Cuenta' }]
                 } : c));
               }
-
-              const nuevoIngreso = {
-                id: Date.now(),
-                cuentaId: cuentaSeleccionada,
-                categoria: 'Abono de Terceros',
-                concepto: `Abono de ${nombreTerceroCompleto}`,
-                valor: num,
-                tipo: 'Ingreso',
-                fecha: fechaMovimiento.trim() || fechaHoy(),
-              };
-              setMovimientos(prev => [nuevoIngreso, ...prev]);
+              setMovimientos(prev => [{ id: Date.now(), cuentaId: cuentaSeleccionada, categoria: 'Abono de Terceros', concepto: `Abono de ${nombreTerceroCompleto}`, valor: num, tipo: 'Ingreso', fecha: fechaMov }, ...prev]);
               setTerceroCC(''); setTerceroNombre(''); setValorDisplay('');
               notificar('¡Abono Registrado!', 'Se descontó de la CxC y se sumó el dinero a la cuenta.');
               return;
@@ -650,38 +571,12 @@
               }
               let itemCxP = cuentasPorPagar.find(c => c.tercero.toLowerCase().includes(terceroCC.trim().toLowerCase()));
               if (!itemCxP) {
-                itemCxP = {
-                  id: Date.now(),
-                  tercero: nombreTerceroCompleto,
-                  concepto: 'Préstamo Recibido',
-                  valorTotal: num,
-                  saldoPendiente: num,
-                  fechaInicial: fechaMovimiento.trim() || fechaHoy(),
-                  vencimiento: fechaMovimiento.trim() || fechaHoy(),
-                  cuentaId: cuentaSeleccionada,
-                  estado: 'Pendiente',
-                  historialPagos: []
-                };
+                itemCxP = { id: Date.now(), tercero: nombreTerceroCompleto, concepto: 'Préstamo Recibido', valorTotal: num, saldoPendiente: num, fechaInicial: fechaMov, vencimiento: fechaMov, cuentaId: cuentaSeleccionada, estado: 'Pendiente', historialPagos: [] };
                 setCuentasPorPagar(prev => [itemCxP, ...prev]);
               } else {
-                setCuentasPorPagar(prev => prev.map(c => c.id === itemCxP.id ? {
-                  ...c,
-                  valorTotal: c.valorTotal + num,
-                  saldoPendiente: c.saldoPendiente + num,
-                  estado: 'Pendiente'
-                } : c));
+                setCuentasPorPagar(prev => prev.map(c => c.id === itemCxP.id ? { ...c, valorTotal: c.valorTotal + num, saldoPendiente: c.saldoPendiente + num, estado: 'Pendiente' } : c));
               }
-
-              const nuevoIngreso = {
-                id: Date.now(),
-                cuentaId: cuentaSeleccionada,
-                categoria: 'Préstamo de Terceros',
-                concepto: `Préstamo de ${nombreTerceroCompleto}`,
-                valor: num,
-                tipo: 'Ingreso',
-                fecha: fechaMovimiento.trim() || fechaHoy(),
-              };
-              setMovimientos(prev => [nuevoIngreso, ...prev]);
+              setMovimientos(prev => [{ id: Date.now(), cuentaId: cuentaSeleccionada, categoria: 'Préstamo de Terceros', concepto: `Préstamo de ${nombreTerceroCompleto}`, valor: num, tipo: 'Ingreso', fecha: fechaMov }, ...prev]);
               setTerceroCC(''); setTerceroNombre(''); setValorDisplay('');
               notificar('¡Préstamo Registrado!', 'Se registró la obligación en CxP y el dinero ingresó a la cuenta.');
               return;
@@ -694,38 +589,12 @@
               }
               let itemCxC = cuentasPorCobrar.find(c => c.tercero.toLowerCase().includes(terceroCC.trim().toLowerCase()));
               if (!itemCxC) {
-                itemCxC = {
-                  id: Date.now(),
-                  tercero: nombreTerceroCompleto,
-                  concepto: 'Préstamo Otorgado',
-                  valorTotal: num,
-                  saldoPendiente: num,
-                  fechaInicial: fechaMovimiento.trim() || fechaHoy(),
-                  vencimiento: fechaMovimiento.trim() || fechaHoy(),
-                  cuentaId: cuentaSeleccionada,
-                  estado: 'Pendiente',
-                  historialPagos: []
-                };
+                itemCxC = { id: Date.now(), tercero: nombreTerceroCompleto, concepto: 'Préstamo Otorgado', valorTotal: num, saldoPendiente: num, fechaInicial: fechaMov, vencimiento: fechaMov, cuentaId: cuentaSeleccionada, estado: 'Pendiente', historialPagos: [] };
                 setCuentasPorCobrar(prev => [itemCxC, ...prev]);
               } else {
-                setCuentasPorCobrar(prev => prev.map(c => c.id === itemCxC.id ? {
-                  ...c,
-                  valorTotal: c.valorTotal + num,
-                  saldoPendiente: c.saldoPendiente + num,
-                  estado: 'Pendiente'
-                } : c));
+                setCuentasPorCobrar(prev => prev.map(c => c.id === itemCxC.id ? { ...c, valorTotal: c.valorTotal + num, saldoPendiente: c.saldoPendiente + num, estado: 'Pendiente' } : c));
               }
-
-              const nuevoGasto = {
-                id: Date.now(),
-                cuentaId: cuentaSeleccionada,
-                categoria: 'Préstamos a Clientes',
-                concepto: `Préstamo a ${nombreTerceroCompleto}`,
-                valor: num,
-                tipo: 'Gasto',
-                fecha: fechaMovimiento.trim() || fechaHoy(),
-              };
-              setMovimientos(prev => [nuevoGasto, ...prev]);
+              setMovimientos(prev => [{ id: Date.now(), cuentaId: cuentaSeleccionada, categoria: 'Préstamos a Clientes', concepto: `Préstamo a ${nombreTerceroCompleto}`, valor: num, tipo: 'Gasto', fecha: fechaMov }, ...prev]);
               setTerceroCC(''); setTerceroNombre(''); setValorDisplay('');
               notificar('¡Préstamo Otorgado!', 'Se registró en CxC y se descontó el dinero de la cuenta.');
               return;
@@ -741,25 +610,14 @@
                 notificar('Aviso', 'No se encontró una CxP activa con esa identificación.');
                 return;
               }
-
               const nuevoSaldo = Math.max(0, itemCxP.saldoPendiente - num);
               setCuentasPorPagar(prev => prev.map(c => c.id === itemCxP.id ? {
                 ...c,
                 saldoPendiente: nuevoSaldo,
                 estado: nuevoSaldo === 0 ? 'Pagado' : 'Parcial',
-                historialPagos: [...(c.historialPagos || []), { fecha: fechaMovimiento.trim() || fechaHoy(), monto: num, cuentaName: cuentas.find(acc => acc.id === cuentaSeleccionada)?.nombre || 'Cuenta' }]
+                historialPagos: [...(c.historialPagos || []), { fecha: fechaMov, monto: num, cuentaName: cuentas.find(acc => acc.id === cuentaSeleccionada)?.nombre || 'Cuenta' }]
               } : c));
-
-              const nuevoGasto = {
-                id: Date.now(),
-                cuentaId: cuentaSeleccionada,
-                categoria: 'Pago a Terceros',
-                concepto: `Pago a ${nombreTerceroCompleto}`,
-                valor: num,
-                tipo: 'Gasto',
-                fecha: fechaMovimiento.trim() || fechaHoy(),
-              };
-              setMovimientos(prev => [nuevoGasto, ...prev]);
+              setMovimientos(prev => [{ id: Date.now(), cuentaId: cuentaSeleccionada, categoria: 'Pago a Terceros', concepto: `Pago a ${nombreTerceroCompleto}`, valor: num, tipo: 'Gasto', fecha: fechaMov }, ...prev]);
               setTerceroCC(''); setTerceroNombre(''); setValorDisplay('');
               notificar('¡Pago a Tercero Registrado!', 'Se descontó de la CxP y de la cuenta.');
               return;
@@ -769,16 +627,7 @@
               notificar('Datos incompletos', 'Escribe un concepto y un valor numérico válido.');
               return;
             }
-            const nuevo = {
-              id: Date.now(),
-              cuentaId: cuentaSeleccionada,
-              categoria: categoriaSeleccionada,
-              concepto: concepto.trim(),
-              valor: num,
-              tipo: tipoMovimiento,
-              fecha: fechaMovimiento.trim() || fechaHoy(),
-            };
-            setMovimientos((prev) => [nuevo, ...prev]);
+            setMovimientos((prev) => [{ id: Date.now(), cuentaId: cuentaSeleccionada, categoria: categoriaSeleccionada, concepto: concepto.trim(), valor: num, tipo: tipoMovimiento, fecha: fechaMov }, ...prev]);
             setConcepto('');
             setValorDisplay('');
             notificar('¡Registrado!', `${tipoMovimiento} guardado con éxito.`);
@@ -803,13 +652,7 @@
               return;
             }
             setMovimientos(prev => prev.map(m => m.id === movimientoAEditar.id ? {
-              ...m,
-              concepto: editConcepto.trim(),
-              valor: num,
-              fecha: editFecha || fechaHoy(),
-              tipo: editTipo,
-              cuentaId: editCuentaId,
-              categoria: editCategoria
+              ...m, concepto: editConcepto.trim(), valor: num, fecha: editFecha || fechaHoy(), tipo: editTipo, cuentaId: editCuentaId, categoria: editCategoria
             } : m));
             setModalEditarMovimiento(false);
             setMovimientoAEditar(null);
@@ -826,9 +669,7 @@
           const actualizarSaldoInicial = () => {
             if (!cuentaAEditar) return;
             const nuevoMonto = obtenerNumeroLimpio(saldoEditadoValorDisplay);
-            setCuentas((prev) =>
-              prev.map((c) => (c.id === cuentaAEditar.id ? { ...c, saldoInicial: nuevoMonto, fechaSaldoInicial: fechaSaldoEditado } : c))
-            );
+            setCuentas((prev) => prev.map((c) => (c.id === cuentaAEditar.id ? { ...c, saldoInicial: nuevoMonto, fechaSaldoInicial: fechaSaldoEditado } : c)));
             setModalEditarSaldo(false);
             setCuentaAEditar(null);
             notificar('Saldo Actualizado', 'El saldo inicial y su fecha han sido modificados.');
@@ -841,15 +682,7 @@
               return;
             }
             const iconos = { Efectivo: '💵', Banco: '🏦', Billetera: '📱' };
-            const nueva = {
-              id: Date.now().toString(),
-              nombre: nuevoNombre.trim(),
-              tipo: nuevoTipo,
-              saldoInicial: saldo,
-              fechaSaldoInicial: fechaHoy(),
-              icono: iconos[nuevoTipo],
-            };
-            setCuentas((prev) => [...prev, nueva]);
+            setCuentas((prev) => [...prev, { id: Date.now().toString(), nombre: nuevoNombre.trim(), tipo: nuevoTipo, saldoInicial: saldo, fechaSaldoInicial: fechaHoy(), icono: iconos[nuevoTipo] }]);
             setNuevoNombre('');
             setNuevoSaldoInitDisplay('');
             setModalNuevaCuenta(false);
@@ -872,20 +705,10 @@
               notificar('Datos incompletos', 'Ingresa la Cédula/NIT, Nombre y un saldo válido.');
               return;
             }
-            const nuevaCxC = {
-              id: Date.now(),
-              tercero: terceroCompleto,
-              concepto: conceptoCxC,
-              valorTotal: num,
-              saldoPendiente: num,
-              fechaInicial: fechaGeneralReg,
-              vencimiento: vencimientoCxC,
-              cuentaId: cuentaCxC,
-              observacion: obsCxC.trim(),
-              estado: 'Pendiente',
-              historialPagos: []
-            };
-            setCuentasPorCobrar(prev => [nuevaCxC, ...prev]);
+            setCuentasPorCobrar(prev => [{
+              id: Date.now(), tercero: terceroCompleto, concepto: conceptoCxC, valorTotal: num, saldoPendiente: num,
+              fechaInicial: fechaGeneralReg, vencimiento: vencimientoCxC, cuentaId: cuentaCxC, observacion: obsCxC.trim(), estado: 'Pendiente', historialPagos: []
+            }, ...prev]);
             setTerceroCCReg(''); setTerceroNombreReg(''); setSaldoInicialCxCDisplay(''); setObsCxC('');
             notificar('Cuenta por Cobrar', 'Registrada correctamente.');
           };
@@ -897,20 +720,10 @@
               notificar('Datos incompletos', 'Ingresa la Cédula/NIT, Nombre y un saldo válido.');
               return;
             }
-            const nuevaCxP = {
-              id: Date.now(),
-              tercero: terceroCompleto,
-              concepto: conceptoCxP,
-              valorTotal: num,
-              saldoPendiente: num,
-              fechaInicial: fechaGeneralReg,
-              vencimiento: vencimientoCxP,
-              cuentaId: cuentaCxP,
-              observacion: obsCxP.trim(),
-              estado: 'Pendiente',
-              historialPagos: []
-            };
-            setCuentasPorPagar(prev => [nuevaCxP, ...prev]);
+            setCuentasPorPagar(prev => [{
+              id: Date.now(), tercero: terceroCompleto, concepto: conceptoCxP, valorTotal: num, saldoPendiente: num,
+              fechaInicial: fechaGeneralReg, vencimiento: vencimientoCxP, cuentaId: cuentaCxP, observacion: obsCxP.trim(), estado: 'Pendiente', historialPagos: []
+            }, ...prev]);
             setTerceroCCRegP(''); setTerceroNombreRegP(''); setSaldoInicialCxPDisplay(''); setObsCxP('');
             notificar('Cuenta por Pagar', 'Registrada correctamente.');
           };
@@ -941,64 +754,37 @@
             document.body.removeChild(link);
           };
 
+          const estiloReporte = `
+            body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+            th { background-color: #205B43; color: white; }
+            .btn-volver { display: block; width: 100%; padding: 12px; background: #205B43; color: white; text-align: center; text-decoration: none; font-weight: bold; border-radius: 8px; margin-top: 20px; }
+          `;
+
           const exportarReporteCarteraPDF = () => {
             const contenidoHtml = `
-              <html>
-                <head>
-                  <meta charset="UTF-8">
-                  <title>Reporte de Cartera - MIA</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-                    th { background-color: #205B43; color: white; }
-                    .btn-volver { display: block; width: 100%; padding: 12px; background: #205B43; color: white; text-align: center; text-decoration: none; font-weight: bold; border-radius: 8px; margin-top: 20px; }
-                  </style>
-                </head>
-                <body>
-                  <h2>MIA - Reporte de ${repTipoCartera === 'CxC' ? 'Cuentas por Cobrar (CxC)' : 'Cuentas por Pagar (CxP)'}</h2>
-                  <p><strong>Total Registros:</strong> ${listaDeudasReporte.length}</p>
-                  <hr/>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>CC / NIT</th>
-                        <th>Tercero</th>
-                        <th>Concepto</th>
-                        <th>Valor Total</th>
-                        <th>Saldo Pendiente</th>
-                        <th>Vencimiento</th>
-                        <th>Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${listaDeudasReporte.map(i => {
-                        const match = i.tercero.match(/^(.*?)\s*\(([^)]+)\)$/);
-                        const nombre = match ? match[1].trim() : i.tercero;
-                        const cc = match ? match[2].trim() : '';
-                        return `
-                          <tr>
-                            <td><b>${cc}</b></td>
-                            <td>${nombre}</td>
-                            <td>${i.concepto}</td>
-                            <td>${formatoCOP(i.valorTotal, simboloMoneda)}</td>
-                            <td>${formatoCOP(i.saldoPendiente, simboloMoneda)}</td>
-                            <td>${i.vencimiento}</td>
-                            <td>${i.estado}</td>
-                          </tr>
-                        `;
-                      }).join('')}
-                    </tbody>
-                  </table>
-                  <br/><hr/>
-                  <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
-                  <a href="javascript:window.close();" class="btn-volver">Cerrar y Volver a la App</a>
-                </body>
-              </html>
-            `;
+              <html><head><meta charset="UTF-8"><title>Reporte de Cartera - MIA</title><style>${estiloReporte}</style></head>
+              <body>
+                <h2>MIA - Reporte de ${repTipoCartera === 'CxC' ? 'Cuentas por Cobrar (CxC)' : 'Cuentas por Pagar (CxP)'}</h2>
+                <p><strong>Total Registros:</strong> ${listaDeudasReporte.length}</p><hr/>
+                <table>
+                  <thead><tr><th>CC / NIT</th><th>Tercero</th><th>Concepto</th><th>Valor Total</th><th>Saldo Pendiente</th><th>Vencimiento</th><th>Estado</th></tr></thead>
+                  <tbody>
+                    ${listaDeudasReporte.map(i => {
+                      const match = i.tercero.match(/^(.*?)\s*\(([^)]+)\)$/);
+                      const nombre = match ? match[1].trim() : i.tercero;
+                      const cc = match ? match[2].trim() : '';
+                      return `<tr><td><b>${cc}</b></td><td>${nombre}</td><td>${i.concepto}</td><td>${formatoCOP(i.valorTotal, simboloMoneda)}</td><td>${formatoCOP(i.saldoPendiente, simboloMoneda)}</td><td>${i.vencimiento}</td><td>${i.estado}</td></tr>`;
+                    }).join('')}
+                  </tbody>
+                </table>
+                <br/><hr/>
+                <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
+                <a href="javascript:window.close();" class="btn-volver">Cerrar y Volver a la App</a>
+              </body></html>`;
             const blob = new Blob([contenidoHtml], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
+            window.open(URL.createObjectURL(blob), '_blank');
           };
 
           const usuariosFiltrados = listaUsuariosCloud.filter(usr => {
@@ -1011,7 +797,8 @@
             if (filtroFechaHasta && fechaActualizacion && fechaActualizacion > filtroFechaHasta) return false;
 
             if (tipoBusqueda === 'correo' && filtroCorreo !== 'Todos' && correoUsr !== filtroCorreo) return false;
-            if (tipoBusqueda === 'idioma' && filtroIdioma !== 'Todos' && idiomaUsr !== idiomaUsr) return false;
+            // CORREGIDO: antes comparaba idiomaUsr contra sí mismo
+            if (tipoBusqueda === 'idioma' && filtroIdioma !== 'Todos' && idiomaUsr !== filtroIdioma) return false;
             if (tipoBusqueda === 'moneda' && filtroMoneda !== 'Todas' && !monedaUsr.includes(filtroMoneda)) return false;
             return true;
           });
@@ -1034,54 +821,25 @@
 
           const exportarReporteUsuariosPDF = () => {
             const contenidoHtml = `
-              <html>
-                <head>
-                  <meta charset="UTF-8">
-                  <title>Reporte de Usuarios - MIA</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; color: #1B4332; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-                    th { background-color: #205B43; color: white; }
-                    .btn-volver { display: block; width: 100%; padding: 12px; background: #205B43; color: white; text-align: center; text-decoration: none; font-weight: bold; border-radius: 8px; margin-top: 20px; }
-                  </style>
-                </head>
-                <body>
-                  <h2>MIA - Reporte Ejecutivo de Usuarios Registrados</h2>
-                  <p><strong>Total de usuarios encontrados:</strong> ${usuariosFiltrados.length}</p>
-                  <hr/>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Correo Electrónico</th>
-                        <th>Idioma</th>
-                        <th>Moneda</th>
-                        <th>Última Actualización</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${usuariosFiltrados.map(u => {
-                        const mail = u.correo || u.data?.correo || u.user_id || 'N/A';
-                        return `
-                          <tr>
-                            <td>${mail}</td>
-                            <td>${u.data?.idioma || 'Español'}</td>
-                            <td>${u.data?.moneda || 'COP'}</td>
-                            <td>${new Date(u.updated_at).toLocaleString()}</td>
-                          </tr>
-                        `;
-                      }).join('')}
-                    </tbody>
-                  </table>
-                  <br/><hr/>
-                  <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
-                  <a href="javascript:window.close();" class="btn-volver">Cerrar y Volver a la App</a>
-                </body>
-              </html>
-            `;
+              <html><head><meta charset="UTF-8"><title>Reporte de Usuarios - MIA</title><style>${estiloReporte}</style></head>
+              <body>
+                <h2>MIA - Reporte Ejecutivo de Usuarios Registrados</h2>
+                <p><strong>Total de usuarios encontrados:</strong> ${usuariosFiltrados.length}</p><hr/>
+                <table>
+                  <thead><tr><th>Correo Electrónico</th><th>Idioma</th><th>Moneda</th><th>Última Actualización</th></tr></thead>
+                  <tbody>
+                    ${usuariosFiltrados.map(u => {
+                      const mail = u.correo || u.data?.correo || u.user_id || 'N/A';
+                      return `<tr><td>${mail}</td><td>${u.data?.idioma || 'Español'}</td><td>${u.data?.moneda || 'COP'}</td><td>${new Date(u.updated_at).toLocaleString()}</td></tr>`;
+                    }).join('')}
+                  </tbody>
+                </table>
+                <br/><hr/>
+                <p style="font-size: 11px; color: #666;">Generado por MIA - Mi Inteligencia de Ahorro</p>
+                <a href="javascript:window.close();" class="btn-volver">Cerrar y Volver a la App</a>
+              </body></html>`;
             const blob = new Blob([contenidoHtml], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
+            window.open(URL.createObjectURL(blob), '_blank');
           };
 
           const manejarSubidaLogoGlobalLocal = (e) => {
@@ -1138,410 +896,410 @@
                   ) : (
                     <button onClick={manejarLogin} className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0D211A] font-extrabold py-3.5 rounded-2xl shadow-lg transition mt-2">Ingresar</button>
                   )}
-                  <button onClick={() => setModoRegistro(!modoRegistro)} className="w-full text-center text-xs text-[#D4AF37] font-bold hover:underline pt-1">
-                    {modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí'}
-                  </button>
+                  {!modoRegistro && (
+                    <button onClick={manejarRecuperarClave} className="w-full text-center text-xs text-emerald-300 font-semibold hover:underline">¿Olvidaste o aún no tienes contraseña? Recupérala aquí</button>
+                  )}
+                  {REGISTRO_PUBLICO && (
+                    <button onClick={() => setModoRegistro(!modoRegistro)} className="w-full text-center text-xs text-[#D4AF37] font-bold hover:underline pt-1">
+                      {modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí'}
+                    </button>
+                  )}
                 </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className="flex flex-col h-full bg-[#0D211A] relative w-full text-slate-100">
+              <div className="p-3 px-5 flex justify-between items-center bg-[#112A20] border-b border-[#D4AF37]/20 shadow-md">
+                <LogoHeaderMIA logoCustom={logoGlobal} />
+                <div className="flex items-center gap-2">
+                  {esSuperAdmin && (
+                    <button onClick={() => setTab('admin')} className="bg-[#D4AF37]/20 text-[#D4AF37] px-3.5 py-1.5 rounded-xl text-xs font-bold border border-[#D4AF37]/50">Admin</button>
+                  )}
+                  <button onClick={cerrarSesion} className="bg-red-500/20 text-red-300 px-3.5 py-1.5 rounded-xl text-xs font-bold border border-red-500/30">Salir</button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 pb-28">
+                {tab === 'inicio' && (
+                  <div>
+                    <div className="bg-gradient-to-br from-[#112A20] to-[#1B4332] rounded-3xl p-5 mb-5 shadow-xl border border-[#D4AF37]/40 text-white relative overflow-hidden">
+                      <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-[#D4AF37]/10 rounded-full blur-2xl"></div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[11px] font-extrabold text-[#D4AF37] tracking-wider">{t.patrimonio} ({monedaSeleccionada})</span>
+                        <button onClick={() => setTab('cuentas')} className="text-emerald-300 text-xs font-bold hover:underline">{t.ajustarSaldos}</button>
+                      </div>
+                      <h2 className="text-3xl font-black my-2 tracking-tight text-white">{formatoCOP(patrimonioTotal, simboloMoneda)}</h2>
+                      <p className="text-[11px] text-emerald-200/80">{t.subPatrimonio}</p>
+                    </div>
+
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-base font-bold text-slate-100">{t.fondosActivos}</h3>
+                      <button onClick={() => setTab('cuentas')} className="text-xs text-emerald-400 font-bold hover:underline">{t.verCuentas}</button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mb-5">
+                      {cuentasConSaldo.length === 0 && totalCxCPendiente === 0 && totalCxPPendiente === 0 ? (
+                        <p className="col-span-2 text-center text-xs text-slate-400 italic py-2">{t.sinCuentas}</p>
+                      ) : (
+                        <>
+                          {cuentasConSaldo.map((c) => (
+                            <div key={c.id} className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-emerald-900/30 flex flex-col justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xl">{c.icono}</span>
+                                <p className="text-xs font-semibold text-slate-200 truncate">{c.nombre}</p>
+                              </div>
+                              <p className="text-[14px] font-extrabold text-emerald-400 mt-2">{formatoCOP(obtenerSaldoCuenta(c.id), simboloMoneda)}</p>
+                            </div>
+                          ))}
+                          {totalCxCPendiente > 0 && (
+                            <div className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-emerald-900/30 flex flex-col justify-between">
+                              <div className="flex items-center gap-2"><span className="text-xl">📥</span><p className="text-xs font-semibold text-slate-200 truncate">{t.totalCxCPend}</p></div>
+                              <p className="text-[14px] font-extrabold text-emerald-400 mt-2">{formatoCOP(totalCxCPendiente, simboloMoneda)}</p>
+                            </div>
+                          )}
+                          {totalCxPPendiente > 0 && (
+                            <div className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-red-900/30 flex flex-col justify-between">
+                              <div className="flex items-center gap-2"><span className="text-xl">📤</span><p className="text-xs font-semibold text-slate-200 truncate">{t.totalCxPPend}</p></div>
+                              <p className="text-[14px] font-extrabold text-red-400 mt-2">{formatoCOP(totalCxPPendiente, simboloMoneda)}</p>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    <h3 className="text-base font-bold text-slate-100 mb-3">{t.registrarMov}</h3>
+                    <div className="bg-[#16382D] rounded-3xl p-4 shadow-xl border border-emerald-900/30 space-y-3.5">
+                      <div className="flex gap-2">
+                        <button onClick={() => { setTipoMovimiento('Gasto'); setCategoriaSeleccionada(categoriasGasto[0]); }} className={`flex-1 py-2.5 rounded-2xl font-bold text-sm transition ${tipoMovimiento === 'Gasto' ? 'bg-[#EF4444] text-white shadow-lg' : 'bg-[#112A20] text-slate-300'}`}>{t.gasto}</button>
+                        <button onClick={() => { setTipoMovimiento('Ingreso'); setCategoriaSeleccionada(categoriasIngreso[0]); }} className={`flex-1 py-2.5 rounded-2xl font-bold text-sm transition ${tipoMovimiento === 'Ingreso' ? 'bg-[#10B981] text-[#0D211A] shadow-lg font-black' : 'bg-[#112A20] text-slate-300'}`}>{t.ingreso}</button>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.medioPago}</label>
+                        <select value={cuentaSeleccionada} onChange={(e) => setCuentaSeleccionada(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none font-medium focus:ring-2 focus:ring-emerald-500/20">
+                          {cuentas.map((c) => (<option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.fecha}</label>
+                        <input type="text" value={fechaMovimiento} onChange={(e) => setFechaMovimiento(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20" />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.rubro}</label>
+                        <select value={categoriaSeleccionada} onChange={(e) => setCategoriaSeleccionada(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none font-medium focus:ring-2 focus:ring-emerald-500/20">
+                          {(tipoMovimiento === 'Gasto' ? categoriasGasto : categoriasIngreso).map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
+                        </select>
+                      </div>
+
+                      {((tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) ||
+                        (tipoMovimiento === 'Gasto' && (categoriaSeleccionada === 'Préstamos a Clientes' || categoriaSeleccionada === 'Pago a Terceros'))) && (
+                        <div className="bg-[#112A20] p-3.5 rounded-2xl border border-emerald-900/40 space-y-2">
+                          <label className="text-xs font-bold text-[#D4AF37] block">Identificación del Tercero (Llave Principal):</label>
+                          <input type="text" placeholder="Digita Cédula o NIT..." value={terceroCC} onChange={(e) => handleIdentificacionMovimientoChange(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs outline-none font-bold focus:ring-2 focus:ring-[#D4AF37]/50" />
+                          <input type="text" placeholder="Nombre completo autocompletado..." value={terceroNombre} onChange={(e) => setTerceroNombre(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs outline-none font-medium" />
+                        </div>
+                      )}
+
+                      {!((tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) ||
+                          (tipoMovimiento === 'Gasto' && (categoriaSeleccionada === 'Préstamos a Clientes' || categoriaSeleccionada === 'Pago a Terceros'))) && (
+                        <input type="text" placeholder={t.conceptoPlaceholder} value={concepto} onChange={(e) => setConcepto(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20" />
+                      )}
+
+                      <input type="text" placeholder={t.valorPlaceholder(monedaSeleccionada)} value={valorDisplay} onChange={(e) => setValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold" />
+                      <button onClick={guardarMovimiento} className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0D211A] font-extrabold py-3.5 rounded-2xl shadow-lg mt-2 transition">{t.guardarMovBtn}</button>
+                    </div>
+
+                    <h3 className="text-base font-bold text-slate-100 mt-5 mb-2.5">{t.movRecientes}</h3>
+                    {movimientos.length === 0 ? (
+                      <p className="text-center text-slate-400 my-6 italic text-sm">{t.sinMovs}</p>
+                    ) : (
+                      movimientos.slice(0, 5).map((m) => {
+                        const cuentaAsociada = cuentas.find((c) => c.id === m.cuentaId);
+                        const esIngreso = m.tipo === 'Ingreso';
+                        return (
+                          <div key={m.id} className="bg-[#16382D] rounded-2xl p-3.5 my-2 flex justify-between items-center shadow-md border border-emerald-900/30">
+                            <div className="flex-1 pr-2">
+                              <p className="text-sm font-semibold text-slate-200">{m.concepto}</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-sm font-extrabold ${esIngreso ? 'text-emerald-400' : 'text-red-400'}`}>{esIngreso ? '+ ' : '- '}{formatoCOP(m.valor, simboloMoneda)}</span>
+                              <button onClick={() => abrirModalEditarMovimiento(m)} className="p-1.5 bg-[#112A20] text-emerald-400 rounded-xl text-xs font-bold border border-emerald-900/40">✏️</button>
+                              <button onClick={() => eliminarMovimiento(m.id)} className="p-1.5 bg-red-950/40 text-red-400 rounded-xl text-xs font-bold border border-red-950/50">🗑️</button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+
+                {tab === 'cuentas' && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-base font-bold text-slate-100">{t.cuentasTitulo}</h3>
+                      <button onClick={() => setModalNuevaCuenta(true)} className="bg-[#10B981] text-[#0D211A] px-4 py-2 rounded-full text-xs font-extrabold shadow-lg">{t.crearCuentaBtn}</button>
+                    </div>
+                    <p className="text-[13px] text-emerald-300 mb-4">{t.cuentasSub}</p>
+
+                    {cuentas.map((c) => {
+                      const saldoActual = obtenerSaldoCuenta(c.id);
+                      return (
+                        <div key={c.id} className="bg-[#16382D] rounded-3xl p-4 my-3 shadow-md border border-emerald-900/30 space-y-3">
+                          <div className="flex items-center">
+                            <span className="text-3xl">{c.icono}</span>
+                            <div className="ml-3 flex-1">
+                              <h4 className="text-base font-bold text-slate-100">{c.nombre}</h4>
+                              <p className="text-xs text-slate-400">Tipo: {c.tipo}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[11px] text-slate-400">{t.saldoActual}</span>
+                              <p className="text-base font-extrabold text-emerald-400">{formatoCOP(saldoActual, simboloMoneda)}</p>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center pt-2 border-t border-emerald-900/40">
+                            <div>
+                              <span className="text-[10px] font-bold text-slate-400">{t.saldoInicialLabel} (Desde: {c.fechaSaldoInicial || fechaHoy()})</span>
+                              <p className="text-[14px] font-bold text-slate-200">{formatoCOP(c.saldoInicial, simboloMoneda)}</p>
+                            </div>
+                            <button onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setFechaSaldoEditado(c.fechaSaldoInicial || fechaHoy()); setModalEditarSaldo(true); }} className="bg-[#112A20] px-3.5 py-2 rounded-2xl text-xs font-bold text-emerald-300 border border-emerald-900/50">{t.modificarBtn}</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <button onClick={reiniciarTodo} className="w-full mt-5 p-3.5 bg-red-950/30 rounded-2xl text-red-400 font-bold text-xs border border-red-900/40">{t.reiniciarCelularBtn}</button>
+                  </div>
+                )}
+
+                {tab === 'deudas' && (
+                  <div>
+                    <h3 className="text-base font-bold text-slate-100 mb-3">{t.deudasTitulo}</h3>
+
+                    <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3.5">
+                      <div>
+                        <label className="text-xs font-bold text-slate-200 block mb-1">{t.tipoOp}</label>
+                        <select value={tipoCxUnified} onChange={(e) => setTipoCxUnified(e.target.value)} className="w-full bg-[#112A20] text-emerald-300 font-extrabold rounded-2xl p-3 text-sm outline-none border border-emerald-900/40">
+                          <option value="CxC">{t.cxcOption}</option>
+                          <option value="CxP">{t.cxpOption}</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-emerald-300 block mb-1">📅 Fecha inicial del saldo inicial:</label>
+                        <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-2.5 border border-emerald-900/40 text-xs font-semibold" />
+                      </div>
+
+                      {tipoCxUnified === 'CxC' ? (
+                        <div className="space-y-2">
+                          <label className="text-[11px] font-bold text-emerald-400 block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
+                          <input type="text" placeholder="Cédula o NIT..." value={terceroCCReg} onChange={(e) => setTerceroCCReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
+                          <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreReg} onChange={(e) => setTerceroNombreReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs" />
+                          <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
+                          <button onClick={guardarCxC} className="w-full bg-[#10B981] text-[#0D211A] font-extrabold py-3 px-4 rounded-2xl shadow-md text-xs mt-2 hover:bg-[#059669] transition block text-center">Guardar Cuenta por Cobrar</button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <label className="text-[11px] font-bold text-red-400 block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
+                          <input type="text" placeholder="Cédula o NIT..." value={terceroCCRegP} onChange={(e) => setTerceroCCRegP(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
+                          <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreRegP} onChange={(e) => setTerceroNombreRegP(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs" />
+                          <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
+                          <button onClick={guardarCxP} className="w-full bg-[#EF4444] text-white font-extrabold py-3 px-4 rounded-2xl shadow-md text-xs mt-2 hover:bg-[#DC2626] transition block text-center">Guardar Cuenta por Pagar</button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-xs font-bold text-slate-200">📊 Edades de Vencimiento (Cartera)</h4>
+                        <span className="text-[10px] font-extrabold text-[#D4AF37] uppercase">{tipoCxUnified}</span>
+                      </div>
+
+                      {(() => {
+                        const edades = tipoCxUnified === 'CxC' ? edadesCxC : edadesCxP;
+                        return (
+                          <div className="pt-2">
+                            <div className="h-36 flex items-end justify-around gap-4 px-2 border-b border-emerald-900/40 pb-1">
+                              <div className="flex flex-col items-center h-full justify-end flex-1">
+                                <span className="text-[9px] font-extrabold text-emerald-400 mb-1 text-center">{formatoCOP(edades.v1_30, simboloMoneda)}</span>
+                                <div style={{ height: `${Math.max(edades.h1_30, 8)}%` }} className="w-full bg-[#10B981] rounded-t-xl transition-all duration-300 shadow-sm"></div>
+                              </div>
+                              <div className="flex flex-col items-center h-full justify-end flex-1">
+                                <span className="text-[9px] font-extrabold text-[#D4AF37] mb-1 text-center">{formatoCOP(edades.v31_60, simboloMoneda)}</span>
+                                <div style={{ height: `${Math.max(edades.h31_60, 8)}%` }} className="w-full bg-[#D4AF37] rounded-t-xl transition-all duration-300 shadow-sm"></div>
+                              </div>
+                              <div className="flex flex-col items-center h-full justify-end flex-1">
+                                <span className="text-[9px] font-extrabold text-red-400 mb-1 text-center">{formatoCOP(edades.vMas60, simboloMoneda)}</span>
+                                <div style={{ height: `${Math.max(edades.hMas60, 8)}%` }} className="w-full bg-[#EF4444] rounded-t-xl transition-all duration-300 shadow-sm"></div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 text-[10px] font-bold text-center text-slate-400 pt-2">
+                              <span>1 - 30 días</span>
+                              <span>31 - 60 días</span>
+                              <span>&gt; 60 días</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {tab === 'reportes' && (
+                  <div>
+                    <h3 className="text-base font-bold text-slate-100 mb-3">{t.reportesTitulo}</h3>
+
+                    <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3.5">
+                      <h4 className="text-xs font-bold text-slate-200">📑 Reporte Avanzado de Cartera (Cruce por NIT/CC)</h4>
+
+                      <select value={repTipoCartera} onChange={(e) => setRepTipoCartera(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-2.5 border border-emerald-900/40 text-xs font-semibold">
+                        <option value="CxC">Cuentas por Cobrar (CxC)</option>
+                        <option value="CxP">Cuentas por Pagar (CxP)</option>
+                      </select>
+
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Desde:</label>
+                          <input type="date" value={repFechaDesde} onChange={(e) => setRepFechaDesde(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2 border border-emerald-900/40 text-[11px]" />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Hasta:</label>
+                          <input type="date" value={repFechaHasta} onChange={(e) => setRepFechaHasta(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2 border border-emerald-900/40 text-[11px]" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Buscar por Cédula, NIT, Nombre o "Todos":</label>
+                        <input type="text" placeholder="Digita Cédula o NIT..." value={repTerceroBusqueda} onChange={(e) => setRepTerceroBusqueda(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/40 text-xs font-bold" />
+                      </div>
+
+                      <div className="pt-2 border-t border-emerald-900/40 space-y-2">
+                        <p className="text-xs font-bold text-emerald-400">Registros encontrados: {listaDeudasReporte.length}</p>
+                        <div className="flex gap-2">
+                          <button onClick={exportarReporteCarteraCSV} className="flex-1 bg-[#10B981] text-[#0D211A] py-2.5 rounded-2xl text-xs font-extrabold shadow">📊 Exportar Excel</button>
+                          <button onClick={exportarReporteCarteraPDF} className="flex-1 bg-[#059669] text-white py-2.5 rounded-2xl text-xs font-extrabold shadow">📄 Exportar PDF</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {tab === 'admin' && esSuperAdmin && (
+                  <div className="bg-[#16382D] rounded-3xl p-5 shadow-xl border border-[#D4AF37]/30 space-y-4">
+                    <h3 className="text-lg font-extrabold text-[#D4AF37] border-b border-emerald-900/40 pb-2">{t.adminPanel}</h3>
+
+                    <div className="space-y-3 bg-[#0D211A] p-4 rounded-2xl border border-emerald-900/40">
+                      <h4 className="text-xs font-bold text-slate-200">📊 Reporte Ejecutivo de Usuarios</h4>
+
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Desde:</label>
+                          <input type="date" value={filtroFechaDesde} onChange={(e) => setFiltroFechaDesde(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-1.5 border border-emerald-900/40 text-[11px]" />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Hasta:</label>
+                          <input type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-1.5 border border-emerald-900/40 text-[11px]" />
+                        </div>
+                      </div>
+
+                      <select value={tipoBusqueda} onChange={(e) => setTipoBusqueda(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-2 border border-emerald-900/40 text-xs">
+                        <option value="correo">Buscar por Correo</option>
+                        <option value="idioma">Buscar por Idioma</option>
+                        <option value="moneda">Buscar por Moneda</option>
+                      </select>
+                      <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#10B981] text-[#0D211A] font-extrabold py-2.5 rounded-xl text-xs">🔍 Mostrar Reporte por Fechas</button>
+                    </div>
+
+                    {reporteGenerado && (
+                      <div className="space-y-3 pt-3 border-t border-emerald-900/40">
+                        <div className="bg-[#112A20] text-white p-3.5 rounded-2xl border border-emerald-900/40">
+                          <p className="text-[10px] text-[#D4AF37] font-bold uppercase">Total Usuarios en el Rango</p>
+                          <h3 className="text-2xl font-black text-white">{usuariosFiltrados.length}</h3>
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={exportarReporteUsuariosCSV} className="flex-1 bg-[#10B981] text-[#0D211A] py-2.5 rounded-xl text-xs font-extrabold shadow">📊 Excel (CSV)</button>
+                          <button onClick={exportarReporteUsuariosPDF} className="flex-1 bg-[#059669] text-white py-2.5 rounded-xl text-xs font-extrabold shadow">📄 PDF</button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-3 pt-2">
+                      <h4 className="text-xs font-bold text-slate-200">{t.cargaLogo}</h4>
+                      <div className="flex items-center gap-3 bg-[#0D211A] p-3 rounded-2xl border border-emerald-900/40">
+                        <div className="w-12 h-12 bg-[#112A20] rounded-xl flex items-center justify-center overflow-hidden border border-[#D4AF37]/30">
+                          {logoGlobal ? <img src={logoGlobal} alt="Logo" className="w-full h-full object-contain" /> : <span className="text-xs text-[#D4AF37] font-bold">MIA</span>}
+                        </div>
+                        <input type="file" accept="image/*" onChange={manejarSubidaLogoGlobalLocal} className="w-full text-xs text-slate-400 cursor-pointer" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {modalEditarMovimiento && (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
+                  <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
+                    <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Editar Movimiento</h3>
+                    <input type="text" value={editConcepto} onChange={(e) => setEditConcepto(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
+                    <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-bold outline-none" />
+                    <div className="flex gap-2">
+                      <button onClick={() => setModalEditarMovimiento(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
+                      <button onClick={guardarEdicionMovimiento} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Guardar</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {modalEditarSaldo && (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
+                  <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
+                    <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Modificar Saldo Inicial</h3>
+                    <p className="text-xs text-emerald-300 text-center">Cuenta: <strong>{cuentaAEditar?.nombre}</strong></p>
+                    <div>
+                      <label className="text-xs font-semibold text-emerald-300 block mb-1">📅 Fecha de corte:</label>
+                      <input type="date" value={fechaSaldoEditado} onChange={(e) => setFechaSaldoEditado(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-semibold mb-2 outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-emerald-300 block mb-1">Nuevo saldo de arranque:</label>
+                      <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-bold mb-3 outline-none" />
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
+                      <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Guardar Saldo</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {modalNuevaCuenta && (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
+                  <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
+                    <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Nueva Cuenta</h3>
+                    <input type="text" placeholder="Nombre" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
+                    <input type="text" placeholder="Saldo Inicial" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
+                    <div className="flex gap-2">
+                      <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
+                      <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Crear</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-[#112A20]/90 backdrop-blur-md flex border-t border-[#D4AF37]/20 shadow-2xl z-40 px-2">
+                <button onClick={() => setTab('inicio')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">🏠</span><span className={`text-[10px] ${tab === 'inicio' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Inicio</span></button>
+                <button onClick={() => setTab('cuentas')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">🏦</span><span className={`text-[10px] ${tab === 'cuentas' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Cuentas</span></button>
+                <button onClick={() => setTab('deudas')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">📑</span><span className={`text-[10px] ${tab === 'deudas' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>CxC / CxP</span></button>
+                <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">📊</span><span className={`text-[10px] ${tab === 'reportes' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Reportes</span></button>
+                {esSuperAdmin && (<button onClick={() => setTab('admin')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">⚙️</span><span className={`text-[10px] ${tab === 'admin' ? 'text-amber-400 font-black' : 'text-slate-400'}`}>Admin</span></button>)}
               </div>
             </div>
           );
         }
 
-        const esSuperAdmin = sesion?.user?.email?.trim().toLowerCase() === 'viprof429@gmail.com';
-
-        return (
-          <div className="flex flex-col h-full bg-[#0D211A] relative w-full text-slate-100">
-            <div className="p-3 px-5 flex justify-between items-center bg-[#112A20] border-b border-[#D4AF37]/20 shadow-md">
-              <LogoHeaderMIA logoCustom={logoGlobal} />
-              <div className="flex items-center gap-2">
-                {esSuperAdmin && (
-                  <button onClick={() => setTab('admin')} className="bg-[#D4AF37]/20 text-[#D4AF37] px-3.5 py-1.5 rounded-xl text-xs font-bold border border-[#D4AF37]/50">Admin</button>
-                )}
-                <button onClick={cerrarSesion} className="bg-red-500/20 text-red-300 px-3.5 py-1.5 rounded-xl text-xs font-bold border border-red-500/30">Salir</button>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 pb-28">
-              {tab === 'inicio' && (
-                <div>
-                  <div className="bg-gradient-to-br from-[#112A20] to-[#1B4332] rounded-3xl p-5 mb-5 shadow-xl border border-[#D4AF37]/40 text-white relative overflow-hidden">
-                    <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-[#D4AF37]/10 rounded-full blur-2xl"></div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-[11px] font-extrabold text-[#D4AF37] tracking-wider">{t.patrimonio} ({monedaSeleccionada})</span>
-                      <button onClick={() => setTab('cuentas')} className="text-emerald-300 text-xs font-bold hover:underline">{t.ajustarSaldos}</button>
-                    </div>
-                    <h2 className="text-3xl font-black my-2 tracking-tight text-white">{formatoCOP(patrimonioTotal, simboloMoneda)}</h2>
-                    <p className="text-[11px] text-emerald-200/80">{t.subPatrimonio}</p>
-                  </div>
-
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-base font-bold text-slate-100">{t.fondosActivos}</h3>
-                    <button onClick={() => setTab('cuentas')} className="text-xs text-emerald-400 font-bold hover:underline">{t.verCuentas}</button>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mb-5">
-                    {cuentasConSaldo.length === 0 && totalCxCPendiente === 0 && totalCxPPendiente === 0 ? (
-                      <p className="col-span-2 text-center text-xs text-slate-400 italic py-2">{t.sinCuentas}</p>
-                    ) : (
-                      <>
-                        {cuentasConSaldo.map((c) => (
-                          <div key={c.id} className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-emerald-900/30 flex flex-col justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xl">{c.icono}</span>
-                              <p className="text-xs font-semibold text-slate-200 truncate">{c.nombre}</p>
-                            </div>
-                            <p className="text-[14px] font-extrabold text-emerald-400 mt-2">{formatoCOP(obtenerSaldoCuenta(c.id), simboloMoneda)}</p>
-                          </div>
-                        ))}
-                        {totalCxCPendiente > 0 && (
-                          <div className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-emerald-900/30 flex flex-col justify-between">
-                            <div className="flex items-center gap-2"><span className="text-xl">📥</span><p className="text-xs font-semibold text-slate-200 truncate">{t.totalCxCPend}</p></div>
-                            <p className="text-[14px] font-extrabold text-emerald-400 mt-2">{formatoCOP(totalCxCPendiente, simboloMoneda)}</p>
-                          </div>
-                        )}
-                        {totalCxPPendiente > 0 && (
-                          <div className="bg-[#16382D] p-3.5 rounded-2xl shadow-md border border-red-900/30 flex flex-col justify-between">
-                            <div className="flex items-center gap-2"><span className="text-xl">📤</span><p className="text-xs font-semibold text-slate-200 truncate">{t.totalCxPPend}</p></div>
-                            <p className="text-[14px] font-extrabold text-red-400 mt-2">{formatoCOP(totalCxPPendiente, simboloMoneda)}</p>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  <h3 className="text-base font-bold text-slate-100 mb-3">{t.registrarMov}</h3>
-                  <div className="bg-[#16382D] rounded-3xl p-4 shadow-xl border border-emerald-900/30 space-y-3.5">
-                    <div className="flex gap-2">
-                      <button onClick={() => { setTipoMovimiento('Gasto'); setCategoriaSeleccionada(categoriasGasto[0]); }} className={`flex-1 py-2.5 rounded-2xl font-bold text-sm transition ${tipoMovimiento === 'Gasto' ? 'bg-[#EF4444] text-white shadow-lg' : 'bg-[#112A20] text-slate-300'}`}>{t.gasto}</button>
-                      <button onClick={() => { setTipoMovimiento('Ingreso'); setCategoriaSeleccionada(categoriasIngreso[0]); }} className={`flex-1 py-2.5 rounded-2xl font-bold text-sm transition ${tipoMovimiento === 'Ingreso' ? 'bg-[#10B981] text-[#0D211A] shadow-lg font-black' : 'bg-[#112A20] text-slate-300'}`}>{t.ingreso}</button>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.medioPago}</label>
-                      <select value={cuentaSeleccionada} onChange={(e) => setCuentaSeleccionada(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none font-medium focus:ring-2 focus:ring-emerald-500/20">
-                        {cuentas.map((c) => (<option key={c.id} value={c.id}>{c.icono} {c.nombre}</option>))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.fecha}</label>
-                      <input type="text" value={fechaMovimiento} onChange={(e) => setFechaMovimiento(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20" />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-300 block mb-1">{t.rubro}</label>
-                      <select value={categoriaSeleccionada} onChange={(e) => setCategoriaSeleccionada(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none font-medium focus:ring-2 focus:ring-emerald-500/20">
-                        {(tipoMovimiento === 'Gasto' ? categoriasGasto : categoriasIngreso).map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
-                      </select>
-                    </div>
-
-                    {((tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) || 
-                      (tipoMovimiento === 'Gasto' && (categoriaSeleccionada === 'Préstamos a Clientes' || categoriaSeleccionada === 'Pago a Terceros'))) && (
-                      <div className="bg-[#112A20] p-3.5 rounded-2xl border border-emerald-900/40 space-y-2">
-                        <label className="text-xs font-bold text-[#D4AF37] block">Identificación del Tercero (Llave Principal):</label>
-                        <input type="text" placeholder="Digita Cédula o NIT..." value={terceroCC} onChange={(e) => handleIdentificacionMovimientoChange(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs outline-none font-bold focus:ring-2 focus:ring-[#D4AF37]/50" />
-                        <input type="text" placeholder="Nombre completo autocompletado..." value={terceroNombre} onChange={(e) => setTerceroNombre(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs outline-none font-medium" />
-                      </div>
-                    )}
-
-                    {!( (tipoMovimiento === 'Ingreso' && (categoriaSeleccionada === 'Abono de Terceros' || categoriaSeleccionada === 'Préstamo de Terceros')) || 
-                        (tipoMovimiento === 'Gasto' && (categoriaSeleccionada === 'Préstamos a Clientes' || categoriaSeleccionada === 'Pago a Terceros')) ) && (
-                      <input type="text" placeholder={t.conceptoPlaceholder} value={concepto} onChange={(e) => setConcepto(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20" />
-                    )}
-
-                    <input type="text" placeholder={t.valorPlaceholder(monedaSeleccionada)} value={valorDisplay} onChange={(e) => setValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold" />
-                    <button onClick={guardarMovimiento} className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0D211A] font-extrabold py-3.5 rounded-2xl shadow-lg mt-2 transition">{t.guardarMovBtn}</button>
-                  </div>
-
-                  <h3 className="text-base font-bold text-slate-100 mt-5 mb-2.5">{t.movRecientes}</h3>
-                  {movimientos.length === 0 ? (
-                    <p className="text-center text-slate-400 my-6 italic text-sm">{t.sinMovs}</p>
-                  ) : (
-                    movimientos.slice(0, 5).map((m) => {
-                      const cuentaAsociada = cuentas.find((c) => c.id === m.cuentaId);
-                      const esIngreso = m.tipo === 'Ingreso';
-                      return (
-                        <div key={m.id} className="bg-[#16382D] rounded-2xl p-3.5 my-2 flex justify-between items-center shadow-md border border-emerald-900/30">
-                          <div className="flex-1 pr-2">
-                            <p className="text-sm font-semibold text-slate-200">{m.concepto}</p>
-                            <p className="text-[11px] text-slate-400 mt-0.5">📅 {m.fecha} · {cuentaAsociada?.nombre || 'Cuenta'} · {m.categoria}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-sm font-extrabold ${esIngreso ? 'text-emerald-400' : 'text-red-400'}`}>{esIngreso ? '+ ' : '- '}{formatoCOP(m.valor, simboloMoneda)}</span>
-                            <button onClick={() => abrirModalEditarMovimiento(m)} className="p-1.5 bg-[#112A20] text-emerald-400 rounded-xl text-xs font-bold border border-emerald-900/40">✏️</button>
-                            <button onClick={() => eliminarMovimiento(m.id)} className="p-1.5 bg-red-950/40 text-red-400 rounded-xl text-xs font-bold border border-red-950/50">🗑️</button>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              )}
-
-              {tab === 'cuentas' && (
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-base font-bold text-slate-100">{t.cuentasTitulo}</h3>
-                    <button onClick={() => setModalNuevaCuenta(true)} className="bg-[#10B981] text-[#0D211A] px-4 py-2 rounded-full text-xs font-extrabold shadow-lg">{t.crearCuentaBtn}</button>
-                  </div>
-                  <p className="text-[13px] text-emerald-300 mb-4">{t.cuentasSub}</p>
-
-                  {cuentas.map((c) => {
-                    const saldoActual = obtenerSaldoCuenta(c.id);
-                    return (
-                      <div key={c.id} className="bg-[#16382D] rounded-3xl p-4 my-3 shadow-md border border-emerald-900/30 space-y-3">
-                        <div className="flex items-center">
-                          <span className="text-3xl">{c.icono}</span>
-                          <div className="ml-3 flex-1">
-                            <h4 className="text-base font-bold text-slate-100">{c.nombre}</h4>
-                            <p className="text-xs text-slate-400">Tipo: {c.tipo}</p>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-[11px] text-slate-400">{t.saldoActual}</span>
-                            <p className="text-base font-extrabold text-emerald-400">{formatoCOP(saldoActual, simboloMoneda)}</p>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center pt-2 border-t border-emerald-900/40">
-                          <div>
-                            <span className="text-[10px] font-bold text-slate-400">{t.saldoInicialLabel} (Desde: {c.fechaSaldoInicial || fechaHoy()})</span>
-                            <p className="text-[14px] font-bold text-slate-200">{formatoCOP(c.saldoInicial, simboloMoneda)}</p>
-                          </div>
-                          <button onClick={() => { setCuentaAEditar(c); setSaldoEditadoValorDisplay(formatearInputEnVivo(c.saldoInicial)); setFechaSaldoEditado(c.fechaSaldoInicial || fechaHoy()); setModalEditarSaldo(true); }} className="bg-[#112A20] px-3.5 py-2 rounded-2xl text-xs font-bold text-emerald-300 border border-emerald-900/50">{t.modificarBtn}</button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <button onClick={reiniciarTodo} className="w-full mt-5 p-3.5 bg-red-950/30 rounded-2xl text-red-400 font-bold text-xs border border-red-900/40">{t.reiniciarCelularBtn}</button>
-                </div>
-              )}
-
-              {tab === 'deudas' && (
-                <div>
-                  <h3 className="text-base font-bold text-slate-100 mb-3">{t.deudasTitulo}</h3>
-                  
-                  <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3.5">
-                    <div>
-                      <label className="text-xs font-bold text-slate-200 block mb-1">{t.tipoOp}</label>
-                      <select value={tipoCxUnified} onChange={(e) => setTipoCxUnified(e.target.value)} className="w-full bg-[#112A20] text-emerald-300 font-extrabold rounded-2xl p-3 text-sm outline-none border border-emerald-900/40">
-                        <option value="CxC">{t.cxcOption}</option>
-                        <option value="CxP">{t.cxpOption}</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-[11px] font-bold text-emerald-300 block mb-1">📅 Fecha inicial del saldo inicial:</label>
-                      <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-2.5 border border-emerald-900/40 text-xs font-semibold" />
-                    </div>
-
-                    {tipoCxUnified === 'CxC' ? (
-                      <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-emerald-400 block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
-                        <input type="text" placeholder="Cédula o NIT..." value={terceroCCReg} onChange={(e) => setTerceroCCReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
-                        <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreReg} onChange={(e) => setTerceroNombreReg(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs" />
-                        <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxCDisplay} onChange={(e) => setSaldoInicialCxCDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
-                        <button onClick={guardarCxC} className="w-full bg-[#10B981] text-[#0D211A] font-extrabold py-3 px-4 rounded-2xl shadow-md text-xs mt-2 hover:bg-[#059669] transition block text-center">Guardar Cuenta por Cobrar</button>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-red-400 block">Registrar Tercero (Llave Principal: Cédula/NIT):</label>
-                        <input type="text" placeholder="Cédula o NIT..." value={terceroCCRegP} onChange={(e) => setTerceroCCRegP(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
-                        <input type="text" placeholder="Nombre completo o Razón Social" value={terceroNombreRegP} onChange={(e) => setTerceroNombreRegP(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs" />
-                        <input type="text" placeholder="Saldo Inicial" value={saldoInicialCxPDisplay} onChange={(e) => setSaldoInicialCxPDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/50 text-xs font-bold" />
-                        <button onClick={guardarCxP} className="w-full bg-[#EF4444] text-white font-extrabold py-3 px-4 rounded-2xl shadow-md text-xs mt-2 hover:bg-[#DC2626] transition block text-center">Guardar Cuenta por Pagar</button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* GRÁFICO DE EDADES ESTILIZADO CON BARRAS REDONDEADAS */}
-                  <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <h4 className="text-xs font-bold text-slate-200">📊 Edades de Vencimiento (Cartera)</h4>
-                      <span className="text-[10px] font-extrabold text-[#D4AF37] uppercase">{tipoCxUnified}</span>
-                    </div>
-
-                    {(() => {
-                      const edades = tipoCxUnified === 'CxC' ? edadesCxC : edadesCxP;
-                      return (
-                        <div className="pt-2">
-                          <div className="h-36 flex items-end justify-around gap-4 px-2 border-b border-emerald-900/40 pb-1">
-                            <div className="flex flex-col items-center h-full justify-end flex-1">
-                              <span className="text-[9px] font-extrabold text-emerald-400 mb-1 text-center">{formatoCOP(edades.v1_30, simboloMoneda)}</span>
-                              <div style={{ height: `${Math.max(edades.h1_30, 8)}%` }} className="w-full bg-[#10B981] rounded-t-xl transition-all duration-300 shadow-sm"></div>
-                            </div>
-                            <div className="flex flex-col items-center h-full justify-end flex-1">
-                              <span className="text-[9px] font-extrabold text-[#D4AF37] mb-1 text-center">{formatoCOP(edades.v31_60, simboloMoneda)}</span>
-                              <div style={{ height: `${Math.max(edades.h31_60, 8)}%` }} className="w-full bg-[#D4AF37] rounded-t-xl transition-all duration-300 shadow-sm"></div>
-                            </div>
-                            <div className="flex flex-col items-center h-full justify-end flex-1">
-                              <span className="text-[9px] font-extrabold text-red-400 mb-1 text-center">{formatoCOP(edades.vMas60, simboloMoneda)}</span>
-                              <div style={{ height: `${Math.max(edades.hMas60, 8)}%` }} className="w-full bg-[#EF4444] rounded-t-xl transition-all duration-300 shadow-sm"></div>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-3 text-[10px] font-bold text-center text-slate-400 pt-2">
-                            <span>1 - 30 días</span>
-                            <span>31 - 60 días</span>
-                            <span>&gt; 60 días</span>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-              )}
-
-              {tab === 'reportes' && (
-                <div>
-                  <h3 className="text-base font-bold text-slate-100 mb-3">{t.reportesTitulo}</h3>
-                  
-                  <div className="bg-[#16382D] rounded-3xl p-4 shadow-md border border-emerald-900/30 mb-4 space-y-3.5">
-                    <h4 className="text-xs font-bold text-slate-200">📑 Reporte Avanzado de Cartera (Cruce por NIT/CC)</h4>
-                    
-                    <select value={repTipoCartera} onChange={(e) => setRepTipoCartera(e.target.value)} className="w-full bg-[#0D211A] text-slate-100 rounded-2xl p-2.5 border border-emerald-900/40 text-xs font-semibold">
-                      <option value="CxC">Cuentas por Cobrar (CxC)</option>
-                      <option value="CxP">Cuentas por Pagar (CxP)</option>
-                    </select>
-
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Desde:</label>
-                        <input type="date" value={repFechaDesde} onChange={(e) => setRepFechaDesde(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2 border border-emerald-900/40 text-[11px]" />
-                      </div>
-                      <div className="flex-1">
-                        <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Hasta:</label>
-                        <input type="date" value={repFechaHasta} onChange={(e) => setRepFechaHasta(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2 border border-emerald-900/40 text-[11px]" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Buscar por Cédula, NIT, Nombre o "Todos":</label>
-                      <input type="text" placeholder="Digita Cédula o NIT..." value={repTerceroBusqueda} onChange={(e) => setRepTerceroBusqueda(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-xl p-2.5 border border-emerald-900/40 text-xs font-bold" />
-                    </div>
-
-                    <div className="pt-2 border-t border-emerald-900/40 space-y-2">
-                      <p className="text-xs font-bold text-emerald-400">Registros encontrados: {listaDeudasReporte.length}</p>
-                      <div className="flex gap-2">
-                        <button onClick={exportarReporteCarteraCSV} className="flex-1 bg-[#10B981] text-[#0D211A] py-2.5 rounded-2xl text-xs font-extrabold shadow">📊 Exportar Excel</button>
-                        <button onClick={exportarReporteCarteraPDF} className="flex-1 bg-[#059669] text-white py-2.5 rounded-2xl text-xs font-extrabold shadow">📄 Exportar PDF</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {tab === 'admin' && esSuperAdmin && (
-                <div className="bg-[#16382D] rounded-3xl p-5 shadow-xl border border-[#D4AF37]/30 space-y-4">
-                  <h3 className="text-lg font-extrabold text-[#D4AF37] border-b border-emerald-900/40 pb-2">{t.adminPanel}</h3>
-                  
-                  <div className="space-y-3 bg-[#0D211A] p-4 rounded-2xl border border-emerald-900/40">
-                    <h4 className="text-xs font-bold text-slate-200">📊 Reporte Ejecutivo de Usuarios</h4>
-                    
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Desde:</label>
-                        <input type="date" value={filtroFechaDesde} onChange={(e) => setFiltroFechaDesde(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-1.5 border border-emerald-900/40 text-[11px]" />
-                      </div>
-                      <div className="flex-1">
-                        <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Hasta:</label>
-                        <input type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-1.5 border border-emerald-900/40 text-[11px]" />
-                      </div>
-                    </div>
-
-                    <select value={tipoBusqueda} onChange={(e) => setTipoBusqueda(e.target.value)} className="w-full bg-[#112A20] text-white rounded-xl p-2 border border-emerald-900/40 text-xs">
-                      <option value="correo">Buscar por Correo</option>
-                      <option value="idioma">Buscar por Idioma</option>
-                      <option value="moneda">Buscar por Moneda</option>
-                    </select>
-                    <button onClick={() => setReporteGenerado(true)} className="w-full bg-[#10B981] text-[#0D211A] font-extrabold py-2.5 rounded-xl text-xs">🔍 Mostrar Reporte por Fechas</button>
-                  </div>
-
-                  {reporteGenerado && (
-                    <div className="space-y-3 pt-3 border-t border-emerald-900/40">
-                      <div className="bg-[#112A20] text-white p-3.5 rounded-2xl border border-emerald-900/40">
-                        <p className="text-[10px] text-[#D4AF37] font-bold uppercase">Total Usuarios en el Rango</p>
-                        <h3 className="text-2xl font-black text-white">{usuariosFiltrados.length}</h3>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={exportarReporteUsuariosCSV} className="flex-1 bg-[#10B981] text-[#0D211A] py-2.5 rounded-xl text-xs font-extrabold shadow">📊 Excel (CSV)</button>
-                        <button onClick={exportarReporteUsuariosPDF} className="flex-1 bg-[#059669] text-white py-2.5 rounded-xl text-xs font-extrabold shadow">📄 PDF</button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-3 pt-2">
-                    <h4 className="text-xs font-bold text-slate-200">{t.cargaLogo}</h4>
-                    <div className="flex items-center gap-3 bg-[#0D211A] p-3 rounded-2xl border border-emerald-900/40">
-                      <div className="w-12 h-12 bg-[#112A20] rounded-xl flex items-center justify-center overflow-hidden border border-[#D4AF37]/30">
-                        {logoGlobal ? <img src={logoGlobal} alt="Logo" className="w-full h-full object-contain" /> : <span className="text-xs text-[#D4AF37] font-bold">MIA</span>}
-                      </div>
-                      <input type="file" accept="image/*" onChange={manejarSubidaLogoGlobalLocal} className="w-full text-xs text-slate-400 cursor-pointer" />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {modalEditarMovimiento && (
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
-                <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
-                  <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Editar Movimiento</h3>
-                  <input type="text" value={editConcepto} onChange={(e) => setEditConcepto(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
-                  <input type="text" value={editValorDisplay} onChange={(e) => setEditValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-bold outline-none" />
-                  <div className="flex gap-2">
-                    <button onClick={() => setModalEditarMovimiento(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
-                    <button onClick={guardarEdicionMovimiento} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Guardar</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {modalEditarSaldo && (
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
-                <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
-                  <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Modificar Saldo Inicial</h3>
-                  <p className="text-xs text-emerald-300 text-center">Cuenta: <strong>{cuentaAEditar?.nombre}</strong></p>
-                  <div>
-                    <label className="text-xs font-semibold text-emerald-300 block mb-1">📅 Fecha de corte:</label>
-                    <input type="date" value={fechaSaldoEditado} onChange={(e) => setFechaSaldoEditado(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-semibold mb-2 outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-emerald-300 block mb-1">Nuevo saldo de arranque:</label>
-                    <input type="text" value={saldoEditadoValorDisplay} onChange={(e) => setSaldoEditadoValorDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm font-bold mb-3 outline-none" />
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => setModalEditarSaldo(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
-                    <button onClick={actualizarSaldoInicial} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Guardar Saldo</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {modalNuevaCuenta && (
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center p-5 z-50">
-                <div className="bg-[#16382D] text-slate-100 rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-900/40 space-y-3.5">
-                  <h3 className="text-lg font-extrabold text-[#D4AF37] text-center">Nueva Cuenta</h3>
-                  <input type="text" placeholder="Nombre" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
-                  <input type="text" placeholder="Saldo Inicial" value={nuevoSaldoInitDisplay} onChange={(e) => setNuevoSaldoInitDisplay(formatearInputEnVivo(e.target.value))} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none" />
-                  <div className="flex gap-2">
-                    <button onClick={() => setModalNuevaCuenta(false)} className="flex-1 bg-slate-700 text-white font-bold py-3 rounded-2xl text-xs">Cancelar</button>
-                    <button onClick={guardarNuevaCuenta} className="flex-1 bg-[#10B981] text-[#0D211A] font-extrabold py-3 rounded-2xl text-xs shadow">Crear</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* NAVEGACIÓN INFERIOR FLOTANTE CON BACKDROP BLUR (ESTILO APP NATIVA) */}
-            <div className="absolute bottom-0 left-0 right-0 h-16 bg-[#112A20]/90 backdrop-blur-md flex border-t border-[#D4AF37]/20 shadow-2xl z-40 px-2">
-              <button onClick={() => setTab('inicio')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">🏠</span><span className={`text-[10px] ${tab === 'inicio' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Inicio</span></button>
-              <button onClick={() => setTab('cuentas')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">🏦</span><span className={`text-[10px] ${tab === 'cuentas' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Cuentas</span></button>
-              <button onClick={() => setTab('deudas')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">📑</span><span className={`text-[10px] ${tab === 'deudas' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>CxC / CxP</span></button>
-              <button onClick={() => setTab('reportes')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">📊</span><span className={`text-[10px] ${tab === 'reportes' ? 'text-[#D4AF37] font-black' : 'text-slate-400'}`}>Reportes</span></button>
-              {esSuperAdmin && (<button onClick={() => setTab('admin')} className="flex-1 flex flex-col items-center justify-center transition transform active:scale-95"><span className="text-lg">⚙️</span><span className={`text-[10px] ${tab === 'admin' ? 'text-amber-400 font-black' : 'text-slate-400'}`}>Admin</span></button>)}
-            </div>
-          </div>
-        );
-      }
-
-      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>
