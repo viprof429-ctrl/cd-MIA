@@ -322,7 +322,7 @@
           },
           async guardarDatosNube(token, userId, payload) {
             try {
-              // 1. Verificamos si ya existe el registro del usuario en la tabla
+              // Verificamos si ya existe el registro del usuario
               const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}&select=user_id`, {
                 method: 'GET',
                 headers: {
@@ -333,7 +333,7 @@
               const existingRows = await checkRes.json();
 
               if (existingRows && existingRows.length > 0) {
-                // 2. Si ya existe, hacemos un PATCH exacto (Actualización)
+                // Si existe, actualizamos con PATCH limpio (sin errores 400)
                 await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario?user_id=eq.${userId}`, {
                   method: 'PATCH',
                   headers: {
@@ -348,7 +348,7 @@
                   })
                 });
               } else {
-                // 3. Si no existe, hacemos un POST (Creación)
+                // Si no existe, creamos el registro con POST
                 await fetch(`${SUPABASE_URL}/rest/v1/mia_datos_usuario`, {
                   method: 'POST',
                   headers: {
@@ -1100,7 +1100,7 @@
                   <p><strong>Concepto:</strong> ${terceroItem.concepto}</p>
                   <p><strong>Fecha Inicial:</strong> ${terceroItem.fechaInicial || 'N/A'}</p>
                   <p><strong>Fecha Vencimiento:</strong> ${terceroItem.vencimiento}</p>
-                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(itemSel.valorTotal, simboloMoneda)}</p>
+                  <p><strong>Valor Total Inicial:</strong> ${formatoCOP(terceroItem.valorTotal, simboloMoneda)}</p>
                   <p><strong>Saldo Pendiente Actual:</strong> ${formatoCOP(terceroItem.saldoPendiente, simboloMoneda)}</p>
                   <p><strong>Estado:</strong> ${terceroItem.estado}</p>
                   <p><strong>Observaciones:</strong> ${terceroItem.observacion || 'Ninguna'}</p>
