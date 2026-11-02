@@ -479,7 +479,6 @@
           const [valorDisplay, setValorDisplay] = useState('');
           const [fechaMovimiento, setFechaMovimiento] = useState(fechaHoy());
 
-          // CAMPOS DE IDENTIFICACIÓN DE TERCEROS (CC/NIT y Nombre)
           const [terceroCC, setTerceroCC] = useState('');
           const [terceroNombre, setTerceroNombre] = useState('');
 
@@ -492,9 +491,8 @@
           const [editCuentaId, setEditCuentaId] = useState('');
           const [editCategoria, setEditCategoria] = useState('');
 
-          // GESTIÓN DE TERCEROS (CxC / CxP) CON CC/NIT
           const [tipoCxUnified, setTipoCxUnified] = useState('CxC');
-          const [fechaGeneralReg, setFechaGeneralReg] = useState(fechaHoy());
+          const [fechaGeneralReg, setFechaGeneralReg] = useState(fechaHoy()); // FECHA INICIAL DEL SALDO INICIAL
           const [terceroCCReg, setTerceroCCReg] = useState('');
           const [terceroNombreReg, setTerceroNombreReg] = useState('');
           const [conceptoCxC, setConceptoCxC] = useState(conceptosDeuda[0]);
@@ -552,7 +550,6 @@
             const num = obtenerNumeroLimpio(valorDisplay);
             const nombreTerceroCompleto = terceroNombre.trim() ? `${terceroNombre.trim()} (${terceroCC.trim() || 'NIT/CC N/A'})` : '';
 
-            // 1. INGRESO: ABONO DE TERCEROS (Disminuye CxC y Aumenta Cuenta)
             if (tipoMovimiento === 'Ingreso' && categoriaSeleccionada === 'Abono de Terceros') {
               if (!terceroNombre.trim() || isNaN(num) || num <= 0) {
                 notificar('Datos incompletos', 'Ingresa el nombre del tercero y un valor válido.');
@@ -584,7 +581,6 @@
               return;
             }
 
-            // 2. INGRESO: PRÉSTAMO DE TERCEROS (Crea o Aumenta CxP y Aumenta Cuenta)
             if (tipoMovimiento === 'Ingreso' && categoriaSeleccionada === 'Préstamo de Terceros') {
               if (!terceroNombre.trim() || isNaN(num) || num <= 0) {
                 notificar('Datos incompletos', 'Ingresa el nombre del prestamista y un valor válido.');
@@ -629,7 +625,6 @@
               return;
             }
 
-            // 3. GASTO: PRÉSTAMOS A CLIENTES (Crea o Aumenta CxC y Disminuye Cuenta)
             if (tipoMovimiento === 'Gasto' && categoriaSeleccionada === 'Préstamos a Clientes') {
               if (!terceroNombre.trim() || isNaN(num) || num <= 0) {
                 notificar('Datos incompletos', 'Ingresa el nombre del cliente y un valor válido.');
@@ -674,7 +669,6 @@
               return;
             }
 
-            // 4. GASTO: PAGO A TERCEROS (Disminuye CxP y Disminuye Cuenta)
             if (tipoMovimiento === 'Gasto' && categoriaSeleccionada === 'Pago a Terceros') {
               if (!terceroNombre.trim() || isNaN(num) || num <= 0) {
                 notificar('Datos incompletos', 'Ingresa el nombre del tercero y un valor válido.');
@@ -709,7 +703,6 @@
               return;
             }
 
-            // CASO GENERAL (Gastos / Ingresos normales)
             if (!concepto.trim() || isNaN(num) || num <= 0) {
               notificar('Datos incompletos', 'Escribe un concepto y un valor numérico válido.');
               return;
@@ -810,7 +803,7 @@
             }
           };
 
-          // GUARDAR DESDE EL MÓDULO CXC / CXP CON CC/NIT Y NOMBRE
+          // GUARDAR CXC / CXP CON FECHA DE SALDO INICIAL Y CC/NIT
           const guardarCxC = () => {
             const num = obtenerNumeroLimpio(saldoInicialCxCDisplay);
             const conceptoFinal = usarNuevoConceptoCxC ? nuevoConceptoCxC.trim() : conceptoCxC;
@@ -825,7 +818,7 @@
               concepto: conceptoFinal,
               valorTotal: num,
               saldoPendiente: num,
-              fechaInicial: fechaGeneralReg,
+              fechaInicial: fechaGeneralReg, // Fecha inicial del saldo inicial
               vencimiento: vencimientoCxC,
               cuentaId: cuentaCxC,
               observacion: obsCxC.trim(),
@@ -851,7 +844,7 @@
               concepto: conceptoFinal,
               valorTotal: num,
               saldoPendiente: num,
-              fechaInicial: fechaGeneralReg,
+              fechaInicial: fechaGeneralReg, // Fecha inicial del saldo inicial
               vencimiento: vencimientoCxP,
               cuentaId: cuentaCxP,
               observacion: obsCxP.trim(),
@@ -1196,6 +1189,12 @@
                           <option value="CxC">{t.cxcOption}</option>
                           <option value="CxP">{t.cxpOption}</option>
                         </select>
+                      </div>
+
+                      {/* SELECTOR DE FECHA INICIAL DEL SALDO INICIAL */}
+                      <div>
+                        <label className="text-[11px] font-bold text-[#52725F] block mb-1">📅 Fecha inicial del saldo inicial:</label>
+                        <input type="date" value={fechaGeneralReg} onChange={(e) => setFechaGeneralReg(e.target.value)} className="w-full bg-[#F8FAF8] rounded-xl p-2.5 border text-xs font-semibold" />
                       </div>
 
                       {tipoCxUnified === 'CxC' ? (
