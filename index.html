@@ -40,7 +40,7 @@
         const ADMIN_EMAIL = 'viprof429@gmail.com';
         // Ponlo en false cuando conectes Hotmart: así nadie podrá crear cuenta por su cuenta,
         // solo entran los correos que habilite el webhook de compra.
-        const REGISTRO_PUBLICO = true;
+        const REGISTRO_PUBLICO = false;
 
         const T = {
           Español: {
@@ -119,6 +119,24 @@
           if (typeof window !== 'undefined') window.alert(`${titulo}\n\n${mensaje}`);
         };
 
+        const obtenerDeviceId = () => {
+          try {
+            let id = localStorage.getItem('mia_device_id');
+            if (!id) {
+              id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(16).slice(2));
+              localStorage.setItem('mia_device_id', id);
+            }
+            return id;
+          } catch (e) { return 'sin-id'; }
+        };
+
+        const mensajeAcceso = (codigo) => {
+          const c = String(codigo || '');
+          if (c.includes('limite_dispositivos')) return ['Límite de dispositivos', 'Esta cuenta ya está activa en 2 dispositivos. Para cambiar uno, contacta al soporte de MIA.'];
+          if (c.includes('sin_acceso')) return ['Sin acceso', 'Este correo no tiene una compra activa de MIA.'];
+          return ['No se pudo iniciar sesión', 'Intenta de nuevo en unos minutos.'];
+        };
+
         const supabaseApi = {
           async signUp(email, password, extraData) {
             try {
@@ -160,6 +178,50 @@
               return { data: null, error: err };
             }
           },
+          async refrescarSesion(refreshToken) {
+            try {
+              const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+                body: JSON.stringify({ refresh_token: refreshToken })
+              });
+              const data = await res.json();
+              if (!res.ok) return { data: null, error: new Error(data.error_description || data.msg || 'Sesión vencida'), fatal: res.status >= 400 && res.status < 500 };
+              return { data, error: null, fatal: false };
+            } catch (err) {
+              return { data: null, error: err, fatal: false };
+            }
+          },
+          async crearClave(accessToken, password) {
+            try {
+              const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}` },
+                body: JSON.stringify({ password })
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.msg || data.error_description || 'No se pudo guardar la contraseña');
+              return { data, error: null };
+            } catch (err) {
+              return { data: null, error: err };
+            }
+          },
+          async registrarDispositivo(token) {
+            try {
+              const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/registrar_dispositivo`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ p_device_id: obtenerDeviceId(), p_etiqueta: (navigator.userAgent || '').slice(0, 120) })
+              });
+              if (!res.ok) {
+                const d = await res.json().catch(() => ({}));
+                return { ok: false, codigo: d.message || '' };
+              }
+              return { ok: true };
+            } catch (err) {
+              return { ok: false, codigo: 'red' };
+            }
+          },
           async recuperarClave(email) {
             try {
               const res = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
@@ -182,7 +244,7 @@
                 method: 'GET',
                 headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` }
               });
-              if (!res.ok) return null;
+              if (!res.ok) return 'error';
               const rows = await res.json();
               if (rows && rows.length > 0) {
                 let rawData = rows[0].data;
@@ -211,7 +273,7 @@
               return null;
             } catch (err) {
               console.error("Error cargando de la nube:", err);
-              return null;
+              return 'error';
             }
           },
           async guardarDatosNube(token, userId, jsonData) {
@@ -329,6 +391,43 @@
           const t = T[idiomaSeleccionado] || T['Español'];
           const esSuperAdmin = sesion?.user?.email?.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
+          const [pendienteClave, setPendienteClave] = useState(null);
+          const [claveNueva, setClaveNueva] = useState('');
+          const [claveRepite, setClaveRepite] = useState('');
+          const sesionRef = useRef(sesion);
+          useEffect(() => { sesionRef.current = sesion; }, [sesion]);
+
+          // Enlace del correo de compra (invitación) o de recuperar contraseña
+          useEffect(() => {
+            const hash = window.location.hash ? window.location.hash.substring(1) : '';
+            if (!hash) return;
+            const p = new URLSearchParams(hash);
+            if (p.get('error_description')) {
+              notificar('Enlace no válido', 'Este enlace ya fue usado o venció. Pulsa "Recupérala aquí" para recibir uno nuevo.');
+            } else if (p.get('access_token') && (p.get('type') === 'invite' || p.get('type') === 'recovery')) {
+              setPendienteClave({ access_token: p.get('access_token'), refresh_token: p.get('refresh_token') });
+            }
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }, []);
+
+          // Renovar el token de sesión (dura 1 hora) para que nunca se pierda el guardado
+          useEffect(() => {
+            if (!sesion || !sesion.refresh_token) return;
+            const refrescar = async () => {
+              const actual = sesionRef.current;
+              if (!actual || !actual.refresh_token) return;
+              const { data, error, fatal } = await supabaseApi.refrescarSesion(actual.refresh_token);
+              if (error) { if (fatal) cerrarSesion(); return; }
+              const nueva = { ...actual, access_token: data.access_token, refresh_token: data.refresh_token || actual.refresh_token };
+              localStorage.setItem('mia_sesion', JSON.stringify(nueva));
+              sesionRef.current = nueva;
+              setSesion(nueva);
+            };
+            refrescar();
+            const t = setInterval(refrescar, 50 * 60 * 1000);
+            return () => clearInterval(t);
+          }, [!!(sesion && sesion.refresh_token)]);
+
           useEffect(() => {
             supabaseApi.cargarLogoGlobal().then(logo => { if (logo) setLogoGlobal(logo); });
           }, []);
@@ -336,6 +435,7 @@
           useEffect(() => {
             if (sesion && sesion.access_token && !datosCargadosRef.current) {
               supabaseApi.cargarDatosNube(sesion.access_token, sesion.user_id).then((cloudData) => {
+                if (cloudData === 'error') return;
                 if (cloudData && cloudData.cuentas) {
                   setCuentas(cloudData.cuentas);
                   setMovimientos(cloudData.movimientos || []);
@@ -374,8 +474,14 @@
             } else {
               const tokenValido = data.access_token || data.session?.access_token || data.token;
               const userIdValido = data.user?.id || data.session?.user?.id || data.id;
-              const userSession = { user: { email: emailInput.trim() }, user_id: userIdValido, access_token: tokenValido };
-              localStorage.clear();
+              const reg = await supabaseApi.registrarDispositivo(tokenValido);
+              if (!reg.ok) {
+                const [tit, msg] = mensajeAcceso(reg.codigo);
+                notificar(tit, msg);
+                return;
+              }
+              const userSession = { user: { email: emailInput.trim() }, user_id: userIdValido, access_token: tokenValido, refresh_token: data.refresh_token };
+              localStorage.removeItem('mia_sesion');
               datosCargadosRef.current = false;
               setSesion(userSession);
               setDatosCargados(false);
@@ -413,7 +519,7 @@
           };
 
           const cerrarSesion = () => {
-            localStorage.clear();
+            localStorage.removeItem('mia_sesion');
             datosCargadosRef.current = false;
             setSesion(null);
             setDatosCargados(false);
@@ -854,6 +960,43 @@
             };
             lector.readAsDataURL(archivo);
           };
+
+          const guardarClaveNueva = async () => {
+            if (claveNueva.length < 8) { notificar('Contraseña muy corta', 'Usa al menos 8 caracteres.'); return; }
+            if (claveNueva !== claveRepite) { notificar('No coinciden', 'Las dos contraseñas deben ser iguales.'); return; }
+            const { data, error } = await supabaseApi.crearClave(pendienteClave.access_token, claveNueva);
+            if (error) { notificar('Error', error.message); return; }
+            const reg = await supabaseApi.registrarDispositivo(pendienteClave.access_token);
+            if (!reg.ok) {
+              const [tit, msg] = mensajeAcceso(reg.codigo);
+              notificar(tit, msg);
+              setPendienteClave(null);
+              return;
+            }
+            const userSession = { user: { email: data.email }, user_id: data.id, access_token: pendienteClave.access_token, refresh_token: pendienteClave.refresh_token };
+            localStorage.setItem('mia_sesion', JSON.stringify(userSession));
+            datosCargadosRef.current = false;
+            setDatosCargados(false);
+            setSesion(userSession);
+            setPendienteClave(null);
+            setClaveNueva('');
+            setClaveRepite('');
+          };
+
+          if (pendienteClave) {
+            return (
+              <div className="flex flex-col h-full bg-[#0D211A] justify-center items-center p-4 w-full text-slate-100 overflow-y-auto">
+                <LogoOficialMIA logoCustom={logoGlobal} />
+                <div className="bg-[#16382D] text-slate-100 rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-[#D4AF37]/30 space-y-4 shrink-0 mt-4">
+                  <h2 className="text-xl font-bold text-center text-[#D4AF37]">Crea tu contraseña</h2>
+                  <p className="text-xs text-emerald-200/80 text-center">Elige una contraseña para entrar a MIA. Mínimo 8 caracteres.</p>
+                  <input type="password" placeholder="Nueva contraseña" value={claveNueva} onChange={(e) => setClaveNueva(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-[#D4AF37]/50" />
+                  <input type="password" placeholder="Repite la contraseña" value={claveRepite} onChange={(e) => setClaveRepite(e.target.value)} className="w-full bg-[#0D211A] text-white rounded-2xl p-3 border border-emerald-900/40 text-sm outline-none focus:ring-2 focus:ring-[#D4AF37]/50" />
+                  <button onClick={guardarClaveNueva} className="w-full bg-[#10B981] hover:bg-[#059669] text-[#0D211A] font-extrabold py-3.5 rounded-2xl shadow-lg transition mt-2">Guardar y entrar</button>
+                </div>
+              </div>
+            );
+          }
 
           if (!sesion) {
             return (
