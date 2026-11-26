@@ -8,64 +8,64 @@
   /* ===== 1. CONTENIDO DEL MANUAL =====
      t = título del tema, k = palabras clave extra (sinónimos), x = respuesta (se lee en voz alta). */
   var MANUAL = [
-    { t: 'Primer ingreso y crear contraseña',
+    { t: 'Primer ingreso y crear contraseña', p: '¿Cómo creo mi contraseña y entro por primera vez?',
       k: 'entrar acceso correo invitacion enlace clave contrasena primera vez comprar compre registrarme',
       x: 'Después de tu compra recibes un correo con el botón Crear mi contraseña. El enlace es de un solo uso. Elige una contraseña de mínimo 8 caracteres y pulsa Guardar y entrar. Desde ese momento entras a MIA con tu correo y tu contraseña. Si no ves el correo, revisa Spam o Promociones.' },
-    { t: 'Olvidé mi contraseña',
+    { t: 'Olvidé mi contraseña', p: 'Olvidé mi contraseña, ¿qué hago?',
       k: 'recuperar olvide clave restablecer cambiar contrasena no recuerdo',
       x: 'En la pantalla de entrada toca ¿Olvidaste o aún no tienes contraseña? Recupérala aquí. Escribe tu correo y te llegará un enlace de un solo uso para crear una contraseña nueva. Revisa también Spam o Promociones.' },
-    { t: 'Dispositivos permitidos',
+    { t: 'Dispositivos permitidos', p: '¿En cuántos dispositivos puedo usar MIA?',
       k: 'celulares equipos computador cuantos telefonos dispositivo limite compartir',
       x: 'Puedes usar MIA con tu correo y tu contraseña en hasta 2 dispositivos. La cuenta es personal y no se puede compartir.' },
-    { t: 'Instalar MIA en el celular',
+    { t: 'Instalar MIA en el celular', p: '¿Cómo instalo MIA en mi celular?',
       k: 'instalar pantalla inicio icono acceso directo descargar app agregar',
       x: 'Abre MIA en el navegador de tu celular y elige la opción Agregar a pantalla de inicio. Así queda con su ícono como cualquier otra app.' },
-    { t: 'Idioma y moneda',
+    { t: 'Idioma y moneda', p: '¿Cómo cambio el idioma o la moneda?',
       k: 'ingles portugues espanol euros dolares pesos cop usd eur cambiar moneda idioma',
       x: 'MIA funciona en español, inglés y portugués, y en pesos colombianos, dólares o euros. Los eliges en la pantalla de entrada y quedan guardados con tu cuenta.' },
-    { t: 'Pantalla de Inicio y patrimonio total',
+    { t: 'Pantalla de Inicio y patrimonio total', p: '¿Qué es el patrimonio total que veo en Inicio?',
       k: 'inicio patrimonio total disponible saldo suma dinero cuanto tengo resumen',
       x: 'En Inicio ves tu Patrimonio Total Disponible, que es la suma de tus saldos iniciales más tus ingresos menos tus gastos. Debajo ves tus fondos y deudas activas, y el total pendiente por cobrar y por pagar.' },
-    { t: 'Registrar un gasto o un ingreso',
+    { t: 'Registrar un gasto o un ingreso', p: '¿Cómo registro un gasto o un ingreso?',
       k: 'registrar anotar agregar movimiento gasto ingreso guardar compra pago entrada salida plata',
       x: 'En Inicio, en Registrar Movimiento General: elige Gasto o Ingreso, escoge el medio de pago, es decir la cuenta, la fecha en formato año guion mes guion día, el rubro o categoría, el concepto y el valor. Pulsa Guardar Movimiento y listo.' },
-    { t: 'Categorías de gastos e ingresos',
+    { t: 'Categorías de gastos e ingresos', p: '¿Qué categorías de gastos e ingresos hay?',
       k: 'rubros categorias alimentacion transporte salud educacion ocio servicios salario ventas otros',
       x: 'Las categorías de gasto son: Alimentación, Transporte, Servicios y Hogar, Ocio y Salidas, Salud, Educación, Préstamos a Clientes, Pago a Terceros y Otros Gastos. Las de ingreso son: Salario o Nómina, Ventas o Negocio, Abono de Terceros, Préstamo de Terceros y Otros Ingresos.' },
-    { t: 'Editar o eliminar un movimiento',
+    { t: 'Editar o eliminar un movimiento', p: '¿Cómo corrijo o elimino un movimiento?',
       k: 'editar corregir modificar borrar eliminar movimiento error equivoque cambiar valor',
       x: 'En Movimientos Recientes puedes editar un movimiento para corregir concepto, valor, fecha, tipo, cuenta o categoría. También puedes eliminarlo, y la app te pide confirmar antes de borrarlo.' },
-    { t: 'Cuentas y saldos iniciales',
+    { t: 'Cuentas y saldos iniciales', p: '¿Cómo funcionan las cuentas y los saldos iniciales?',
       k: 'cuentas saldo inicial efectivo bancolombia nequi banco billetera modificar saldo actual',
       x: 'En la pestaña Cuentas defines el dinero con el que arrancas en cada cuenta. MIA trae Efectivo en Mano, Bancolombia y Nequi. Cada cuenta muestra su saldo inicial y su saldo actual, y con el botón Modificar cambias el saldo inicial y su fecha. Más abajo consultas sus reportes y exportas su historial.' },
-    { t: 'Crear una cuenta nueva',
+    { t: 'Crear una cuenta nueva', p: '¿Cómo creo una cuenta nueva?',
       k: 'crear nueva cuenta agregar banco tarjeta ahorros billetera',
       x: 'En la pestaña Cuentas pulsa Crear Cuenta. Escribe el nombre, elige el tipo, por ejemplo Banco, y el saldo inicial. Pulsa guardar y la cuenta aparece para usarla al registrar movimientos.' },
-    { t: 'Cuentas por cobrar y por pagar',
+    { t: 'Cuentas por cobrar y por pagar', p: '¿Cómo anoto lo que me deben o lo que debo?',
       k: 'cxc cxp cobrar pagar deudas terceros deben debo prestamo cliente nit cedula',
       x: 'En la pestaña CxC / CxP gestionas a terceros. Cuentas por Cobrar es lo que otros te deben, y Cuentas por Pagar es lo que tú debes. Para registrar una, escribe la cédula o NIT del tercero, que es la llave principal, su nombre, el concepto, el saldo, la fecha de vencimiento, la cuenta y una observación. Luego pulsa Guardar Cuenta por Cobrar o Guardar Cuenta por Pagar.' },
-    { t: 'Registrar abonos o pagos de una deuda',
+    { t: 'Registrar abonos o pagos de una deuda', p: '¿Cómo registro un abono o el pago de una deuda?',
       k: 'abono abonar pagar deuda cobrar cobro pago tercero parcial saldo pendiente',
       x: 'Registra el abono como un movimiento en Inicio. Si alguien te paga lo que te debe, usa Ingreso con la categoría Abono de Terceros. Si tú pagas una deuda, usa Gasto con la categoría Pago a Terceros. Al elegir esas categorías, escribe la cédula o NIT del tercero para que se descuente de su saldo pendiente.' },
-    { t: 'Reportes y estado de deudas',
+    { t: 'Reportes y estado de deudas', p: '¿Cómo veo y exporto mis reportes?',
       k: 'reportes cartera edades vencimiento pdf excel csv exportar imprimir fecha corte tercero',
       x: 'En la pestaña Reportes ves el estado de tus deudas y el Reporte Avanzado de Cartera, donde eliges Cuentas por Cobrar o Cuentas por Pagar, un rango de fechas y un tercero específico o Todos. Muestra la cartera por edades de vencimiento. Puedes exportarlo en PDF o en Excel.' },
-    { t: 'Empezar de cero y borrar movimientos',
+    { t: 'Empezar de cero y borrar movimientos', p: '¿Cómo borro todo y empiezo de nuevo?',
       k: 'reiniciar borrar todo limpiar resetear empezar nuevo vaciar datos',
       x: 'En la pestaña Cuentas está el botón Reiniciar datos de este celular. Te pregunta si deseas borrar todos tus movimientos y empezar en limpio. Úsalo solo si estás seguro, porque no se puede deshacer.' },
-    { t: 'Salir de la app',
+    { t: 'Salir de la app', p: '¿Cómo cierro sesión?',
       k: 'salir cerrar sesion logout desconectar',
       x: 'Toca el botón Salir arriba a la derecha para cerrar tu sesión.' },
-    { t: 'Dónde se guardan mis datos',
+    { t: 'Dónde se guardan mis datos', p: '¿Dónde se guardan mis datos?',
       k: 'datos guardados seguridad privacidad nube perder informacion copia respaldo',
       x: 'Tu información se guarda en tu cuenta de MIA, no solo en el celular, y la ves igual al entrar desde tus dispositivos. Cada persona solo ve sus propios datos.' },
-    { t: 'Garantía y reembolso',
+    { t: 'Garantía y reembolso', p: '¿Cómo pido el reembolso?',
       k: 'garantia reembolso reembolsar devolucion devolver devuelvan devuelva devuelvas dinero cancelar compra hotmart 7 dias',
       x: 'MIA tiene garantía de 7 días. Si pides el reembolso en Hotmart dentro de ese plazo, tu acceso a la app se desactiva.' },
-    { t: 'Bonos incluidos',
+    { t: 'Bonos incluidos', p: '¿Qué bonos incluye mi compra?',
       k: 'bonos regalo guias manual ahorro gastos hormiga inversiones pdf',
       x: 'Tu compra incluye 4 bonos: el manual de usuario, la guía para mejorar el ahorro, la guía para eliminar gastos hormiga y la guía para mejorar inversiones con ahorros.' },
-    { t: 'Soporte',
+    { t: 'Soporte', p: '¿Con quién hablo si tengo un problema?',
       k: 'soporte ayuda contacto problema falla error escribir correo hablar persona humano',
       x: 'Si necesitas ayuda de una persona, escríbenos a soporte arroba ingetef punto com. Cuéntanos qué pasó y desde qué dispositivo entras.',
       xt: 'Si necesitas ayuda de una persona, escríbenos a soporte@ingetef.com. Cuéntanos qué pasó y desde qué dispositivo entras.' },
@@ -180,6 +180,9 @@
     '#mia-respuesta .t{font-size:12px;color:#2F6B52;margin:0 0 4px;font-weight:600}',
     '#mia-respuesta .c{white-space:pre-line}',
     '#mia-panel .rel{margin:0 0 6px;font-size:12px;color:#9FC4B2}',
+    '#mia-panel .tabs{display:flex;gap:6px;margin-bottom:10px}',
+    '#mia-panel button.tab{flex:1;height:36px;border-radius:10px;border:1px solid rgba(212,166,58,.5);background:#12362A;color:#D4A63A;font-size:13px;cursor:pointer}',
+    '#mia-panel button.tab.activa{background:#D4A63A;color:#0A1F17;font-weight:600}',
     '#mia-aviso{margin:8px 0 0;font-size:11px;color:#9FC4B2}'
   ].join('');
   var st = document.createElement('style');
@@ -221,13 +224,16 @@
     + '<div class="barra"><h2>Ayuda de MIA</h2><span>'
     + '<button class="mini" id="mia-mudo" type="button"></button>'
     + '<button class="mini" id="mia-cerrar" type="button" aria-label="Cerrar">Cerrar</button></span></div>'
+    + '<div class="tabs"><button type="button" class="tab activa" id="mia-tab-p">Preguntar</button>'
+    + '<button type="button" class="tab" id="mia-tab-g">Preguntas guardadas</button></div>'
+    + '<div id="mia-vista-p">'
     + '<form class="fila" id="mia-form" autocomplete="off">'
     + '<input id="mia-q" type="text" maxlength="200" placeholder="Escribe tu pregunta…" aria-label="Escribe tu pregunta">'
     + (SR ? '<button class="btn mic" id="mia-mic" type="button" aria-label="Preguntar con la voz">🎤</button>' : '')
     + '<button class="btn" type="submit">Preguntar</button></form>'
     + '<div id="mia-respuesta" aria-live="polite"></div>'
-    + '<p class="sub" id="mia-sub">O toca un tema del manual:</p>'
-    + '<div id="mia-lista"></div>'
+    + '</div>'
+    + '<div id="mia-vista-pregs" style="display:none"><p class="sub">Toca una pregunta y te respondo con voz.</p><div id="mia-lista"></div></div>'
     + '<p id="mia-aviso">Esta ayuda explica cómo usar la app. No da consejos financieros.</p>'
     + '</div>'
     + '<button id="mia-muneco" type="button" aria-label="Abrir la ayuda de MIA">' + svg + '</button>';
@@ -255,7 +261,7 @@
     box.appendChild(p);
     lista2.forEach(function (r) {
       var b = document.createElement('button');
-      b.type = 'button'; b.className = 'chip'; b.textContent = r.m.t;
+      b.type = 'button'; b.className = 'chip'; b.textContent = r.m.p || r.m.t;
       b.addEventListener('click', function () { responder(r.m); });
       box.appendChild(b);
     });
@@ -281,11 +287,20 @@
   }
 
   MANUAL.forEach(function (m) {
+    if (!m.p) return;
     var b = document.createElement('button');
-    b.type = 'button'; b.className = 'chip'; b.textContent = m.t;
-    b.addEventListener('click', function () { responder(m); });
+    b.type = 'button'; b.className = 'chip'; b.textContent = m.p;
+    b.addEventListener('click', function () { verTab('p'); responder(m); });
     lista.appendChild(b);
   });
+  function verTab(cual) {
+    document.getElementById('mia-vista-p').style.display = cual === 'p' ? 'block' : 'none';
+    document.getElementById('mia-vista-pregs').style.display = cual === 'g' ? 'block' : 'none';
+    document.getElementById('mia-tab-p').classList.toggle('activa', cual === 'p');
+    document.getElementById('mia-tab-g').classList.toggle('activa', cual === 'g');
+  }
+  document.getElementById('mia-tab-p').addEventListener('click', function () { verTab('p'); });
+  document.getElementById('mia-tab-g').addEventListener('click', function () { verTab('g'); });
 
   document.getElementById('mia-form').addEventListener('submit', function (ev) {
     ev.preventDefault();
@@ -325,6 +340,7 @@
 
   function abrir() {
     panel.classList.add('abierto');
+    verTab('p');
     resp.classList.remove('visible');
     hablar('¿En qué te ayudo? Escribe tu pregunta o toca un tema.');
   }
