@@ -41,6 +41,7 @@
         // Ponlo en false cuando conectes Hotmart: así nadie podrá crear cuenta por su cuenta,
         // solo entran los correos que habilite el webhook de compra.
         const REGISTRO_PUBLICO = false;
+        const URL_COMPRA = 'https://pay.hotmart.com/I108421704E?checkoutMode=10';
 
         const T = {
           Español: {
@@ -133,6 +134,7 @@
         const mensajeAcceso = (codigo) => {
           const c = String(codigo || '');
           if (c.includes('limite_dispositivos')) return ['Límite de dispositivos', 'Esta cuenta ya está activa en 2 dispositivos. Para cambiar uno, contacta al soporte de MIA.'];
+          if (c.includes('prueba_vencida')) return ['Tu prueba gratis terminó', 'Tus 15 días de prueba terminaron. Adquiere MIA para seguir usándola con todos tus datos.'];
           if (c.includes('sin_acceso')) return ['Sin acceso', 'Este correo no tiene una compra activa de MIA.'];
           return ['No se pudo iniciar sesión', 'Intenta de nuevo en unos minutos.'];
         };
@@ -221,6 +223,29 @@
             } catch (err) {
               return { ok: false, codigo: 'red' };
             }
+          },
+          async iniciarPrueba(email) {
+            try {
+              const res = await fetch(`${SUPABASE_URL}/functions/v1/iniciar-prueba`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+                body: JSON.stringify({ email })
+              });
+              const d = await res.json().catch(() => ({}));
+              if (!res.ok) return { ok: false, codigo: d.error || 'error' };
+              return { ok: true, estado: d.estado };
+            } catch (err) { return { ok: false, codigo: 'red' }; }
+          },
+          async estadoAcceso(token) {
+            try {
+              const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/estado_acceso`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}` },
+                body: '{}'
+              });
+              if (!res.ok) return null;
+              return await res.json();
+            } catch (err) { return null; }
           },
           async recuperarClave(email) {
             try {
@@ -371,6 +396,7 @@
           const [emailInput, setEmailInput] = useState('');
           const [passInput, setPassInput] = useState('');
           const [modoRegistro, setModoRegistro] = useState(false);
+          const [acceso, setAcceso] = useState(null);
           const [idiomaSeleccionado, setIdiomaSeleccionado] = useState('Español');
           const [monedaSeleccionada, setMonedaSeleccionada] = useState('COP ($)');
           const [tab, setTab] = useState('inicio');
@@ -427,6 +453,20 @@
             const t = setInterval(refrescar, 50 * 60 * 1000);
             return () => clearInterval(t);
           }, [!!(sesion && sesion.refresh_token)]);
+
+          // Estado de la prueba gratis: banner de días y bloqueo al vencer
+          useEffect(() => {
+            if (!sesion || !sesion.access_token) { setAcceso(null); return; }
+            const consultar = async () => {
+              const actual = sesionRef.current;
+              if (!actual) return;
+              const r = await supabaseApi.estadoAcceso(actual.access_token);
+              if (r) setAcceso(r);
+            };
+            consultar();
+            const iv = setInterval(consultar, 30 * 60 * 1000);
+            return () => clearInterval(iv);
+          }, [!!(sesion && sesion.access_token)]);
 
           useEffect(() => {
             supabaseApi.cargarLogoGlobal().then(logo => { if (logo) setLogoGlobal(logo); });
@@ -506,6 +546,19 @@
               notificar('¡Registro exitoso!', 'Ya puedes iniciar sesión con tus datos.');
               setModoRegistro(false);
             }
+          };
+
+          const manejarPrueba = async () => {
+            const correo = emailInput.trim();
+            if (!correo) { notificar('Falta el correo', 'Escribe tu correo arriba y vuelve a pulsar "Probar 15 días gratis".'); return; }
+            const r = await supabaseApi.iniciarPrueba(correo);
+            if (!r.ok) {
+              if (r.codigo === 'correo_invalido') notificar('Correo no válido', 'Revisa que el correo esté bien escrito.');
+              else notificar('No se pudo iniciar', 'Intenta de nuevo en unos minutos.');
+              return;
+            }
+            if (r.estado === 'enviado') notificar('¡Revisa tu correo!', 'Te enviamos un enlace para crear tu contraseña y empezar tus 15 días gratis. Si no lo ves, revisa spam.');
+            else notificar('Este correo ya está registrado', 'Pulsa "Recupérala aquí" para recibir un enlace de acceso. La prueba gratis se puede usar una sola vez por correo.');
           };
 
           const manejarRecuperarClave = async () => {
@@ -1040,6 +1093,9 @@
                   {!modoRegistro && (
                     <button onClick={manejarRecuperarClave} className="w-full text-center text-xs text-emerald-300 font-semibold hover:underline">¿Olvidaste o aún no tienes contraseña? Recupérala aquí</button>
                   )}
+                  {!modoRegistro && (
+                    <button onClick={manejarPrueba} className="w-full bg-transparent border border-[#D4AF37]/60 text-[#D4AF37] font-bold py-3 rounded-2xl hover:bg-[#D4AF37]/10 transition">🎁 Probar 15 días gratis</button>
+                  )}
                   {REGISTRO_PUBLICO && (
                     <button onClick={() => setModoRegistro(!modoRegistro)} className="w-full text-center text-xs text-[#D4AF37] font-bold hover:underline pt-1">
                       {modoRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí'}
@@ -1050,8 +1106,30 @@
             );
           }
 
+          if (acceso && (acceso.tipo === 'vencida' || acceso.tipo === 'sin_acceso')) {
+            const vencida = acceso.tipo === 'vencida';
+            return (
+              <div className="flex flex-col h-full bg-[#0D211A] justify-center items-center p-4 w-full text-slate-100 overflow-y-auto">
+                <LogoOficialMIA logoCustom={logoGlobal} />
+                <div className="bg-[#16382D] rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-[#D4AF37]/30 space-y-4 shrink-0 mt-4 text-center">
+                  <h2 className="text-xl font-bold text-[#D4AF37]">{vencida ? 'Tu prueba gratis terminó' : 'Sin acceso'}</h2>
+                  <p className="text-sm text-emerald-100/90">{vencida ? 'Gracias por probar MIA. Tus datos siguen guardados: adquiere MIA una sola vez (USD 5) y continúa justo donde quedaste.' : 'Este correo no tiene una compra activa de MIA.'}</p>
+                  <a href={URL_COMPRA} target="_blank" rel="noopener" className="block w-full bg-[#10B981] hover:bg-[#059669] text-[#0D211A] font-extrabold py-3.5 rounded-2xl shadow-lg transition">Adquirir MIA – pago único</a>
+                  <p className="text-[11px] text-emerald-200/70">Usa el mismo correo con el que probaste MIA para que tu acceso se active solo.</p>
+                  <button onClick={cerrarSesion} className="w-full text-xs text-emerald-300 font-semibold hover:underline">Salir</button>
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div className="flex flex-col h-full bg-[#0D211A] relative w-full text-slate-100">
+              {acceso && acceso.tipo === 'prueba' && (
+                <div className="bg-[#D4AF37] text-[#0D211A] text-xs font-bold px-4 py-2 flex items-center justify-between gap-2">
+                  <span>🎁 Prueba gratis: te {acceso.dias === 1 ? 'queda 1 día' : 'quedan ' + acceso.dias + ' días'}</span>
+                  <a href={URL_COMPRA} target="_blank" rel="noopener" className="bg-[#0D211A] text-[#D4AF37] px-3 py-1 rounded-lg">Adquirir</a>
+                </div>
+              )}
               <div className="p-3 px-5 flex justify-between items-center bg-[#112A20] border-b border-[#D4AF37]/20 shadow-md">
                 <LogoHeaderMIA logoCustom={logoGlobal} />
                 <div className="flex items-center gap-2">
